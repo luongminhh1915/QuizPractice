@@ -25,6 +25,25 @@ public interface IQuestionRepository
     /// <summary>The question with its subject, lesson, level and dimensions, tracked for a change.</summary>
     Task<Question?> GetByIdAsync(int id, CancellationToken ct = default);
 
+    /// <summary>
+    /// The question with everything Question Details shows, its options in display
+    /// order, tracked for a change (UC-53).
+    /// </summary>
+    Task<Question?> GetWithOptionsAsync(int id, CancellationToken ct = default);
+
+    /// <summary>Whether a quiz or a stored attempt already uses the question.</summary>
+    Task<bool> IsUsedAsync(int questionId, CancellationToken ct = default);
+
+    /// <summary>The options of the question that a stored attempt chose as its answer.</summary>
+    Task<IReadOnlyList<int>> GetAnsweredOptionIdsAsync(int questionId, CancellationToken ct = default);
+
+    /// <summary>Stages a new question with its options and dimensions; the service commits through IUnitOfWork.</summary>
+    void Add(Question question);
+
+    void RemoveOption(AnswerOption option);
+
+    void RemoveDimension(QuestionDimension link);
+
     /// <summary>A page of questions with their subject, lesson, level and dimensions.</summary>
     Task<Page<Question>> SearchAsync(QuestionSearch search, PageRequest page, CancellationToken ct = default);
 

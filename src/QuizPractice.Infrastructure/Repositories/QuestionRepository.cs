@@ -18,6 +18,32 @@ public class QuestionRepository(AppDbContext db) : IQuestionRepository
             .AsSplitQuery()
             .FirstOrDefaultAsync(q => q.Id == id, ct);
 
+    public Task<Question?> GetWithOptionsAsync(int id, CancellationToken ct = default) =>
+        db.Questions
+            .Include(q => q.Subject)
+            .Include(q => q.Level)
+            .Include(q => q.Dimensions)
+            .Include(q => q.Options.OrderBy(o => o.DisplayOrder))
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(q => q.Id == id, ct);
+
+    public async Task<bool> IsUsedAsync(int questionId, CancellationToken ct = default) =>
+        await db.QuizQuestions.AnyAsync(x => x.QuestionId == questionId, ct)
+        || await db.AttemptQuestions.AnyAsync(x => x.QuestionId == questionId, ct);
+
+    public async Task<IReadOnlyList<int>> GetAnsweredOptionIdsAsync(int questionId, CancellationToken ct = default) =>
+        await db.AttemptQuestions
+            .Where(x => x.QuestionId == questionId && x.ChosenOptionId != null)
+            .Select(x => x.ChosenOptionId!.Value)
+            .Distinct()
+            .ToListAsync(ct);
+
+    public void Add(Question question) => db.Questions.Add(question);
+
+    public void RemoveOption(AnswerOption option) => db.AnswerOptions.Remove(option);
+
+    public void RemoveDimension(QuestionDimension link) => db.QuestionDimensions.Remove(link);
+
     public async Task<Page<Question>> SearchAsync(QuestionSearch search, PageRequest page, CancellationToken ct = default)
     {
         var query = db.Questions.AsNoTracking().AsQueryable();
