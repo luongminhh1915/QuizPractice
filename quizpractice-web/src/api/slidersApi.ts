@@ -35,7 +35,7 @@ function toFormData(input: SliderInput): FormData {
   return data
 }
 
-/** /api/sliders — UC-38 View Sliders List, UC-39 Add or Edit Slider. */
+/** /api/sliders — UC-38 View Sliders List, UC-39 Add or Edit Slider, UC-40 Show or Hide Slider. */
 export const slidersApi = {
   list: (criteria: SliderCriteria) =>
     http.get<Page<Slider>>('/sliders', { params: criteria }).then((r) => r.data),
@@ -46,4 +46,7 @@ export const slidersApi = {
 
   update: (id: number, input: SliderInput) =>
     http.put<Slider>(`/sliders/${id}`, toFormData(input)).then((r) => r.data),
+
+  changeStatus: (id: number, status: VisibilityStatus) =>
+    http.put<Slider>(`/sliders/${id}/status`, { status }).then((r) => r.data),
 }

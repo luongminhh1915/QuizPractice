@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { slidersApi, type SliderCriteria, type SliderInput } from '../api/slidersApi'
+import type { VisibilityStatus } from '../api/types'
 
 // Query keys: ['sliders'] covers every list and detail, so one invalidate after a
 // change reloads whatever slider screen is open.
@@ -30,6 +31,14 @@ export function useSaveSlider(id: number | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: SliderInput) => (id === undefined ? slidersApi.create(input) : slidersApi.update(id, input)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  })
+}
+
+export function useChangeSliderStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: VisibilityStatus }) => slidersApi.changeStatus(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   })
 }

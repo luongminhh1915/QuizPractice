@@ -1,4 +1,4 @@
-import { Button, Input, Select, Space, Typography } from 'antd'
+import { App, Button, Input, Select, Space, Typography } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { Link, useLocation } from 'react-router'
 import type { Slider } from '../../api/slidersApi'
@@ -8,20 +8,33 @@ import { DataTable, type DataTableColumn } from '../../components/DataTable'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusTag } from '../../components/StatusTag'
 import { useListParams } from '../../hooks/useListParams'
-import { useSliderList } from '../../hooks/useSliders'
+import { useChangeSliderStatus, useSliderList } from '../../hooks/useSliders'
 
 /**
- * Sliders List (SRS III 5.4; F#21; UC-38 View Sliders List).
+ * Sliders List (SRS III 5.4; F#21; UC-38 View Sliders List, UC-40 Show or Hide Slider).
  * The sample list screen: copy its shape for every other list.
  */
 export function SlidersListPage() {
+  const { message } = App.useApp()
   const location = useLocation()
   const list = useListParams()
   const status = list.get('status') as VisibilityStatus | undefined
   const query = useSliderList({ ...list.criteria, status })
+  const changeStatus = useChangeSliderStatus()
 
   // Detail screens return to this list with the same criteria (SRS III 0.3).
   const back = { state: { back: location.pathname + location.search } }
+
+  const toggle = (slider: Slider) => {
+    const next: VisibilityStatus = slider.status === 'Shown' ? 'Hidden' : 'Shown'
+    changeStatus.mutate(
+      { id: slider.id, status: next },
+      {
+        onSuccess: () => message.success(`"${slider.title}" is now ${next.toLowerCase()}.`),
+        onError: (e) => message.error(errorMessage(e)),
+      },
+    )
+  }
 
   const columns: DataTableColumn<Slider>[] = [
     { title: 'ID', key: 'id', sortable: true, width: 80 },
@@ -57,6 +70,14 @@ export function SlidersListPage() {
           <Link to={`/manage/sliders/${s.id}`} {...back}>
             <Button size="small">Edit</Button>
           </Link>
+          <Button
+            size="small"
+            danger={s.status === 'Shown'}
+            loading={changeStatus.isPending && changeStatus.variables?.id === s.id}
+            onClick={() => toggle(s)}
+          >
+            {s.status === 'Shown' ? 'Hide' : 'Show'}
+          </Button>
         </Space>
       ),
     },
