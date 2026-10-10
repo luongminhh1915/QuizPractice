@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using QuizPractice.Application.Abstractions;
 using QuizPractice.Infrastructure.Persistence;
 using QuizPractice.Infrastructure.Security;
+using QuizPractice.Infrastructure.Spreadsheets;
 using QuizPractice.Infrastructure.Storage;
 
 namespace QuizPractice.Infrastructure;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddSingleton<IFileStorage>(new LocalFileStorage(webRootPath));
         services.AddSingleton<IPrivateFileStorage>(new PrivateFileStorage(privateRootPath));
+        services.AddSingleton<IQuestionSheet, ExcelQuestionSheet>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IHtmlSanitizer, HtmlContentSanitizer>();
 
