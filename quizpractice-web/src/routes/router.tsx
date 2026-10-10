@@ -4,6 +4,7 @@ import { PublicLayout } from '../layouts/PublicLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { SliderDetailsPage } from '../pages/marketing/SliderDetailsPage'
 import { SlidersListPage } from '../pages/marketing/SlidersListPage'
+import { HomePage } from '../pages/public/HomePage'
 
 /**
  * Every screen of SRS III gets one route here. Public and customer pages sit under
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
   {
     element: <PublicLayout />,
     children: [
+      { path: '/', element: <HomePage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
