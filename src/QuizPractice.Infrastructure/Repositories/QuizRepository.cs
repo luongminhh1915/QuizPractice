@@ -9,6 +9,14 @@ namespace QuizPractice.Infrastructure.Repositories;
 
 public class QuizRepository(AppDbContext db) : IQuizRepository
 {
+    public Task<Quiz?> GetByIdAsync(int id, CancellationToken ct = default) =>
+        db.Quizzes.Include(q => q.Subject).FirstOrDefaultAsync(q => q.Id == id, ct);
+
+    public async Task<IReadOnlyList<string>> GetLessonsUsingAsync(int quizId, CancellationToken ct = default) =>
+        await db.Lessons.Where(l => l.QuizId == quizId).OrderBy(l => l.Name).Select(l => l.Name).ToListAsync(ct);
+
+    public void Remove(Quiz quiz) => db.Quizzes.Remove(quiz);
+
     public async Task<Page<Quiz>> SearchAsync(QuizSearch search, PageRequest page, CancellationToken ct = default)
     {
         var query = db.Quizzes.AsNoTracking().AsQueryable();
