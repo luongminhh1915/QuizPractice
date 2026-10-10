@@ -8,3 +8,6 @@ export const URL_MAX = 500
 
 export const IMAGE_MAX_BYTES = 2 * 1024 * 1024
 export const IMAGE_TYPES = ['image/jpeg', 'image/png']
+
+/** Description, post content, question content, explanation, HTML lesson. */
+export const LONG_TEXT_MAX = 20_000
