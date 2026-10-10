@@ -7,8 +7,10 @@ namespace QuizPractice.Infrastructure.Persistence.Seed;
 
 /// <summary>
 /// Writes <see cref="DevSeedData"/> once, into a migrated database whose Settings
-/// table is empty. Program.cs calls it in Development only: the sample accounts
-/// share one known password. To seed again, drop and re-create the database (README).
+/// table is empty, then the sample quizzes while the Quizzes table is empty
+/// (<see cref="DevQuizSeeder"/>, so an older database gets them too). Program.cs calls
+/// it in Development only: the sample accounts share one known password. To seed
+/// again, drop and re-create the database (README).
 /// </summary>
 public static class DevDataSeeder
 {
@@ -32,9 +34,18 @@ public static class DevDataSeeder
         if (await db.Settings.AnyAsync(ct))
         {
             logger.LogInformation("Sample data not seeded: the Settings table already has rows.");
-            return true;
+        }
+        else
+        {
+            await SeedBaseAsync(db, hasher, logger, ct);
         }
 
+        await DevQuizSeeder.SeedAsync(db, logger, DateTime.UtcNow, ct);
+        return true;
+    }
+
+    private static async Task SeedBaseAsync(AppDbContext db, IPasswordHasher hasher, ILogger logger, CancellationToken ct)
+    {
         var data = DevSeedData.Build(hasher, DateTime.UtcNow);
         db.Settings.AddRange(data.Settings);
         db.Users.AddRange(data.Users);
@@ -48,6 +59,5 @@ public static class DevDataSeeder
         logger.LogInformation(
             "Sample data seeded: {Settings} settings, {Users} accounts, {Subjects} subjects, {Questions} questions.",
             data.Settings.Count, data.Users.Count, data.Subjects.Count, data.Questions.Count);
-        return true;
     }
 }
