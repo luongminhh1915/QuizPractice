@@ -2,6 +2,7 @@ import { Avatar, Breadcrumb, Dropdown, Flex, Layout, Menu, Typography } from 'an
 import {
   DashboardOutlined,
   FileTextOutlined,
+  FormOutlined,
   LogoutOutlined,
   PictureOutlined,
   QuestionCircleOutlined,
@@ -19,6 +20,7 @@ const ROLE_MENU = [
   { key: '/manage/posts', icon: <FileTextOutlined />, label: 'Posts' },
   { key: '/manage/sliders', icon: <PictureOutlined />, label: 'Sliders' },
   { key: '/manage/questions', icon: <QuestionCircleOutlined />, label: 'Questions' },
+  { key: '/manage/quizzes', icon: <FormOutlined />, label: 'Quizzes' },
 ]
 
 // Breadcrumb labels by path segment; a number is a record id.
@@ -27,6 +29,7 @@ const CRUMBS: Record<string, string> = {
   posts: 'Posts',
   sliders: 'Sliders',
   questions: 'Questions',
+  quizzes: 'Quizzes',
   new: 'New',
 }
 

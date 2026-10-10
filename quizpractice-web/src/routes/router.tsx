@@ -9,6 +9,7 @@ import { SlidersListPage } from '../pages/marketing/SlidersListPage'
 import { HomePage } from '../pages/public/HomePage'
 import { QuestionDetailsPage } from '../pages/testcontent/QuestionDetailsPage'
 import { QuestionsListPage } from '../pages/testcontent/QuestionsListPage'
+import { QuizzesListPage } from '../pages/testcontent/QuizzesListPage'
 
 /**
  * Every screen of SRS III gets one route here. Public and customer pages sit under
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
       { path: 'questions', element: <QuestionsListPage /> },
       { path: 'questions/new', element: <QuestionDetailsPage /> },
       { path: 'questions/:id', element: <QuestionDetailsPage /> },
+      { path: 'quizzes', element: <QuizzesListPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
