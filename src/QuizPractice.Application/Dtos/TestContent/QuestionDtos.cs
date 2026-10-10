@@ -20,6 +20,9 @@ public sealed record QuestionListRequest(
     int Page = 1,
     int PageSize = 10);
 
+/// <summary>Show or Hide Question (UC-54).</summary>
+public sealed record ChangeQuestionStatusRequest(VisibilityStatus Status);
+
 /// <summary>A row of Questions List: no options, media or explanation.</summary>
 public sealed record QuestionSummaryDto(
     int Id,

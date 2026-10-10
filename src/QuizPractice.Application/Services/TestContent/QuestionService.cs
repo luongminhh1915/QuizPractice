@@ -11,6 +11,7 @@ namespace QuizPractice.Application.Services.TestContent;
 
 public class QuestionService(
     IQuestionRepository questions,
+    IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IValidator<QuestionListRequest> listValidator) : IQuestionService
 {
@@ -65,6 +66,43 @@ public class QuestionService(
             levels.Select(l => new QuestionLookupDto(l.Id, l.Value)).ToList(),
             lessons,
             dimensions);
+    }
+
+    public async Task<Result<QuestionSummaryDto>> ChangeStatusAsync(int id, ChangeQuestionStatusRequest request, CancellationToken ct = default)
+    {
+        if (CheckRole(out var expertId) is { } denied)
+        {
+            return denied;
+        }
+
+        if (!Enum.IsDefined(request.Status))
+        {
+            return Error.Invalid(nameof(request.Status), "Status must be Shown or Hidden.");
+        }
+
+        var question = await questions.GetByIdAsync(id, ct);
+        if (question is null)
+        {
+            return Error.NotFound("Question", id);
+        }
+
+        // UC-54 E1: an Expert on a question of a subject not assigned to that Expert.
+        if (expertId is not null && question.Subject.ExpertId != expertId)
+        {
+            return NotAssigned;
+        }
+
+        // A1: already in the chosen state (perhaps set by another user meanwhile), so
+        // nothing is written and the list shows the current state. A2 needs nothing here:
+        // hiding deletes nothing, so a stored attempt still reads the question and the
+        // option chosen (AttemptQuestion); only new draws skip a Hidden question.
+        if (question.Status != request.Status)
+        {
+            question.Status = request.Status;
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+
+        return QuestionSummaryDto.From(question);
     }
 
     /// <summary>

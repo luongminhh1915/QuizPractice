@@ -22,6 +22,9 @@ public sealed record QuestionSearch(
 
 public interface IQuestionRepository
 {
+    /// <summary>The question with its subject, lesson, level and dimensions, tracked for a change.</summary>
+    Task<Question?> GetByIdAsync(int id, CancellationToken ct = default);
+
     /// <summary>A page of questions with their subject, lesson, level and dimensions.</summary>
     Task<Page<Question>> SearchAsync(QuestionSearch search, PageRequest page, CancellationToken ct = default);
 

@@ -9,6 +9,15 @@ namespace QuizPractice.Infrastructure.Repositories;
 
 public class QuestionRepository(AppDbContext db) : IQuestionRepository
 {
+    public Task<Question?> GetByIdAsync(int id, CancellationToken ct = default) =>
+        db.Questions
+            .Include(q => q.Subject)
+            .Include(q => q.Lesson)
+            .Include(q => q.Level)
+            .Include(q => q.Dimensions).ThenInclude(d => d.Dimension)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(q => q.Id == id, ct);
+
     public async Task<Page<Question>> SearchAsync(QuestionSearch search, PageRequest page, CancellationToken ct = default)
     {
         var query = db.Questions.AsNoTracking().AsQueryable();
