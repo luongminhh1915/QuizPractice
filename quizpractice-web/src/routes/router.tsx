@@ -7,6 +7,7 @@ import { PostsListPage } from '../pages/marketing/PostsListPage'
 import { SliderDetailsPage } from '../pages/marketing/SliderDetailsPage'
 import { SlidersListPage } from '../pages/marketing/SlidersListPage'
 import { HomePage } from '../pages/public/HomePage'
+import { QuestionDetailsPage } from '../pages/testcontent/QuestionDetailsPage'
 import { QuestionsListPage } from '../pages/testcontent/QuestionsListPage'
 
 /**
@@ -36,6 +37,8 @@ export const router = createBrowserRouter([
       { path: 'sliders/new', element: <SliderDetailsPage /> },
       { path: 'sliders/:id', element: <SliderDetailsPage /> },
       { path: 'questions', element: <QuestionsListPage /> },
+      { path: 'questions/new', element: <QuestionDetailsPage /> },
+      { path: 'questions/:id', element: <QuestionDetailsPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

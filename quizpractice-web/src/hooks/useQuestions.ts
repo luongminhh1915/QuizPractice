@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { questionsApi, type QuestionCriteria } from '../api/questionsApi'
+import { questionsApi, type QuestionCriteria, type QuestionInput } from '../api/questionsApi'
 import type { VisibilityStatus } from '../api/types'
 
 // Query keys: ['questions'] covers every list and detail, so one invalidate after a
@@ -8,6 +8,7 @@ const keys = {
   all: ['questions'] as const,
   list: (criteria: QuestionCriteria) => ['questions', 'list', criteria] as const,
   filters: (subjectId?: number) => ['questions', 'filters', subjectId ?? null] as const,
+  detail: (id: number) => ['questions', 'detail', id] as const,
 }
 
 export function useQuestionList(criteria: QuestionCriteria) {
@@ -26,6 +27,24 @@ export function useQuestionFilters(subjectId?: number) {
     queryFn: () => questionsApi.filters(subjectId),
     staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
+  })
+}
+
+export function useQuestion(id: number | undefined) {
+  return useQuery({
+    queryKey: keys.detail(id ?? 0),
+    queryFn: () => questionsApi.get(id!),
+    enabled: id !== undefined,
+  })
+}
+
+/** version: the one the question was loaded with; required on edit (UC-53 E4). */
+export function useSaveQuestion(id: number | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ input, version }: { input: QuestionInput; version?: string }) =>
+      id === undefined ? questionsApi.create(input) : questionsApi.update(id, input, version!),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   })
 }
 

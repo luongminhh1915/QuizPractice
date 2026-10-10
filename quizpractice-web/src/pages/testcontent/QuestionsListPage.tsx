@@ -1,4 +1,6 @@
 import { App, Button, Input, Select, Space, Tag, Typography } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
+import { Link, useLocation } from 'react-router'
 import type { QuestionSummary } from '../../api/questionsApi'
 import type { VisibilityStatus } from '../../api/types'
 import { errorMessage } from '../../api/client'
@@ -7,23 +9,14 @@ import { PageHeader } from '../../components/PageHeader'
 import { StatusTag } from '../../components/StatusTag'
 import { useListParams } from '../../hooks/useListParams'
 import { useChangeQuestionStatus, useQuestionFilters, useQuestionList } from '../../hooks/useQuestions'
+import { groupedOptions } from '../../utils/groupedOptions'
 
 const toNumber = (value: string | undefined) => (value ? Number(value) : undefined)
-
-/** Groups options under a heading (a topic, a dimension type), keeping the order the API gave. */
-function grouped<T extends { id: number; name: string }>(items: T[], groupOf: (item: T) => string) {
-  const groups = new Map<string, { value: number; label: string }[]>()
-  for (const item of items) {
-    const group = groupOf(item)
-    if (!groups.has(group)) groups.set(group, [])
-    groups.get(group)!.push({ value: item.id, label: item.name })
-  }
-  return [...groups].map(([label, options]) => ({ label, title: label, options }))
-}
 
 /** Questions List (SRS III 7.1; PDF II.7, F#30; UC-52 View Questions List, UC-54 Show or Hide Question). */
 export function QuestionsListPage() {
   const { message } = App.useApp()
+  const location = useLocation()
   const list = useListParams()
   const subjectId = toNumber(list.get('subjectId'))
   const lessonId = toNumber(list.get('lessonId'))
@@ -36,6 +29,9 @@ export function QuestionsListPage() {
   const filters = useQuestionFilters(subjectId)
   const choices = filters.data
   const changeStatus = useChangeQuestionStatus()
+
+  // Question Details returns to this list with the same criteria (SRS III 0.3).
+  const back = { state: { back: location.pathname + location.search } }
 
   const toggle = (question: QuestionSummary) => {
     const next: VisibilityStatus = question.status === 'Shown' ? 'Hidden' : 'Shown'
@@ -86,16 +82,21 @@ export function QuestionsListPage() {
     {
       title: 'Action',
       key: 'action',
-      width: 90,
+      width: 140,
       render: (q) => (
-        <Button
-          size="small"
-          danger={q.status === 'Shown'}
-          loading={changeStatus.isPending && changeStatus.variables?.id === q.id}
-          onClick={() => toggle(q)}
-        >
-          {q.status === 'Shown' ? 'Hide' : 'Show'}
-        </Button>
+        <Space>
+          <Link to={`/manage/questions/${q.id}`} {...back}>
+            <Button size="small">Edit</Button>
+          </Link>
+          <Button
+            size="small"
+            danger={q.status === 'Shown'}
+            loading={changeStatus.isPending && changeStatus.variables?.id === q.id}
+            onClick={() => toggle(q)}
+          >
+            {q.status === 'Shown' ? 'Hide' : 'Show'}
+          </Button>
+        </Space>
       ),
     },
   ]
@@ -104,7 +105,16 @@ export function QuestionsListPage() {
 
   return (
     <>
-      <PageHeader title="Questions List" />
+      <PageHeader
+        title="Questions List"
+        action={
+          <Link to="/manage/questions/new" {...back}>
+            <Button type="primary" icon={<PlusOutlined />}>
+              Add New Question
+            </Button>
+          </Link>
+        }
+      />
 
       <Space wrap style={{ marginBottom: 16 }}>
         {/* key resets the box when the criteria are cleared */}
@@ -136,7 +146,7 @@ export function QuestionsListPage() {
           value={lessonId ?? 'All'}
           disabled={subjectId === undefined}
           onChange={(value) => list.set({ lessonId: value === 'All' ? undefined : value })}
-          options={[{ value: 'All', label: 'All lessons' }, ...grouped(choices?.lessons ?? [], (l) => l.topic)]}
+          options={[{ value: 'All', label: 'All lessons' }, ...groupedOptions(choices?.lessons ?? [], (l) => l.topic)]}
           popupMatchSelectWidth={false}
           style={{ width: 190 }}
         />
@@ -149,7 +159,7 @@ export function QuestionsListPage() {
           allowClear
           maxTagCount="responsive"
           onChange={(values: number[]) => list.set({ dimensionIds: values.length ? values.join(',') : undefined })}
-          options={grouped(choices?.dimensions ?? [], (d) => d.type)}
+          options={groupedOptions(choices?.dimensions ?? [], (d) => d.type)}
           popupMatchSelectWidth={false}
           style={{ width: 220 }}
         />
