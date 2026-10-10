@@ -15,6 +15,9 @@ public class SaveQuestionRequestValidator : AbstractValidator<SaveQuestionReques
     public const int MinOptions = 2;
     public const int MaxOptions = 6;
 
+    /// <summary>Error code of the one-correct-option rule, so the import can tell it apart.</summary>
+    public const string OneCorrect = "OneCorrectOption";
+
     public SaveQuestionRequestValidator()
     {
         RuleFor(x => x.SubjectId).GreaterThan(0).WithMessage("Choose a subject.");
@@ -28,7 +31,7 @@ public class SaveQuestionRequestValidator : AbstractValidator<SaveQuestionReques
         RuleFor(x => x.Options)
             .Must(o => o.Count >= MinOptions).WithMessage($"Enter at least {MinOptions} answer options.")
             .Must(o => o.Count <= MaxOptions).WithMessage($"Enter at most {MaxOptions} answer options.")
-            .Must(o => o.Count(x => x.IsCorrect) == 1).WithMessage("Mark exactly one option as the correct answer.")
+            .Must(o => o.Count(x => x.IsCorrect) == 1).WithMessage("Mark exactly one option as the correct answer.").WithErrorCode(OneCorrect)
             .Must(o => o.Where(x => x.Id is not null).Select(x => x.Id).Distinct().Count() == o.Count(x => x.Id is not null))
             .WithMessage("An option is listed twice.");
         RuleFor(x => x.Media!).SetValidator(new QuestionMediaValidator()).When(x => x.Media is not null);

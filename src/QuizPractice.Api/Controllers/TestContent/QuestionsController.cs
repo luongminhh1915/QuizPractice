@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using QuizPractice.Api.Controllers.Marketing;
+using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.TestContent;
 using QuizPractice.Application.Services.TestContent;
 using QuizPractice.Domain.Common;
@@ -9,15 +10,18 @@ using QuizPractice.Domain.Enums;
 namespace QuizPractice.Api.Controllers.TestContent;
 
 /// <summary>
-/// Questions List and Question Details (PDF II.7, F#30, F#31; UC-52 to UC-54). The service already refuses every role but the
+/// Questions List, Question Details and Question Import (PDF II.7, F#30 to F#32; UC-52 to UC-55). The service already refuses every role but the
 /// Admin and the Expert, and limits an Expert to the assigned subjects (BR-11).
 /// TODO(auth): add the role attribute once cookie sign-in and the role table (BR-03, D23) are in place.
 /// </summary>
 [Route("api/questions")]
-public class QuestionsController(IQuestionService questions) : ApiControllerBase
+public class QuestionsController(IQuestionService questions, IQuestionImportService imports) : ApiControllerBase
 {
     /// <summary>The largest media file (an MP4, UC-53 E3) plus the text of the form.</summary>
     private const long FormLimit = FieldLength.VideoMaxBytes + 512 * 1024;
+
+    /// <summary>The 5 MB import file of SDS II.4 plus the form fields.</summary>
+    private const long ImportLimit = QuestionImport.MaxFileBytes + 64 * 1024;
 
     [HttpGet]
     public async Task<ActionResult<Page<QuestionSummaryDto>>> List([FromQuery] QuestionListRequest request, CancellationToken ct) =>
@@ -66,6 +70,23 @@ public class QuestionsController(IQuestionService questions) : ApiControllerBase
     [RequestSizeLimit(FormLimit)]
     public async Task<ActionResult<QuestionDto>> Update(int id, [FromForm] QuestionForm form, CancellationToken ct) =>
         FromResult(await questions.UpdateAsync(id, await form.ToRequestAsync(ct), ct));
+
+    /// <summary>The sample import file of a subject: headings, and its lesson, dimension and level names (UC-55 A1).</summary>
+    [HttpGet("import-template")]
+    public async Task<IActionResult> ImportTemplate([FromQuery] int subjectId, CancellationToken ct)
+    {
+        var result = await imports.GetTemplateAsync(subjectId, ct);
+        return result.IsSuccess
+            ? File(result.Value.Content, result.Value.ContentType, result.Value.FileName)
+            : Problem(result.Error!);
+    }
+
+    /// <summary>Imports the rows of an .xlsx into the subject as Hidden questions (UC-55).</summary>
+    [HttpPost("import")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(ImportLimit)]
+    public async Task<ActionResult<QuestionImportResultDto>> Import([FromForm] int subjectId, IFormFile? file, CancellationToken ct) =>
+        FromResult(await imports.ImportAsync(subjectId, file is null ? null : await FormFiles.BufferAsync(file, ct), ct));
 
     [HttpPut("{id:int}/status")]
     public async Task<ActionResult<QuestionSummaryDto>> ChangeStatus(int id, ChangeQuestionStatusRequest request, CancellationToken ct) =>

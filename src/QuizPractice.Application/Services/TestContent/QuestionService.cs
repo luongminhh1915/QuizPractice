@@ -4,7 +4,6 @@ using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.TestContent;
 using QuizPractice.Application.Validators;
 using QuizPractice.Domain.Common;
-using QuizPractice.Domain.Constants;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
@@ -111,20 +110,7 @@ public class QuestionService(
             return badChoice;
         }
 
-        var question = new Question
-        {
-            SubjectId = request.SubjectId,
-            LessonId = request.LessonId,
-            LevelId = request.LevelId,
-            Status = request.Status,
-            Content = request.Content.Trim(),
-            Explanation = NullIfBlank(request.Explanation),
-            Media = request.Media is null ? null : await SaveMediaAsync(request.Media, ct),
-            Dimensions = request.DimensionIds.Select(d => new QuestionDimension { DimensionId = d }).ToList(),
-            Options = request.Options
-                .Select((o, i) => new AnswerOption { Content = o.Content.Trim(), IsCorrect = o.IsCorrect, DisplayOrder = (byte)(i + 1) })
-                .ToList(),
-        };
+        var question = QuestionMapping.NewQuestion(request, request.Media is null ? null : await SaveMediaAsync(request.Media, ct));
         questions.Add(question);
         await unitOfWork.SaveChangesAsync(ct);
 
@@ -330,31 +316,7 @@ public class QuestionService(
         return QuestionSummaryDto.From(question);
     }
 
-    /// <summary>
-    /// BR-11: the question bank belongs to the Admin and to the Expert of each subject.
-    /// expertId is that Expert's user id, to limit every query; null for the Admin.
-    /// </summary>
-    private Error? CheckRole(out int? expertId)
-    {
-        expertId = null;
-        if (currentUser.Id is not { } userId)
-        {
-            return NotSignedIn;
-        }
-
-        if (currentUser.IsInRole(Roles.Admin))
-        {
-            return null;
-        }
-
-        if (currentUser.IsInRole(Roles.Expert))
-        {
-            expertId = userId;
-            return null;
-        }
-
-        return NotContentRole;
-    }
+    private Error? CheckRole(out int? expertId) => ContentAccess.Check(currentUser, out expertId);
 
     /// <summary>
     /// The subject must be one the user may reach (E1), and the lesson, the dimensions
@@ -396,7 +358,7 @@ public class QuestionService(
     private Task<string> SaveMediaAsync(FileUpload media, CancellationToken ct) =>
         mediaFiles.SaveAsync(media.Content, media.Extension, QuestionMedia.Folder, ct);
 
-    private static string? NullIfBlank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static string? NullIfBlank(string? value) => QuestionMapping.NullIfBlank(value);
 
     /// <summary>UC-52 E1: an Expert asks for a subject not assigned to that Expert.</summary>
     private async Task<Error?> CheckSubjectAsync(int subjectId, int? expertId, CancellationToken ct)
@@ -410,12 +372,5 @@ public class QuestionService(
         return subjects.Any(s => s.Id == subjectId) ? null : NotAssigned;
     }
 
-    private static readonly Error NotSignedIn =
-        new(ErrorType.Forbidden, "Auth.Required", "Sign in as an Admin or an Expert to manage questions.");
-
-    private static readonly Error NotContentRole =
-        new(ErrorType.Forbidden, "Question.RoleNotAllowed", "Only the Admin and the Experts manage the question bank (BR-11).");
-
-    private static readonly Error NotAssigned =
-        new(ErrorType.Forbidden, "Question.SubjectNotAssigned", "You are not the Expert of this subject (BR-11).");
+    private static readonly Error NotAssigned = ContentAccess.NotAssigned;
 }
