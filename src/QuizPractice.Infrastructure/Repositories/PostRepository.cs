@@ -9,6 +9,12 @@ namespace QuizPractice.Infrastructure.Repositories;
 
 public class PostRepository(AppDbContext db) : IPostRepository
 {
+    public Task<Post?> GetByIdAsync(int id, CancellationToken ct = default) =>
+        db.Posts
+            .Include(p => p.Category)
+            .Include(p => p.Author)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
     public async Task<Page<Post>> SearchAsync(PostSearch search, PageRequest page, CancellationToken ct = default)
     {
         var query = db.Posts.AsNoTracking().Include(p => p.Category).AsQueryable();
@@ -42,6 +48,11 @@ public class PostRepository(AppDbContext db) : IPostRepository
             .Where(s => s.Type == SettingType.PostCategory)
             .OrderBy(s => s.DisplayOrder).ThenBy(s => s.Id)
             .ToListAsync(ct);
+
+    public Task<Setting?> GetCategoryAsync(int id, CancellationToken ct = default) =>
+        db.Settings.FirstOrDefaultAsync(s => s.Id == id && s.Type == SettingType.PostCategory, ct);
+
+    public void Add(Post post) => db.Posts.Add(post);
 
     // Every heading of the table sorts except the thumbnail (SRS III 5.2); without a
     // chosen heading the latest change comes first. The id is always the last key, so

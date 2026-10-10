@@ -58,10 +58,33 @@ public sealed class FakePostRepository : IPostRepository
 {
     public List<Post> Rows { get; } = [];
     public List<Setting> Categories { get; } = [];
+    public List<User> Users { get; } = [];
+
+    public Task<Post?> GetByIdAsync(int id, CancellationToken ct = default) =>
+        Task.FromResult(Rows.FirstOrDefault(p => p.Id == id));
 
     public Task<Page<Post>> SearchAsync(PostSearch search, PageRequest page, CancellationToken ct = default) =>
         Task.FromResult(new Page<Post>(Rows.Skip(page.Skip).Take(page.PageSize).ToList(), Rows.Count, page.PageNumber, page.PageSize));
 
     public Task<IReadOnlyList<Setting>> GetCategoriesAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Setting>>(Categories);
+
+    public Task<Setting?> GetCategoryAsync(int id, CancellationToken ct = default) =>
+        Task.FromResult(Categories.FirstOrDefault(s => s.Id == id));
+
+    /// <summary>Gives the post an id and its author, as the database and Include would.</summary>
+    public void Add(Post post)
+    {
+        post.Id = Rows.Count == 0 ? 1 : Rows.Max(p => p.Id) + 1;
+        post.Author = Users.First(u => u.Id == post.AuthorId);
+        post.CategoryId = post.Category.Id;
+        Rows.Add(post);
+    }
+}
+
+public sealed class FakeCurrentUser(int? id = 3, string? role = "Marketing") : ICurrentUser
+{
+    public int? Id { get; } = id;
+    public string? Email { get; } = id is null ? null : "marketing@qps.vn";
+    public string? Role { get; } = id is null ? null : role;
 }

@@ -15,6 +15,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddSingleton<IFileStorage>(new LocalFileStorage(webRootPath));
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<IHtmlSanitizer, HtmlContentSanitizer>();
 
         // Every XxxRepository is registered against its IXxxRepository, so adding a
         // repository needs no line here (and no merge conflict on this file).
