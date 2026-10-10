@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { SlidersListPage } from '../pages/marketing/SlidersListPage'
 
 /**
  * Every screen of SRS III gets one route here. Public and customer pages sit under
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
     path: '/manage',
     element: <ManagementLayout />,
     children: [
+      { path: 'sliders', element: <SlidersListPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
