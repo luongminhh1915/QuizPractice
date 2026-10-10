@@ -1,4 +1,4 @@
-import { Button, Input, Select, Space, Tag, Typography } from 'antd'
+import { App, Button, Input, Select, Space, Tag, Typography } from 'antd'
 import { PlusOutlined, StarFilled } from '@ant-design/icons'
 import { Link, useLocation } from 'react-router'
 import type { PostSummary } from '../../api/postsApi'
@@ -8,10 +8,11 @@ import { DataTable, type DataTableColumn } from '../../components/DataTable'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusTag } from '../../components/StatusTag'
 import { useListParams } from '../../hooks/useListParams'
-import { usePostCategories, usePostList } from '../../hooks/usePosts'
+import { useChangePostStatus, usePostCategories, usePostList } from '../../hooks/usePosts'
 
-/** Posts List (SRS III 5.2; PDF II.5; UC-35 View Posts List). */
+/** Posts List (SRS III 5.2; PDF II.5; UC-35 View Posts List, UC-37 Show or Hide Post). */
 export function PostsListPage() {
+  const { message } = App.useApp()
   const location = useLocation()
   const list = useListParams()
   const status = list.get('status') as VisibilityStatus | undefined
@@ -19,9 +20,23 @@ export function PostsListPage() {
   const categoryId = categoryParam ? Number(categoryParam) : undefined
   const query = usePostList({ ...list.criteria, status, categoryId })
   const categories = usePostCategories()
+  const changeStatus = useChangePostStatus()
 
   // Detail screens return to this list with the same criteria (SRS III 0.3).
   const back = { state: { back: location.pathname + location.search } }
+
+  const toggle = (post: PostSummary) => {
+    const next: VisibilityStatus = post.status === 'Shown' ? 'Hidden' : 'Shown'
+    changeStatus.mutate(
+      { id: post.id, status: next },
+      {
+        // UC-37 A1 and E1: a post already in that state (another user got there first)
+        // is left as it is; the list reloads either way.
+        onSuccess: () => message.success(`"${post.title}" is now ${next.toLowerCase()}.`),
+        onError: (e) => message.error(errorMessage(e)),
+      },
+    )
+  }
 
   const columns: DataTableColumn<PostSummary>[] = [
     { title: 'ID', key: 'id', sortable: true, width: 80 },
@@ -59,6 +74,14 @@ export function PostsListPage() {
           <Link to={`/manage/posts/${p.id}`} {...back}>
             <Button size="small">Edit</Button>
           </Link>
+          <Button
+            size="small"
+            danger={p.status === 'Shown'}
+            loading={changeStatus.isPending && changeStatus.variables?.id === p.id}
+            onClick={() => toggle(p)}
+          >
+            {p.status === 'Shown' ? 'Hide' : 'Show'}
+          </Button>
         </Space>
       ),
     },

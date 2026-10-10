@@ -58,7 +58,7 @@ function toFormData(input: PostInput, version?: number): FormData {
   return data
 }
 
-/** /api/posts — UC-35 View Posts List, UC-36 Add or Edit Post. */
+/** /api/posts — UC-35 View Posts List, UC-36 Add or Edit Post, UC-37 Show or Hide Post. */
 export const postsApi = {
   list: (criteria: PostCriteria) =>
     http.get<Page<PostSummary>>('/posts', { params: criteria }).then((r) => r.data),
@@ -71,6 +71,9 @@ export const postsApi = {
 
   update: (id: number, input: PostInput, version: number) =>
     http.put<Post>(`/posts/${id}`, toFormData(input, version)).then((r) => r.data),
+
+  changeStatus: (id: number, status: VisibilityStatus) =>
+    http.put<PostSummary>(`/posts/${id}/status`, { status }).then((r) => r.data),
 
   /** An image for the body; answers the address the editor inserts. */
   uploadContentImage: (image: File) => {

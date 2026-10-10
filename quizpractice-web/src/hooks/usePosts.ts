@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { postsApi, type PostCriteria, type PostInput } from '../api/postsApi'
+import type { VisibilityStatus } from '../api/types'
 
 // Query keys: ['posts'] covers every list and detail, so one invalidate after a
 // change reloads whatever post screen is open.
@@ -38,6 +39,14 @@ export function useSavePost(id: number | undefined) {
   return useMutation({
     mutationFn: ({ input, version }: { input: PostInput; version?: number }) =>
       id === undefined ? postsApi.create(input) : postsApi.update(id, input, version!),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  })
+}
+
+export function useChangePostStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: VisibilityStatus }) => postsApi.changeStatus(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   })
 }
