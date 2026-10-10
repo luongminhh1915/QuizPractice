@@ -4,6 +4,7 @@ import {
   FileTextOutlined,
   LogoutOutlined,
   PictureOutlined,
+  QuestionCircleOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import { Link, Outlet, useLocation } from 'react-router'
@@ -11,15 +12,23 @@ import { Link, Outlet, useLocation } from 'react-router'
 const { Header, Sider, Content } = Layout
 
 // TODO(auth, BR-16, D23): build this from the System Menu settings the signed-in role
-// may open. Until sign-in exists it is the Marketing menu, the role of the sample.
+// may open. Until sign-in exists it is the Marketing menu, the role of the sample,
+// followed by the Expert screens built so far.
 const ROLE_MENU = [
   { key: '/manage/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
   { key: '/manage/posts', icon: <FileTextOutlined />, label: 'Posts' },
   { key: '/manage/sliders', icon: <PictureOutlined />, label: 'Sliders' },
+  { key: '/manage/questions', icon: <QuestionCircleOutlined />, label: 'Questions' },
 ]
 
 // Breadcrumb labels by path segment; a number is a record id.
-const CRUMBS: Record<string, string> = { manage: 'Marketing', posts: 'Posts', sliders: 'Sliders', new: 'New' }
+const CRUMBS: Record<string, string> = {
+  manage: 'Management',
+  posts: 'Posts',
+  sliders: 'Sliders',
+  questions: 'Questions',
+  new: 'New',
+}
 
 /**
  * Frame of every Marketing, Sale, Expert and Admin screen (SRS III 0.1): system name,
