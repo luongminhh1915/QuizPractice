@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using QuizPractice.Application.Abstractions;
 using QuizPractice.Infrastructure.Persistence;
+using QuizPractice.Infrastructure.Security;
 using QuizPractice.Infrastructure.Storage;
 
 namespace QuizPractice.Infrastructure;
@@ -13,6 +14,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddSingleton<IFileStorage>(new LocalFileStorage(webRootPath));
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         // Every XxxRepository is registered against its IXxxRepository, so adding a
         // repository needs no line here (and no merge conflict on this file).

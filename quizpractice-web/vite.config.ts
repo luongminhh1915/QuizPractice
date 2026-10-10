@@ -16,6 +16,8 @@ export default defineConfig({
     proxy: {
       '/api': api,
       '/uploads': api,
+      // Images of the development sample data (README, "Dữ liệu mẫu").
+      '/seed': api,
     },
   },
 })
