@@ -16,6 +16,9 @@ export const ANSWER_OPTION_MAX = 1_000
 export const MIN_OPTIONS = 2
 export const MAX_OPTIONS = 6
 
+/** Question import file (UC-55; SDS II.4): .xlsx, at most 5 MB and 500 rows. */
+export const IMPORT_MAX_BYTES = 5 * 1024 * 1024
+
 /** Question media (UC-53 E3; Duck 10/10), as QuestionMedia.Types in Application/Common. */
 export const QUESTION_MEDIA = [
   { kind: 'image', types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 2 * 1024 * 1024 },

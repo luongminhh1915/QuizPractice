@@ -93,6 +93,21 @@ function toFormData(input: QuestionInput, version?: string): FormData {
   return data
 }
 
+/** A row the import refused: its line in the file and every reason (UC-55 E3). */
+export interface RejectedRow {
+  line: number
+  reasons: string[]
+}
+
+/** Matches QuestionImportResultDto of the API. */
+export interface ImportResult {
+  subjectId: number
+  subject: string
+  rowsRead: number
+  imported: number
+  rejected: RejectedRow[]
+}
+
 /** Choices of the filters: subjects the user may reach (BR-11); lessons and dimensions of the chosen subject. */
 export interface QuestionFilters {
   subjects: QuestionLookup[]
@@ -110,7 +125,7 @@ export interface QuestionCriteria extends ListCriteria {
   status?: VisibilityStatus
 }
 
-/** /api/questions — UC-52 View Questions List, UC-53 Add or Edit Question, UC-54 Show or Hide Question. */
+/** /api/questions — UC-52 View Questions List, UC-53 Add or Edit Question, UC-54 Show or Hide Question, UC-55 Import Questions. */
 export const questionsApi = {
   // indexes: null sends dimensionIds=3&dimensionIds=5, the form ASP.NET Core binds to an array.
   list: (criteria: QuestionCriteria) =>
@@ -127,6 +142,16 @@ export const questionsApi = {
 
   update: (id: number, input: QuestionInput, version: string) =>
     http.put<Question>(`/questions/${id}`, toFormData(input, version)).then((r) => r.data),
+
+  /** Address of the sample template of a subject; a plain link downloads it (UC-55 A1). */
+  templateUrl: (subjectId: number) => `/api/questions/import-template?subjectId=${subjectId}`,
+
+  importFile: (subjectId: number, file: File) => {
+    const data = new FormData()
+    data.append('subjectId', String(subjectId))
+    data.append('file', file)
+    return http.post<ImportResult>('/questions/import', data).then((r) => r.data)
+  },
 
   changeStatus: (id: number, status: VisibilityStatus) =>
     http.put<QuestionSummary>(`/questions/${id}/status`, { status }).then((r) => r.data),

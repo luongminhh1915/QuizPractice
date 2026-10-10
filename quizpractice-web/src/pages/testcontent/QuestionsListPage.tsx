@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { App, Button, Input, Select, Space, Tag, Typography } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { ImportOutlined, PlusOutlined } from '@ant-design/icons'
 import { Link, useLocation } from 'react-router'
 import type { QuestionSummary } from '../../api/questionsApi'
 import type { VisibilityStatus } from '../../api/types'
@@ -10,10 +11,11 @@ import { StatusTag } from '../../components/StatusTag'
 import { useListParams } from '../../hooks/useListParams'
 import { useChangeQuestionStatus, useQuestionFilters, useQuestionList } from '../../hooks/useQuestions'
 import { groupedOptions } from '../../utils/groupedOptions'
+import { QuestionImportModal } from './QuestionImportModal'
 
 const toNumber = (value: string | undefined) => (value ? Number(value) : undefined)
 
-/** Questions List (SRS III 7.1; PDF II.7, F#30; UC-52 View Questions List, UC-54 Show or Hide Question). */
+/** Questions List (SRS III 7.1; PDF II.7, F#30; UC-52 View Questions List, UC-54 Show or Hide Question; Import opens UC-55). */
 export function QuestionsListPage() {
   const { message } = App.useApp()
   const location = useLocation()
@@ -29,6 +31,7 @@ export function QuestionsListPage() {
   const filters = useQuestionFilters(subjectId)
   const choices = filters.data
   const changeStatus = useChangeQuestionStatus()
+  const [importOpen, setImportOpen] = useState(false)
 
   // Question Details returns to this list with the same criteria (SRS III 0.3).
   const back = { state: { back: location.pathname + location.search } }
@@ -108,11 +111,16 @@ export function QuestionsListPage() {
       <PageHeader
         title="Questions List"
         action={
-          <Link to="/manage/questions/new" {...back}>
-            <Button type="primary" icon={<PlusOutlined />}>
-              Add New Question
+          <Space>
+            <Button icon={<ImportOutlined />} onClick={() => setImportOpen(true)}>
+              Import
             </Button>
-          </Link>
+            <Link to="/manage/questions/new" {...back}>
+              <Button type="primary" icon={<PlusOutlined />}>
+                Add New Question
+              </Button>
+            </Link>
+          </Space>
         }
       />
 
@@ -183,6 +191,21 @@ export function QuestionsListPage() {
       </Space>
 
       {error && <Typography.Paragraph type="danger">{errorMessage(error)}</Typography.Paragraph>}
+
+      {importOpen && (
+        <QuestionImportModal
+          subjects={choices?.subjects ?? []}
+          defaultSubjectId={subjectId}
+          onClose={(result) => {
+            setImportOpen(false)
+            // Show the new Hidden questions of the subject, ready to be checked and shown (UC-54).
+            if (result) {
+              list.set({ subjectId: result.subjectId, status: 'Hidden', search: undefined, lessonId: undefined,
+                dimensionIds: undefined, levelId: undefined, sortBy: undefined, descending: undefined })
+            }
+          }}
+        />
+      )}
 
       <DataTable
         columns={columns}

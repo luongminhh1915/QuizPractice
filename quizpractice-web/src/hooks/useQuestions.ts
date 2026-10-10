@@ -48,6 +48,17 @@ export function useSaveQuestion(id: number | undefined) {
   })
 }
 
+/** Imported questions arrive Hidden; the lists reload so they can be checked (UC-55). */
+export function useImportQuestions() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ subjectId, file }: { subjectId: number; file: File }) => questionsApi.importFile(subjectId, file),
+    onSuccess: (result) => {
+      if (result.imported > 0) void queryClient.invalidateQueries({ queryKey: keys.all })
+    },
+  })
+}
+
 export function useChangeQuestionStatus() {
   const queryClient = useQueryClient()
   return useMutation({
