@@ -37,6 +37,8 @@ public sealed class FakeUnitOfWork : IUnitOfWork
         Commits++;
         return Task.FromResult(1);
     }
+
+    public Task ExecuteInTransactionAsync(Func<CancellationToken, Task> work, CancellationToken ct = default) => work(ct);
 }
 
 public sealed class FakeFileStorage : IFileStorage

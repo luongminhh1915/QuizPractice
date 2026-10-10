@@ -29,6 +29,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Attempt> Attempts => Set<Attempt>();
     public DbSet<AttemptQuestion> AttemptQuestions => Set<AttemptQuestion>();
 
+    public async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> work, CancellationToken ct = default)
+    {
+        await using var transaction = await Database.BeginTransactionAsync(ct);
+        await work(ct);
+        await transaction.CommitAsync(ct);
+    }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         // Times are datetime2(0) in UTC; money is whole VND (SDS I.3).
