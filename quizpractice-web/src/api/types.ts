@@ -18,3 +18,6 @@ export interface ListCriteria {
 
 /** Post, Slider, Question (BR-23). */
 export type VisibilityStatus = 'Shown' | 'Hidden'
+
+/** Setting, PricePackage, Lesson, Quiz (BR-23). */
+export type ActiveStatus = 'Active' | 'Inactive'

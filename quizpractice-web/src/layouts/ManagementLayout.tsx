@@ -19,7 +19,7 @@ const ROLE_MENU = [
 ]
 
 // Breadcrumb labels by path segment; a number is a record id.
-const CRUMBS: Record<string, string> = { manage: 'Marketing', sliders: 'Sliders', new: 'New' }
+const CRUMBS: Record<string, string> = { manage: 'Marketing', posts: 'Posts', sliders: 'Sliders', new: 'New' }
 
 /**
  * Frame of every Marketing, Sale, Expert and Admin screen (SRS III 0.1): system name,

@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { PostsListPage } from '../pages/marketing/PostsListPage'
 import { SliderDetailsPage } from '../pages/marketing/SliderDetailsPage'
 import { SlidersListPage } from '../pages/marketing/SlidersListPage'
 import { HomePage } from '../pages/public/HomePage'
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
     path: '/manage',
     element: <ManagementLayout />,
     children: [
+      { path: 'posts', element: <PostsListPage /> },
       { path: 'sliders', element: <SlidersListPage /> },
       { path: 'sliders/new', element: <SliderDetailsPage /> },
       { path: 'sliders/:id', element: <SliderDetailsPage /> },
