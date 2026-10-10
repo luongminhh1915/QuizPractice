@@ -1,3 +1,4 @@
+using QuizPractice.Application.Common;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 
@@ -11,6 +12,17 @@ public sealed record SliderListRequest(
     bool Descending = false,
     int Page = 1,
     int PageSize = 10);
+
+/// <summary>
+/// Slider Details form (UC-39). Image is required for a new slider; on edit, leaving
+/// it empty keeps the stored image. A new slider starts Hidden (BR-23).
+/// </summary>
+public sealed record SaveSliderRequest(
+    string Title,
+    string? Backlink,
+    VisibilityStatus Status = VisibilityStatus.Hidden,
+    string? Notes = null,
+    FileUpload? Image = null);
 
 public sealed record SliderDto(
     int Id,

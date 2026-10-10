@@ -8,6 +8,9 @@ namespace QuizPractice.Infrastructure.Repositories;
 
 public class SliderRepository(AppDbContext db) : ISliderRepository
 {
+    public Task<Slider?> GetByIdAsync(int id, CancellationToken ct = default) =>
+        db.Sliders.FirstOrDefaultAsync(s => s.Id == id, ct);
+
     public async Task<Page<Slider>> SearchAsync(SliderSearch search, PageRequest page, CancellationToken ct = default)
     {
         var query = db.Sliders.AsNoTracking();
@@ -30,6 +33,11 @@ public class SliderRepository(AppDbContext db) : ISliderRepository
             .ToListAsync(ct);
         return new Page<Slider>(items, total, page.PageNumber, page.PageSize);
     }
+
+    public async Task<int> NextDisplayOrderAsync(CancellationToken ct = default) =>
+        (await db.Sliders.MaxAsync(s => (int?)s.DisplayOrder, ct) ?? 0) + 1;
+
+    public void Add(Slider slider) => db.Sliders.Add(slider);
 
     // Every heading of the table sorts except the image (SRS III 5.4). The id is always
     // the last key: without a unique key, rows with equal values can move between

@@ -9,5 +9,13 @@ public sealed record SliderSearch(string? Text, VisibilityStatus? Status, string
 
 public interface ISliderRepository
 {
+    Task<Slider?> GetByIdAsync(int id, CancellationToken ct = default);
+
     Task<Page<Slider>> SearchAsync(SliderSearch search, PageRequest page, CancellationToken ct = default);
+
+    /// <summary>Order a new slider takes: after the last one.</summary>
+    Task<int> NextDisplayOrderAsync(CancellationToken ct = default);
+
+    /// <summary>Stages a new slider; the service commits through IUnitOfWork.</summary>
+    void Add(Slider slider);
 }
