@@ -1,5 +1,6 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { questionsApi, type QuestionCriteria } from '../api/questionsApi'
+import type { VisibilityStatus } from '../api/types'
 
 // Query keys: ['questions'] covers every list and detail, so one invalidate after a
 // change reloads whatever question screen is open.
@@ -25,5 +26,13 @@ export function useQuestionFilters(subjectId?: number) {
     queryFn: () => questionsApi.filters(subjectId),
     staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
+  })
+}
+
+export function useChangeQuestionStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: VisibilityStatus }) => questionsApi.changeStatus(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   })
 }

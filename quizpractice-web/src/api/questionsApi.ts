@@ -46,7 +46,7 @@ export interface QuestionCriteria extends ListCriteria {
   status?: VisibilityStatus
 }
 
-/** /api/questions — UC-52 View Questions List. */
+/** /api/questions — UC-52 View Questions List, UC-54 Show or Hide Question. */
 export const questionsApi = {
   // indexes: null sends dimensionIds=3&dimensionIds=5, the form ASP.NET Core binds to an array.
   list: (criteria: QuestionCriteria) =>
@@ -56,4 +56,7 @@ export const questionsApi = {
 
   filters: (subjectId?: number) =>
     http.get<QuestionFilters>('/questions/filters', { params: { subjectId } }).then((r) => r.data),
+
+  changeStatus: (id: number, status: VisibilityStatus) =>
+    http.put<QuestionSummary>(`/questions/${id}/status`, { status }).then((r) => r.data),
 }
