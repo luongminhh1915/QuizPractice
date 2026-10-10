@@ -1,5 +1,6 @@
-import { Input, Select, Space, Tag, Typography } from 'antd'
-import { StarFilled } from '@ant-design/icons'
+import { Button, Input, Select, Space, Tag, Typography } from 'antd'
+import { PlusOutlined, StarFilled } from '@ant-design/icons'
+import { Link, useLocation } from 'react-router'
 import type { PostSummary } from '../../api/postsApi'
 import type { VisibilityStatus } from '../../api/types'
 import { errorMessage } from '../../api/client'
@@ -11,12 +12,16 @@ import { usePostCategories, usePostList } from '../../hooks/usePosts'
 
 /** Posts List (SRS III 5.2; PDF II.5; UC-35 View Posts List). */
 export function PostsListPage() {
+  const location = useLocation()
   const list = useListParams()
   const status = list.get('status') as VisibilityStatus | undefined
   const categoryParam = list.get('categoryId')
   const categoryId = categoryParam ? Number(categoryParam) : undefined
   const query = usePostList({ ...list.criteria, status, categoryId })
   const categories = usePostCategories()
+
+  // Detail screens return to this list with the same criteria (SRS III 0.3).
+  const back = { state: { back: location.pathname + location.search } }
 
   const columns: DataTableColumn<PostSummary>[] = [
     { title: 'ID', key: 'id', sortable: true, width: 80 },
@@ -45,11 +50,32 @@ export function PostsListPage() {
         ),
     },
     { title: 'Status', key: 'status', sortable: true, width: 110, render: (p) => <StatusTag status={p.status} /> },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 150,
+      render: (p) => (
+        <Space>
+          <Link to={`/manage/posts/${p.id}`} {...back}>
+            <Button size="small">Edit</Button>
+          </Link>
+        </Space>
+      ),
+    },
   ]
 
   return (
     <>
-      <PageHeader title="Posts List" />
+      <PageHeader
+        title="Posts List"
+        action={
+          <Link to="/manage/posts/new" {...back}>
+            <Button type="primary" icon={<PlusOutlined />}>
+              Add New Post
+            </Button>
+          </Link>
+        }
+      />
 
       <Space wrap style={{ marginBottom: 16 }}>
         {/* key resets the box when the criteria are cleared */}
