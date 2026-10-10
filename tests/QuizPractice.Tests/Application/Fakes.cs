@@ -53,3 +53,15 @@ public sealed class FakeFileStorage : IFileStorage
 
     public void Delete(string relativePath) => Deleted.Add(relativePath);
 }
+
+public sealed class FakePostRepository : IPostRepository
+{
+    public List<Post> Rows { get; } = [];
+    public List<Setting> Categories { get; } = [];
+
+    public Task<Page<Post>> SearchAsync(PostSearch search, PageRequest page, CancellationToken ct = default) =>
+        Task.FromResult(new Page<Post>(Rows.Skip(page.Skip).Take(page.PageSize).ToList(), Rows.Count, page.PageNumber, page.PageSize));
+
+    public Task<IReadOnlyList<Setting>> GetCategoriesAsync(CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Setting>>(Categories);
+}
