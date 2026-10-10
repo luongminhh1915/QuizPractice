@@ -30,6 +30,9 @@ public sealed record SavePostRequest(
     long? Version = null,
     FileUpload? Thumbnail = null);
 
+/// <summary>Show or Hide Post (UC-37).</summary>
+public sealed record ChangePostStatusRequest(VisibilityStatus Status);
+
 /// <summary>A row of Posts List: no body, which can be 20,000 characters.</summary>
 public sealed record PostSummaryDto(
     int Id,

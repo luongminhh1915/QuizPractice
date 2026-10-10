@@ -50,6 +50,10 @@ public class PostsController(IPostService posts) : ApiControllerBase
     public async Task<ActionResult<PostDto>> Update(int id, [FromForm] PostForm form, CancellationToken ct) =>
         FromResult(await posts.UpdateAsync(id, await form.ToRequestAsync(ct), ct));
 
+    [HttpPut("{id:int}/status")]
+    public async Task<ActionResult<PostSummaryDto>> ChangeStatus(int id, ChangePostStatusRequest request, CancellationToken ct) =>
+        FromResult(await posts.ChangeStatusAsync(id, request, ct));
+
     /// <summary>Image inserted into the post body by the editor; answers its address.</summary>
     [HttpPost("content-images")]
     [Consumes("multipart/form-data")]

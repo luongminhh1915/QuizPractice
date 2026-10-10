@@ -162,6 +162,36 @@ public class PostService(
         return PostDto.From(post);
     }
 
+    public async Task<Result<PostSummaryDto>> ChangeStatusAsync(int id, ChangePostStatusRequest request, CancellationToken ct = default)
+    {
+        if (currentUser.Id is null)
+        {
+            return NotSignedIn;
+        }
+
+        if (!Enum.IsDefined(request.Status))
+        {
+            return Error.Invalid(nameof(request.Status), "Status must be Shown or Hidden.");
+        }
+
+        var post = await posts.GetByIdAsync(id, ct);
+        if (post is null)
+        {
+            return Error.NotFound("Post", id);
+        }
+
+        // UC-37 A1 and E1: already in the chosen state (perhaps set by another Marketing
+        // user meanwhile), so nothing is written and the list shows the current state.
+        if (post.Status != request.Status)
+        {
+            post.Status = request.Status;
+            post.UpdatedAt = PostVersion.Now();
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+
+        return PostSummaryDto.From(post);
+    }
+
     public async Task<Result<ContentImageDto>> UploadContentImageAsync(FileUpload image, CancellationToken ct = default)
     {
         if (currentUser.Id is null)

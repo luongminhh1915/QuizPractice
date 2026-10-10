@@ -180,7 +180,34 @@ public class PostServiceTests
         Assert.Equal(ErrorType.NotFound, (await Service().GetAsync(42)).Error?.Type);
     }
 
-    // ------------------------------------------------------------ editor and UC-35
+    // ------------------------------------------------------------------- UC-37
+
+    [Fact]
+    public async Task Showing_a_post_stores_the_status_and_a_new_version()
+    {
+        var stored = AddStored();
+
+        var result = await Service().ChangeStatusAsync(stored.Id, new ChangePostStatusRequest(VisibilityStatus.Shown));
+
+        Assert.Equal(VisibilityStatus.Shown, result.Value.Status);
+        Assert.True(stored.UpdatedAt > Loaded); // an open Post Details now gets E3
+        Assert.Equal(1, _uow.Commits);
+    }
+
+    [Fact]
+    public async Task Changing_to_the_status_it_already_has_writes_nothing()
+    {
+        // UC-37 A1 and E1
+        var stored = AddStored();
+
+        var result = await Service().ChangeStatusAsync(stored.Id, new ChangePostStatusRequest(VisibilityStatus.Hidden));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(Loaded, stored.UpdatedAt);
+        Assert.Equal(0, _uow.Commits);
+    }
+
+    // ------------------------------------------------------- UC-35 and editor
 
     [Fact]
     public async Task The_list_refuses_an_unknown_sort_column()

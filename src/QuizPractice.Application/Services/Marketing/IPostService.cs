@@ -4,7 +4,7 @@ using QuizPractice.Domain.Common;
 
 namespace QuizPractice.Application.Services.Marketing;
 
-/// <summary>UC-35 View Posts List, UC-36 Add or Edit Post.</summary>
+/// <summary>UC-35 View Posts List, UC-36 Add or Edit Post, UC-37 Show or Hide Post.</summary>
 public interface IPostService
 {
     Task<Result<Page<PostSummaryDto>>> ListAsync(PostListRequest request, CancellationToken ct = default);
@@ -16,6 +16,8 @@ public interface IPostService
     Task<Result<PostDto>> CreateAsync(SavePostRequest request, CancellationToken ct = default);
 
     Task<Result<PostDto>> UpdateAsync(int id, SavePostRequest request, CancellationToken ct = default);
+
+    Task<Result<PostSummaryDto>> ChangeStatusAsync(int id, ChangePostStatusRequest request, CancellationToken ct = default);
 
     /// <summary>An image for the post body (SRS III 5.3: images in the text editor).</summary>
     Task<Result<ContentImageDto>> UploadContentImageAsync(FileUpload image, CancellationToken ct = default);
