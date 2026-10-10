@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { SliderDetailsPage } from '../pages/marketing/SliderDetailsPage'
 import { SlidersListPage } from '../pages/marketing/SlidersListPage'
 
 /**
@@ -24,6 +25,8 @@ export const router = createBrowserRouter([
     element: <ManagementLayout />,
     children: [
       { path: 'sliders', element: <SlidersListPage /> },
+      { path: 'sliders/new', element: <SliderDetailsPage /> },
+      { path: 'sliders/:id', element: <SliderDetailsPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

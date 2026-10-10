@@ -1,4 +1,6 @@
-import { Input, Select, Space, Typography } from 'antd'
+import { Button, Input, Select, Space, Typography } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
+import { Link, useLocation } from 'react-router'
 import type { Slider } from '../../api/slidersApi'
 import type { VisibilityStatus } from '../../api/types'
 import { errorMessage } from '../../api/client'
@@ -13,9 +15,13 @@ import { useSliderList } from '../../hooks/useSliders'
  * The sample list screen: copy its shape for every other list.
  */
 export function SlidersListPage() {
+  const location = useLocation()
   const list = useListParams()
   const status = list.get('status') as VisibilityStatus | undefined
   const query = useSliderList({ ...list.criteria, status })
+
+  // Detail screens return to this list with the same criteria (SRS III 0.3).
+  const back = { state: { back: location.pathname + location.search } }
 
   const columns: DataTableColumn<Slider>[] = [
     { title: 'ID', key: 'id', sortable: true, width: 80 },
@@ -42,11 +48,32 @@ export function SlidersListPage() {
         ),
     },
     { title: 'Status', key: 'status', sortable: true, width: 110, render: (s) => <StatusTag status={s.status} /> },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 150,
+      render: (s) => (
+        <Space>
+          <Link to={`/manage/sliders/${s.id}`} {...back}>
+            <Button size="small">Edit</Button>
+          </Link>
+        </Space>
+      ),
+    },
   ]
 
   return (
     <>
-      <PageHeader title="Sliders List" />
+      <PageHeader
+        title="Sliders List"
+        action={
+          <Link to="/manage/sliders/new" {...back}>
+            <Button type="primary" icon={<PlusOutlined />}>
+              Add New Slider
+            </Button>
+          </Link>
+        }
+      />
 
       <Space wrap style={{ marginBottom: 16 }}>
         {/* key resets the box when the criteria are cleared */}
