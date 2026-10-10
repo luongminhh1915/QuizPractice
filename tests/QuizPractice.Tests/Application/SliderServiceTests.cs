@@ -101,6 +101,18 @@ public class SliderServiceTests
     }
 
     [Fact]
+    public async Task Changing_to_the_status_it_already_has_writes_nothing()
+    {
+        // UC-40 A1
+        _repo.Add(new Slider { Title = "S", Image = "/i.png", DisplayOrder = 1, Status = VisibilityStatus.Shown });
+
+        var result = await _service.ChangeStatusAsync(1, new ChangeSliderStatusRequest(VisibilityStatus.Shown));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, _uow.Commits);
+    }
+
+    [Fact]
     public async Task An_unknown_slider_is_not_found()
     {
         var result = await _service.GetAsync(42);

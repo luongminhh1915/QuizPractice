@@ -24,6 +24,9 @@ public sealed record SaveSliderRequest(
     string? Notes = null,
     FileUpload? Image = null);
 
+/// <summary>Show or Hide Slider (UC-40).</summary>
+public sealed record ChangeSliderStatusRequest(VisibilityStatus Status);
+
 public sealed record SliderDto(
     int Id,
     string Title,

@@ -101,5 +101,29 @@ public class SliderService(
         return SliderDto.From(slider);
     }
 
+    public async Task<Result<SliderDto>> ChangeStatusAsync(int id, ChangeSliderStatusRequest request, CancellationToken ct = default)
+    {
+        if (!Enum.IsDefined(request.Status))
+        {
+            return Error.Invalid(nameof(request.Status), "Status must be Shown or Hidden.");
+        }
+
+        var slider = await sliders.GetByIdAsync(id, ct);
+        if (slider is null)
+        {
+            return Error.NotFound("Slider", id);
+        }
+
+        // UC-40 A1 and E1: already in the chosen state (perhaps set by another
+        // Marketing user meanwhile), so nothing is written.
+        if (slider.Status != request.Status)
+        {
+            slider.Status = request.Status;
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+
+        return SliderDto.From(slider);
+    }
+
     private static string? NullIfBlank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

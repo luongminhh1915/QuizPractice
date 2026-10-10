@@ -43,6 +43,10 @@ public class SlidersController(ISliderService sliders) : ApiControllerBase
     [RequestSizeLimit(FormLimit)]
     public async Task<ActionResult<SliderDto>> Update(int id, [FromForm] SliderForm form, CancellationToken ct) =>
         FromResult(await sliders.UpdateAsync(id, await form.ToRequestAsync(ct), ct));
+
+    [HttpPut("{id:int}/status")]
+    public async Task<ActionResult<SliderDto>> ChangeStatus(int id, ChangeSliderStatusRequest request, CancellationToken ct) =>
+        FromResult(await sliders.ChangeStatusAsync(id, request, ct));
 }
 
 /// <summary>
