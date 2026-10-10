@@ -1,21 +1,30 @@
-import { Input, Select, Space, Tag, Tooltip, Typography } from 'antd'
+import { App, Button, Input, Popconfirm, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import type { QuizSummary } from '../../api/quizzesApi'
 import { errorMessage } from '../../api/client'
 import { DataTable, type DataTableColumn } from '../../components/DataTable'
 import { PageHeader } from '../../components/PageHeader'
 import { useListParams } from '../../hooks/useListParams'
-import { useQuizFilters, useQuizList } from '../../hooks/useQuizzes'
+import { useDeleteQuiz, useQuizFilters, useQuizList } from '../../hooks/useQuizzes'
 
 const toNumber = (value: string | undefined) => (value ? Number(value) : undefined)
 
-/** Quizzes List (SRS III 7.4; PDF II.7, F#33; UC-56 View Quizzes List). */
+/** Quizzes List (SRS III 7.4; PDF II.7, F#33; UC-56 View Quizzes List, UC-58 Delete Quiz). */
 export function QuizzesListPage() {
+  const { message } = App.useApp()
   const list = useListParams()
   const subjectId = toNumber(list.get('subjectId'))
   const typeId = toNumber(list.get('typeId'))
 
   const query = useQuizList({ ...list.criteria, subjectId, typeId })
   const filters = useQuizFilters()
+  const remove = useDeleteQuiz()
+
+  const deleteQuiz = (quiz: QuizSummary) =>
+    remove.mutate(quiz.id, {
+      onSuccess: () => message.success(`Quiz "${quiz.name}" was deleted.`),
+      // E2, E3: the API says why the quiz stays (taken, or the lesson that opens it).
+      onError: (e) => message.error(errorMessage(e), 8),
+    })
 
   const columns: DataTableColumn<QuizSummary>[] = [
     { title: 'ID', key: 'id', sortable: true, width: 80 },
@@ -48,6 +57,27 @@ export function QuizzesListPage() {
       key: 'type',
       width: 120,
       render: (q) => <Tag color={q.type === 'Simulation' ? 'purple' : 'cyan'}>{q.type}</Tag>,
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 100,
+      // A taken quiz keeps its results: no Delete (BR-13, UC-58 E2).
+      render: (q) =>
+        q.isTaken ? null : (
+          <Popconfirm
+            title="Delete this quiz?"
+            description={`"${q.name}" and its question rules are removed for good.`}
+            okText="Delete"
+            okButtonProps={{ danger: true }}
+            cancelText="Cancel"
+            onConfirm={() => deleteQuiz(q)}
+          >
+            <Button size="small" danger loading={remove.isPending && remove.variables === q.id}>
+              Delete
+            </Button>
+          </Popconfirm>
+        ),
     },
   ]
 

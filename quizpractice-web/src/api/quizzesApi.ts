@@ -32,9 +32,11 @@ export interface QuizCriteria extends ListCriteria {
   typeId?: number
 }
 
-/** /api/quizzes — UC-56 View Quizzes List. */
+/** /api/quizzes — UC-56 View Quizzes List, UC-58 Delete Quiz. */
 export const quizzesApi = {
   list: (criteria: QuizCriteria) => http.get<Page<QuizSummary>>('/quizzes', { params: criteria }).then((r) => r.data),
 
   filters: () => http.get<QuizFilters>('/quizzes/filters').then((r) => r.data),
+
+  remove: (id: number) => http.delete(`/quizzes/${id}`).then(() => undefined),
 }

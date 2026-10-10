@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { quizzesApi, type QuizCriteria } from '../api/quizzesApi'
 
 // Query keys: ['quizzes'] covers every list and detail, so one invalidate after a
@@ -21,4 +21,13 @@ export function useQuizList(criteria: QuizCriteria) {
 /** The subjects the user may reach and the quiz types. */
 export function useQuizFilters() {
   return useQuery({ queryKey: keys.filters, queryFn: quizzesApi.filters, staleTime: 5 * 60_000 })
+}
+
+/** UC-58: the API refuses a taken quiz (E2) or one a lesson opens (E3). */
+export function useDeleteQuiz() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => quizzesApi.remove(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  })
 }
