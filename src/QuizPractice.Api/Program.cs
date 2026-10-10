@@ -20,8 +20,9 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(connectionString, builder.Environment.WebRootPath
-    ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"));
+builder.Services.AddInfrastructure(connectionString,
+    builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"),
+    Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 
 // TODO(auth): until feature/kiet-common adds sign-in, the current user is the
 // DevUser of appsettings.Development.json, and only Development has one.

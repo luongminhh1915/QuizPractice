@@ -39,4 +39,10 @@ public static class FieldLength
     public const int InvoiceCode = 9;
 
     public const long ImageMaxBytes = 2 * 1024 * 1024;
+
+    /// <summary>Question media (UC-53 E3). Not in BR-17: proposed by the team, Duck 10/10.</summary>
+    public const long AudioMaxBytes = 10 * 1024 * 1024;
+
+    /// <summary>Question media (UC-53 E3). Not in BR-17: proposed by the team, Duck 10/10.</summary>
+    public const long VideoMaxBytes = 20 * 1024 * 1024;
 }

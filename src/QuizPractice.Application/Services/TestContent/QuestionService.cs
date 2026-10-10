@@ -14,6 +14,7 @@ namespace QuizPractice.Application.Services.TestContent;
 public class QuestionService(
     IQuestionRepository questions,
     IUnitOfWork unitOfWork,
+    IPrivateFileStorage mediaFiles,
     ICurrentUser currentUser,
     IValidator<SaveQuestionRequest> saveValidator,
     IValidator<QuestionListRequest> listValidator) : IQuestionService
@@ -118,6 +119,7 @@ public class QuestionService(
             Status = request.Status,
             Content = request.Content.Trim(),
             Explanation = NullIfBlank(request.Explanation),
+            Media = request.Media is null ? null : await SaveMediaAsync(request.Media, ct),
             Dimensions = request.DimensionIds.Select(d => new QuestionDimension { DimensionId = d }).ToList(),
             Options = request.Options
                 .Select((o, i) => new AnswerOption { Content = o.Content.Trim(), IsCorrect = o.IsCorrect, DisplayOrder = (byte)(i + 1) })
@@ -192,6 +194,18 @@ public class QuestionService(
             }
         }
 
+        string? replacedMedia = null;
+        if (request.Media is not null)
+        {
+            replacedMedia = question.Media;
+            question.Media = await SaveMediaAsync(request.Media, ct);
+        }
+        else if (request.RemoveMedia)
+        {
+            replacedMedia = question.Media;
+            question.Media = null;
+        }
+
         await unitOfWork.ExecuteInTransactionAsync(async c =>
         {
             // Step 1: no option is correct and the removed ones are gone, so the
@@ -242,8 +256,41 @@ public class QuestionService(
             await unitOfWork.SaveChangesAsync(c);
         }, ct);
 
+        // Only after the commit: if it had failed, the row would still point at the old file.
+        if (replacedMedia is not null)
+        {
+            mediaFiles.Delete(replacedMedia);
+        }
+
         // Reloaded so a new subject's name and the new option ids are filled in.
         return QuestionDto.From((await questions.GetWithOptionsAsync(id, ct))!, isUsed);
+    }
+
+    public async Task<Result<MediaFile>> GetMediaAsync(int id, CancellationToken ct = default)
+    {
+        // TODO(learning): a customer taking a practice or an exam must also reach the media
+        // of the questions in that attempt (Hiếu, UC-24); only the question bank users can now.
+        if (CheckRole(out var expertId) is { } denied)
+        {
+            return denied;
+        }
+
+        var question = await questions.GetByIdAsync(id, ct);
+        if (question is null)
+        {
+            return Error.NotFound("Question", id);
+        }
+
+        if (expertId is not null && question.Subject.ExpertId != expertId)
+        {
+            return NotAssigned;
+        }
+
+        var type = QuestionMedia.TypeOf(question.Media);
+        var content = type is null ? null : mediaFiles.OpenRead(question.Media!);
+        return content is null
+            ? new Error(ErrorType.NotFound, "Question.NoMedia", $"Question {id} has no media file.")
+            : new MediaFile(content, type!.ContentType);
     }
 
     public async Task<Result<QuestionSummaryDto>> ChangeStatusAsync(int id, ChangeQuestionStatusRequest request, CancellationToken ct = default)
@@ -345,6 +392,9 @@ public class QuestionService(
 
         return null;
     }
+
+    private Task<string> SaveMediaAsync(FileUpload media, CancellationToken ct) =>
+        mediaFiles.SaveAsync(media.Content, media.Extension, QuestionMedia.Folder, ct);
 
     private static string? NullIfBlank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

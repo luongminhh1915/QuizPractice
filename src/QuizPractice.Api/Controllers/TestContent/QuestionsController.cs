@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using QuizPractice.Api.Controllers.Marketing;
 using QuizPractice.Application.Dtos.TestContent;
 using QuizPractice.Application.Services.TestContent;
 using QuizPractice.Domain.Common;
+using QuizPractice.Domain.Constants;
 using QuizPractice.Domain.Enums;
 
 namespace QuizPractice.Api.Controllers.TestContent;
@@ -14,6 +16,9 @@ namespace QuizPractice.Api.Controllers.TestContent;
 [Route("api/questions")]
 public class QuestionsController(IQuestionService questions) : ApiControllerBase
 {
+    /// <summary>The largest media file (an MP4, UC-53 E3) plus the text of the form.</summary>
+    private const long FormLimit = FieldLength.VideoMaxBytes + 512 * 1024;
+
     [HttpGet]
     public async Task<ActionResult<Page<QuestionSummaryDto>>> List([FromQuery] QuestionListRequest request, CancellationToken ct) =>
         FromResult(await questions.ListAsync(request, ct));
@@ -26,11 +31,31 @@ public class QuestionsController(IQuestionService questions) : ApiControllerBase
     public async Task<ActionResult<QuestionDto>> Get(int id, CancellationToken ct) =>
         FromResult(await questions.GetAsync(id, ct));
 
+    /// <summary>
+    /// Streams the media of a question to a user who may open the question (BR-05, BR-11).
+    /// Range requests let a video or audio player seek.
+    /// </summary>
+    [HttpGet("{id:int}/media")]
+    public async Task<IActionResult> Media(int id, CancellationToken ct)
+    {
+        var result = await questions.GetMediaAsync(id, ct);
+        if (!result.IsSuccess)
+        {
+            return Problem(result.Error!);
+        }
+
+        // The type comes from our own list; the browser must not guess another one.
+        Response.Headers.XContentTypeOptions = "nosniff";
+        Response.Headers.CacheControl = "private, max-age=3600";
+        return File(result.Value.Content, result.Value.ContentType, enableRangeProcessing: true);
+    }
+
     [HttpPost]
     [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FormLimit)]
     public async Task<ActionResult<QuestionDto>> Create([FromForm] QuestionForm form, CancellationToken ct)
     {
-        var result = await questions.CreateAsync(form.ToRequest(), ct);
+        var result = await questions.CreateAsync(await form.ToRequestAsync(ct), ct);
         return result.IsSuccess
             ? CreatedAtAction(nameof(Get), new { id = result.Value.Id }, result.Value)
             : Problem(result.Error!);
@@ -38,8 +63,9 @@ public class QuestionsController(IQuestionService questions) : ApiControllerBase
 
     [HttpPut("{id:int}")]
     [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FormLimit)]
     public async Task<ActionResult<QuestionDto>> Update(int id, [FromForm] QuestionForm form, CancellationToken ct) =>
-        FromResult(await questions.UpdateAsync(id, form.ToRequest(), ct));
+        FromResult(await questions.UpdateAsync(id, await form.ToRequestAsync(ct), ct));
 
     [HttpPut("{id:int}/status")]
     public async Task<ActionResult<QuestionSummaryDto>> ChangeStatus(int id, ChangeQuestionStatusRequest request, CancellationToken ct) =>
@@ -48,7 +74,7 @@ public class QuestionsController(IQuestionService questions) : ApiControllerBase
 
 /// <summary>
 /// Transport shape of the Question Details form, sent as multipart so the media file can
-/// travel with it: options[0].content, options[0].isCorrect, options[0].id, dimensionIds…
+/// travel with it: options[0].content, options[0].isCorrect, options[0].id, dimensionIds, media…
 /// The rules live on SaveQuestionRequest.
 /// </summary>
 public sealed class QuestionForm
@@ -62,10 +88,13 @@ public sealed class QuestionForm
     public string? Explanation { get; set; }
     public List<AnswerOptionForm> Options { get; set; } = [];
     public string? Version { get; set; }
+    public IFormFile? Media { get; set; }
+    public bool RemoveMedia { get; set; }
 
-    public SaveQuestionRequest ToRequest() =>
+    public async Task<SaveQuestionRequest> ToRequestAsync(CancellationToken ct) =>
         new(SubjectId, LessonId, LevelId, Status, DimensionIds, Content ?? string.Empty, Explanation,
-            Options.Select(o => new AnswerOptionInput(o.Id, o.Content ?? string.Empty, o.IsCorrect)).ToList(), Version);
+            Options.Select(o => new AnswerOptionInput(o.Id, o.Content ?? string.Empty, o.IsCorrect)).ToList(), Version,
+            Media is null ? null : await FormFiles.BufferAsync(Media, ct), RemoveMedia);
 }
 
 public sealed class AnswerOptionForm

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using QuizPractice.Application.Common;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 
@@ -54,6 +55,7 @@ public sealed record AnswerOptionInput(int? Id, string Content, bool IsCorrect);
 /// Question Details form (UC-53). The options are in the order the customer sees them.
 /// A typed-in question starts Shown (SRS III 7.2). On edit, Version is the one the form
 /// was loaded with: a different stored version means another user saved in between (E4).
+/// Media is a new file to store; RemoveMedia drops the stored one when no new file comes.
 /// </summary>
 public sealed record SaveQuestionRequest(
     int SubjectId,
@@ -64,7 +66,9 @@ public sealed record SaveQuestionRequest(
     string Content,
     string? Explanation,
     IReadOnlyList<AnswerOptionInput> Options,
-    string? Version = null);
+    string? Version = null,
+    FileUpload? Media = null,
+    bool RemoveMedia = false);
 
 public sealed record AnswerOptionDto(int Id, string Content, bool IsCorrect)
 {
@@ -74,6 +78,7 @@ public sealed record AnswerOptionDto(int Id, string Content, bool IsCorrect)
 /// <summary>
 /// A question as Question Details shows it. IsUsed: a quiz or a stored attempt has it,
 /// so its subject cannot change and an option already chosen cannot be removed.
+/// MediaUrl is the access-checked address of the file; MediaKind is image, audio or video.
 /// </summary>
 public sealed record QuestionDto(
     int Id,
@@ -84,6 +89,8 @@ public sealed record QuestionDto(
     VisibilityStatus Status,
     IReadOnlyList<int> DimensionIds,
     string Content,
+    string? MediaUrl,
+    string? MediaKind,
     string? Explanation,
     IReadOnlyList<AnswerOptionDto> Options,
     bool IsUsed,
@@ -92,7 +99,11 @@ public sealed record QuestionDto(
     public static QuestionDto From(Question q, bool isUsed) =>
         new(q.Id, q.SubjectId, q.Subject.Name, q.LessonId, q.LevelId, q.Status,
             q.Dimensions.Select(d => d.DimensionId).Order().ToList(),
-            q.Content, q.Explanation,
+            q.Content,
+            // The file name changes with every upload, so it also keeps a browser from showing a cached old file.
+            q.Media is null ? null : $"/api/questions/{q.Id}/media?f={Path.GetFileNameWithoutExtension(q.Media)}",
+            QuestionMedia.TypeOf(q.Media)?.Kind,
+            q.Explanation,
             q.Options.OrderBy(o => o.DisplayOrder).Select(AnswerOptionDto.From).ToList(),
             isUsed, QuestionVersion.Of(q));
 }

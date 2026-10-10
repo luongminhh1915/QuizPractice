@@ -31,6 +31,7 @@ public class SaveQuestionRequestValidator : AbstractValidator<SaveQuestionReques
             .Must(o => o.Count(x => x.IsCorrect) == 1).WithMessage("Mark exactly one option as the correct answer.")
             .Must(o => o.Where(x => x.Id is not null).Select(x => x.Id).Distinct().Count() == o.Count(x => x.Id is not null))
             .WithMessage("An option is listed twice.");
+        RuleFor(x => x.Media!).SetValidator(new QuestionMediaValidator()).When(x => x.Media is not null);
         RuleForEach(x => x.Options).ChildRules(option =>
         {
             option.RuleFor(o => o.Content).NotEmpty().WithMessage("Enter the option text.")

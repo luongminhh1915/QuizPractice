@@ -18,5 +18,8 @@ public interface IQuestionService
 
     Task<Result<QuestionDto>> UpdateAsync(int id, SaveQuestionRequest request, CancellationToken ct = default);
 
+    /// <summary>The media file of a question, for the users who may open the question.</summary>
+    Task<Result<MediaFile>> GetMediaAsync(int id, CancellationToken ct = default);
+
     Task<Result<QuestionSummaryDto>> ChangeStatusAsync(int id, ChangeQuestionStatusRequest request, CancellationToken ct = default);
 }

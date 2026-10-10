@@ -9,11 +9,12 @@ namespace QuizPractice.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, string webRootPath)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, string webRootPath, string privateRootPath)
     {
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddSingleton<IFileStorage>(new LocalFileStorage(webRootPath));
+        services.AddSingleton<IPrivateFileStorage>(new PrivateFileStorage(privateRootPath));
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IHtmlSanitizer, HtmlContentSanitizer>();
 
