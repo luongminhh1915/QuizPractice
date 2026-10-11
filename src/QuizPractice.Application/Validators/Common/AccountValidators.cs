@@ -31,6 +31,16 @@ public class PasswordResetLinkRequestValidator : AbstractValidator<PasswordReset
     }
 }
 
+/// <summary>UC-05 step 5 and E2.</summary>
+public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
+{
+    public ResetPasswordRequestValidator()
+    {
+        RuleFor(x => x.NewPassword).NewPassword();
+        RuleFor(x => x.ConfirmPassword).SameAs(x => x.NewPassword);
+    }
+}
+
 /// <summary>UC-02 step 3 and E2: the formats of BR-17.</summary>
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {
@@ -58,6 +68,20 @@ public static class AccountRules
             // Blank is already told by NotEmpty; one message per problem.
             .Must(n => string.IsNullOrWhiteSpace(n) || n.Trim().Length is >= FieldLength.FullNameMin and <= FieldLength.FullName)
             .WithMessage($"The full name must have {FieldLength.FullNameMin} to {FieldLength.FullName} characters.");
+
+    /// <summary>A password the user sets: 8 to 64 characters with at least one letter and one digit.</summary>
+    public static IRuleBuilderOptions<T, string> NewPassword<T>(this IRuleBuilder<T, string> rule) =>
+        rule.NotEmpty().WithMessage("Enter the new password.")
+            .Length(FieldLength.PasswordMin, FieldLength.PasswordMax)
+            .WithMessage($"The password must have {FieldLength.PasswordMin} to {FieldLength.PasswordMax} characters.")
+            .Must(p => string.IsNullOrEmpty(p) || (p.Any(char.IsLetter) && p.Any(char.IsDigit)))
+            .WithMessage("The password needs at least one letter and one digit.");
+
+    /// <summary>The second entry of a new password.</summary>
+    public static IRuleBuilderOptions<T, string> SameAs<T>(this IRuleBuilder<T, string> rule, Func<T, string> password) =>
+        rule.NotEmpty().WithMessage("Enter the new password again.")
+            .Must((x, confirm) => string.IsNullOrEmpty(confirm) || confirm == password(x))
+            .WithMessage("The two passwords do not match.");
 
     /// <summary>Mobile: 10 digits starting with 0.</summary>
     public static IRuleBuilderOptions<T, string> Mobile<T>(this IRuleBuilder<T, string> rule) =>

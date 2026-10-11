@@ -37,6 +37,12 @@ public interface IAccountService
     /// </summary>
     Task<Result> SendPasswordResetLinkAsync(PasswordResetLinkRequest request, CancellationToken ct = default);
 
+    /// <summary>UC-05 step 2: E1 when the link is not genuine, has expired or has been used.</summary>
+    Task<Result> CheckResetLinkAsync(CheckResetLinkRequest request, CancellationToken ct = default);
+
+    /// <summary>UC-05: stores the new password, which ends every reset link of the account.</summary>
+    Task<Result> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default);
+
     /// <summary>
     /// UC-01 E2, UC-02 E3, UC-03 E1: a new verification link for an account still
     /// Unverified. Succeeds for any email, so it never tells which emails have an account.

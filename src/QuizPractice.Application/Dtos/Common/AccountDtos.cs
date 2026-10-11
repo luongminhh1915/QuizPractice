@@ -38,5 +38,11 @@ public sealed record VerifyEmailDto(string Email, bool AlreadyVerified, bool Pas
 /// <summary>UC-04: the registered email to send a reset link to.</summary>
 public sealed record PasswordResetLinkRequest(string Email);
 
+/// <summary>UC-05 step 2: is the reset link still good, before the form is shown.</summary>
+public sealed record CheckResetLinkRequest(string Token);
+
+/// <summary>UC-05: the new password, twice, with the token of the link.</summary>
+public sealed record ResetPasswordRequest(string Token, string NewPassword, string ConfirmPassword);
+
 /// <summary>Send the verification link again (UC-01 E2, UC-02 E3, UC-03 E1).</summary>
 public sealed record SendVerificationLinkRequest(string Email);

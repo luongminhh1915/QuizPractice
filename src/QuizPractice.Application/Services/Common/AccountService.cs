@@ -24,6 +24,7 @@ public class AccountService(
     IValidator<LoginRequest> loginValidator,
     IValidator<RegisterRequest> registerValidator,
     IValidator<PasswordResetLinkRequest> resetLinkValidator,
+    IValidator<ResetPasswordRequest> resetValidator,
     IValidator<SendVerificationLinkRequest> linkValidator) : IAccountService
 {
     public async Task<CurrentUserDto?> GetCurrentAsync(CancellationToken ct = default)
@@ -185,6 +186,29 @@ public class AccountService(
         return Result.Success();
     }
 
+    public async Task<Result> CheckResetLinkAsync(CheckResetLinkRequest request, CancellationToken ct = default) =>
+        await FindResetUserAsync(request.Token, ct) is null ? ResetLinkInvalid : Result.Success();
+
+    public async Task<Result> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default)
+    {
+        // The link first: with a dead link there is nothing to correct in the form (E1).
+        var user = await FindResetUserAsync(request.Token, ct);
+        if (user is null)
+        {
+            return ResetLinkInvalid;
+        }
+
+        if (await resetValidator.CheckAsync(request, ct) is { } invalid)
+        {
+            return invalid;
+        }
+
+        // Step 6: the hash changes, so the stamp of every reset link no longer matches.
+        user.PasswordHash = hasher.Hash(request.NewPassword);
+        await unitOfWork.SaveChangesAsync(ct);
+        return Result.Success();
+    }
+
     public async Task<Result> SendVerificationLinkAsync(SendVerificationLinkRequest request, CancellationToken ct = default)
     {
         if (await linkValidator.CheckAsync(request, ct) is { } invalid)
@@ -210,6 +234,20 @@ public class AccountService(
     /// </summary>
     private Task<bool> SendVerificationMailAsync(int userId, string email, string fullName, CancellationToken ct) =>
         mail.SendVerificationLinkAsync(email, fullName, tokens.Create(LinkPurpose.VerifyEmail, userId, string.Empty), ct);
+
+    /// <summary>
+    /// UC-05 step 2: genuine and unexpired (BR-02), an account that can still sign in,
+    /// and a password unchanged since the link was made. Null otherwise.
+    /// </summary>
+    private async Task<User?> FindResetUserAsync(string? token, CancellationToken ct)
+    {
+        var link = tokens.Read(LinkPurpose.ResetPassword, token ?? string.Empty);
+        var user = link is null ? null : await users.GetByIdAsync(link.UserId, ct);
+        return user is { Status: UserStatus.Active, PasswordHash: { } hash } && PasswordStamp(hash) == link!.Stamp ? user : null;
+    }
+
+    private static Error ResetLinkInvalid =>
+        InvalidLink("This reset link has expired or has already been used. Ask for a new one.");
 
     /// <summary>
     /// Part of a hash of the stored password hash: enough to notice that the password
