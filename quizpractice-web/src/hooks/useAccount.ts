@@ -51,6 +51,10 @@ export function useRegister() {
   return useMutation({ mutationFn: (input: RegisterInput) => accountApi.register(input) })
 }
 
+export function useVerifyEmail() {
+  return useMutation({ mutationFn: (token: string) => accountApi.verifyEmail(token) })
+}
+
 export function useSendVerificationLink() {
   return useMutation({ mutationFn: (email: string) => accountApi.sendVerificationLink(email) })
 }

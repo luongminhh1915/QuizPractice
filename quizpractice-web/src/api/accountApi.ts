@@ -26,6 +26,13 @@ export interface RegisterInput {
   mobile: string
 }
 
+/** Matches VerifyEmailDto of the API (UC-03). */
+export interface VerifyEmailResult {
+  email: string
+  alreadyVerified: boolean
+  passwordSent: boolean
+}
+
 /** /api/account — the caller's own account (Common feature, UC-01 to UC-08). */
 export const accountApi = {
   /** Signed-in user, or null for a Guest (204). Also hands out the antiforgery token. */
@@ -36,6 +43,9 @@ export const accountApi = {
 
   /** UC-02. Answers with the email the verification link went to. */
   register: (input: RegisterInput) => http.post<{ email: string }>('/account/register', input).then((r) => r.data),
+
+  /** UC-03. 400 Link.Invalid when the link is not genuine or has expired (E1). */
+  verifyEmail: (token: string) => http.post<VerifyEmailResult>('/account/verify', { token }).then((r) => r.data),
 
   /** UC-08. Also succeeds when the session has already expired (A1). */
   logout: () => http.post('/account/logout').then(() => undefined),

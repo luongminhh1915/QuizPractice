@@ -3,6 +3,7 @@ import { AppShell } from '../layouts/AppShell'
 import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { VerifyEmailPage } from '../pages/common/VerifyEmailPage'
 import { DashboardPage } from '../pages/marketing/DashboardPage'
 import { PostDetailsPage } from '../pages/marketing/PostDetailsPage'
 import { PostsListPage } from '../pages/marketing/PostsListPage'
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
         element: <PublicLayout />,
         children: [
           { path: '/', element: <HomePage /> },
+          { path: '/verify-email', element: <VerifyEmailPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
