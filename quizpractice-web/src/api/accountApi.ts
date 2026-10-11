@@ -47,6 +47,10 @@ export const accountApi = {
   /** UC-03. 400 Link.Invalid when the link is not genuine or has expired (E1). */
   verifyEmail: (token: string) => http.post<VerifyEmailResult>('/account/verify', { token }).then((r) => r.data),
 
+  /** UC-04. The same answer whatever the email; 502 when the mail could not be sent (E1). */
+  sendPasswordResetLink: (email: string) =>
+    http.post('/account/password-reset-link', { email }).then(() => undefined),
+
   /** UC-08. Also succeeds when the session has already expired (A1). */
   logout: () => http.post('/account/logout').then(() => undefined),
 

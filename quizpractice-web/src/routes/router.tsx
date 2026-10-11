@@ -3,6 +3,7 @@ import { AppShell } from '../layouts/AppShell'
 import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { ResetPasswordPage } from '../pages/common/ResetPasswordPage'
 import { VerifyEmailPage } from '../pages/common/VerifyEmailPage'
 import { DashboardPage } from '../pages/marketing/DashboardPage'
 import { PostDetailsPage } from '../pages/marketing/PostDetailsPage'
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <HomePage /> },
           { path: '/verify-email', element: <VerifyEmailPage /> },
+          { path: '/reset-password', element: <ResetPasswordPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

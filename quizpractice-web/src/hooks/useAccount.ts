@@ -55,6 +55,10 @@ export function useVerifyEmail() {
   return useMutation({ mutationFn: (token: string) => accountApi.verifyEmail(token) })
 }
 
+export function useSendPasswordResetLink() {
+  return useMutation({ mutationFn: (email: string) => accountApi.sendPasswordResetLink(email) })
+}
+
 export function useSendVerificationLink() {
   return useMutation({ mutationFn: (email: string) => accountApi.sendVerificationLink(email) })
 }
