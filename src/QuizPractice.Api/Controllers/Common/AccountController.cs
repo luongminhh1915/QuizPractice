@@ -76,6 +76,23 @@ public class AccountController(IAccountService accounts) : ApiControllerBase
         return result.IsSuccess ? NoContent() : Problem(result.Error!);
     }
 
+    /// <summary>UC-05 step 2: 204 when the reset link is still good, 400 Link.Invalid otherwise (E1).</summary>
+    [HttpPost("password-reset/check")]
+    public async Task<IActionResult> CheckResetLink(CheckResetLinkRequest request, CancellationToken ct)
+    {
+        var result = await accounts.CheckResetLinkAsync(request, ct);
+        return result.IsSuccess ? NoContent() : Problem(result.Error!);
+    }
+
+    /// <summary>UC-05: 204 when the new password is stored.</summary>
+    [HttpPost("password-reset")]
+    [EnableRateLimiting(AccountRateLimit.Policy)]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken ct)
+    {
+        var result = await accounts.ResetPasswordAsync(request, ct);
+        return result.IsSuccess ? NoContent() : Problem(result.Error!);
+    }
+
     /// <summary>
     /// UC-08: ends the session. A1: a session that has already expired gets the same
     /// 204, so the page returns home without an error.
