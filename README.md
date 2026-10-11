@@ -44,6 +44,9 @@ Lần đầu API chạy ở môi trường Development trên database đã migra
 | Tài khoản | Mỗi role một tài khoản, đều Active, **mật khẩu chung `Qps@12345`** (chỉ dùng khi phát triển) |
 | Môn học | *Java Object-Oriented Programming*: giao cho `expert@gmail.com`, featured, 3 chủ đề × 2 bài, 6 dimension, 4 gói giá (gói 1 tháng Inactive), 12 câu hỏi (1 câu Hidden như vừa import). *SQL Fundamentals*: **chưa giao Expert**, 2 chủ đề × 2 bài, 5 dimension, 2 gói, 6 câu |
 | Tài khoản nhận tiền | Một dòng `BankAccounts`, số tài khoản giả `0000000000` — Admin sửa ở UC-70 |
+| Quiz (`DevQuizSeeder`) | 4 quiz: *Java OOP Practice Exam* (đã có 1 bài làm của `customer@gmail.com`), *Chapter 1 Quiz* (lesson quiz), *Java OOP Mini Exam (retired)* (Inactive, để thử xoá), *SQL Practice Exam*. Ghi khi bảng Quizzes còn trống |
+| Đơn đăng ký (`DevRegistrationSeeder`) | 5 khách mẫu (`an.tran@gmail.com`…) và 20 đơn rải 14 ngày (Paid, Submitted, Cancelled) cho Dashboard. Ghi khi bảng Registrations còn trống |
+| Bài viết (`DevPostSeeder`) | 6 bài của `marketing@gmail.com`, có ảnh, 4 danh mục, 3 bài featured (Hot Posts ở Home), 1 bài Hidden. Ghi khi chưa có bài mẫu nào (tìm theo tiêu đề) |
 
 | Email | Role |
 |---|---|
@@ -53,7 +56,7 @@ Lần đầu API chạy ở môi trường Development trên database đã migra
 | `sale@gmail.com` | Sale |
 | `customer@gmail.com` | Customer |
 
-Chưa có quiz, đăng ký môn, hoá đơn, bài làm, post: mỗi feature tự tạo qua màn của mình.
+Chưa có hoá đơn và bài làm mới: mỗi feature tự tạo qua màn của mình. Ba seeder sau (quiz, đơn, bài viết) chạy cả trên database cũ, nên không cần xoá database để có chúng.
 
 **Đổi góc nhìn = đăng nhập tài khoản khác.** Bấm **Login** trên header, dùng một tài khoản ở bảng trên. Marketing, Sale, Admin vào Dashboard; Expert vào Questions; Customer ở lại trang đang xem và có menu **My Learning**. Mục `DevUser` cũ trong `appsettings.Development.json` không còn được đọc, xoá đi cũng được.
 
