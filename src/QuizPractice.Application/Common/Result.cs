@@ -14,6 +14,9 @@ public enum ErrorType
 
     /// <summary>403: signed in, but not allowed on this record (e.g. an Expert on another subject).</summary>
     Forbidden,
+
+    /// <summary>401: who the caller is could not be proved, e.g. a wrong email or password (UC-01 E1).</summary>
+    Unauthorized,
 }
 
 public sealed record Error(ErrorType Type, string Code, string Message, IReadOnlyDictionary<string, string[]>? Fields = null)

@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.DataProtection;
 using QuizPractice.Api.Auth;
 using QuizPractice.Application;
-using QuizPractice.Application.Abstractions;
 using QuizPractice.Infrastructure;
 using QuizPractice.Infrastructure.Persistence.Seed;
 using Scalar.AspNetCore;
@@ -14,7 +14,8 @@ var connectionString = builder.Configuration.GetConnectionString("QuizPracticeDB
         + "to appsettings.Development.json and set your SQL Server (see README).");
 
 builder.Services
-    .AddControllers()
+    // Every POST, PUT and DELETE must carry the antiforgery header (CookieSignIn).
+    .AddControllers(o => o.Filters.Add<AntiforgeryCheck>())
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
@@ -24,25 +25,23 @@ builder.Services.AddInfrastructure(connectionString,
     builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"),
     Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 
-// TODO(auth): until feature/kiet-common adds sign-in, the current user is the
-// DevUser of appsettings.Development.json, and only Development has one.
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.Configure<DevUserOptions>(builder.Configuration.GetSection(DevUserOptions.Section));
-    builder.Services.AddSingleton(DevCurrentUser.Resolve);
-}
+builder.Services.AddCookieSignIn();
+builder.Services.AddAuthorization();
+
+// Signs the sign-in cookie and the links of the account mails. Kept on disk: with
+// keys only in memory, every restart would sign everyone out and kill every link
+// already sent (SDS, stateless links).
+builder.Services.AddDataProtection()
+    .SetApplicationName("QuizPractice")
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys")));
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    // Sample accounts share one known password: never outside Development.
-    // Resolved now so the start-up log says who the requests run as. Not before the
-    // migrations are applied: the app still starts and the log says what to run.
-    if (await DevDataSeeder.SeedAsync(app.Services))
-    {
-        app.Services.GetRequiredService<ICurrentUser>();
-    }
+    // Sample accounts share one known password: never outside Development. Not before
+    // the migrations are applied: the app still starts and the log says what to run.
+    await DevDataSeeder.SeedAsync(app.Services);
 }
 
 // Unhandled exceptions become a ProblemDetails 500 without the stack trace.
@@ -60,6 +59,7 @@ app.UseHttpsRedirection();
 // Serves /uploads; the React build will be served from here too.
 app.UseStaticFiles();
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

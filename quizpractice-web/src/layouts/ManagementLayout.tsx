@@ -9,6 +9,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { Link, Outlet, useLocation } from 'react-router'
+import { useCurrentUser } from '../hooks/useAccount'
 
 const { Header, Sider, Content } = Layout
 
@@ -39,6 +40,8 @@ const CRUMBS: Record<string, string> = {
  * role menu, account menu, breadcrumb; the screen fills the content area.
  */
 export function ManagementLayout() {
+  // Loads who is signed in and the antiforgery token every change needs.
+  useCurrentUser()
   const { pathname } = useLocation()
   const selected = ROLE_MENU.find((m) => pathname.startsWith(m.key))?.key
 

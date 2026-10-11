@@ -3,8 +3,7 @@ namespace QuizPractice.Application.Abstractions;
 /// <summary>
 /// Who sends the request. A service asks this instead of taking a user id from the
 /// client, e.g. the author of a new post (UC-36) or the subjects an Expert may see.
-/// Until sign-in exists the Api reads a fixed development user from configuration;
-/// the cookie sign-in of feature/kiet-common replaces that implementation.
+/// The Api reads it from the sign-in cookie (HttpCurrentUser).
 /// </summary>
 public interface ICurrentUser
 {

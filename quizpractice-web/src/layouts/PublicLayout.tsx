@@ -1,5 +1,6 @@
 import { Button, Flex, Layout, Menu, Space, Typography } from 'antd'
 import { Link, Outlet, useLocation } from 'react-router'
+import { useCurrentUser } from '../hooks/useAccount'
 
 const { Header, Content, Footer } = Layout
 
@@ -15,6 +16,8 @@ const PUBLIC_MENU = [
  * (see PublicSider), because the blocks differ per page.
  */
 export function PublicLayout() {
+  // Loads who is signed in and the antiforgery token every change needs.
+  useCurrentUser()
   const { pathname } = useLocation()
   const selected = PUBLIC_MENU.filter((m) => (m.key === '/' ? pathname === '/' : pathname.startsWith(m.key)))
 

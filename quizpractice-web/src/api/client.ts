@@ -5,10 +5,15 @@ import type { FormInstance } from 'antd'
  * The one axios instance every xxxApi.ts uses (SDS I.1, api/). Paths are relative to
  * /api, which the Vite server forwards to the API in development.
  *
- * TODO(auth): when sign-in exists (feature/kiet-common), send the antiforgery token
- * header here with an interceptor, so no screen has to remember it.
+ * The sign-in cookie travels by itself (same origin). axios copies the XSRF-TOKEN
+ * cookie, which GET /api/account/me hands out, into the X-XSRF-TOKEN header of every
+ * request, so no screen has to remember the antiforgery check (CookieSignIn.cs).
  */
-export const http = axios.create({ baseURL: '/api' })
+export const http = axios.create({
+  baseURL: '/api',
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+})
 
 /** ProblemDetails as the API answers every error (ApiControllerBase). */
 export interface ProblemDetails {
