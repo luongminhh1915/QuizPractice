@@ -45,14 +45,11 @@ export function AccountMenu({ area }: { area: 'public' | 'manage' }) {
   const onMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key === 'profile') openModal('profile')
     if (key === 'password') openModal('password')
-    // UC-08: back to the public home page with the guest menu.
+    // UC-08: back to the public home page with the guest menu. Leave the page first: a
+    // management screen that saw the user disappear would flash "Sign in" meanwhile.
     if (key === 'logout') {
-      logout.mutate(undefined, {
-        onSettled: () => {
-          navigate('/')
-          message.success('You have signed out.')
-        },
-      })
+      navigate('/')
+      logout.mutate(undefined, { onSettled: () => message.success('You have signed out.') })
     }
   }
 
