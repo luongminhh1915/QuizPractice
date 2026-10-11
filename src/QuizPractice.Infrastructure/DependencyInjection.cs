@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using QuizPractice.Application.Abstractions;
+using QuizPractice.Infrastructure.Email;
 using QuizPractice.Infrastructure.Persistence;
 using QuizPractice.Infrastructure.Security;
 using QuizPractice.Infrastructure.Spreadsheets;
@@ -19,6 +22,12 @@ public static class DependencyInjection
         services.AddSingleton<IQuestionSheet, ExcelQuestionSheet>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IHtmlSanitizer, HtmlContentSanitizer>();
+        services.AddSingleton<ITokenService, DataProtectionTokenService>();
+        services.AddSingleton<IEmailSender>(sp => new SmtpEmailSender(
+            sp.GetRequiredService<IOptions<EmailOptions>>(),
+            sp.GetRequiredService<IOptions<MailLinkOptions>>(),
+            privateRootPath,
+            sp.GetRequiredService<ILogger<SmtpEmailSender>>()));
 
         // Every XxxRepository is registered against its IXxxRepository, so adding a
         // repository needs no line here (and no merge conflict on this file).

@@ -6,10 +6,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- ASP.NET Core: Data Protection for the signed links and the Identity password hasher, no extra package. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.12" />
   </ItemGroup>
 
   <PropertyGroup>

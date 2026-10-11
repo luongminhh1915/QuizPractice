@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.DataProtection;
 using QuizPractice.Api.Auth;
 using QuizPractice.Application;
 using QuizPractice.Infrastructure;
+using QuizPractice.Infrastructure.Email;
 using QuizPractice.Infrastructure.Persistence.Seed;
+using QuizPractice.Infrastructure.Security;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +26,10 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString,
     builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"),
     Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
+
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.Section));
+builder.Services.Configure<MailLinkOptions>(builder.Configuration.GetSection(MailLinkOptions.Section));
+builder.Services.AddAccountRateLimit();
 
 builder.Services.AddCookieSignIn();
 builder.Services.AddPermissionTable(builder.Configuration);
@@ -59,6 +65,7 @@ app.UseHttpsRedirection();
 // Serves /uploads; the React build will be served from here too.
 app.UseStaticFiles();
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
