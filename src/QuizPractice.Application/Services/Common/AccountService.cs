@@ -128,6 +128,32 @@ public class AccountService(
         return new RegisteredDto(user.Email);
     }
 
+    public async Task<Result<VerifyEmailDto>> VerifyEmailAsync(VerifyEmailRequest request, CancellationToken ct = default)
+    {
+        // Step 2: signature and expiry; nothing about the link is stored (BR-01).
+        var link = tokens.Read(LinkPurpose.VerifyEmail, request.Token ?? string.Empty);
+        var user = link is null ? null : await users.GetByIdAsync(link.UserId, ct);
+        if (user is null)
+        {
+            return InvalidLink("This verification link is not valid or has expired. Ask for a new one.");
+        }
+
+        // A1, step 3: the link only works while the account is Unverified.
+        if (user.Status != UserStatus.Unverified)
+        {
+            return new VerifyEmailDto(user.Email, AlreadyVerified: true, PasswordSent: false);
+        }
+
+        // Steps 4 and 5 (OI-16): verified and given a password in one save.
+        var password = PasswordGenerator.Generate();
+        user.PasswordHash = hasher.Hash(password);
+        user.Status = UserStatus.Active;
+        await unitOfWork.SaveChangesAsync(ct);
+
+        var sent = await mail.SendLoginPasswordAsync(user.Email, user.FullName, password, ct);
+        return new VerifyEmailDto(user.Email, AlreadyVerified: false, PasswordSent: sent);
+    }
+
     public async Task<Result> SendVerificationLinkAsync(SendVerificationLinkRequest request, CancellationToken ct = default)
     {
         if (await linkValidator.CheckAsync(request, ct) is { } invalid)
@@ -153,6 +179,9 @@ public class AccountService(
     /// </summary>
     private Task<bool> SendVerificationMailAsync(int userId, string email, string fullName, CancellationToken ct) =>
         mail.SendVerificationLinkAsync(email, fullName, tokens.Create(LinkPurpose.VerifyEmail, userId, string.Empty), ct);
+
+    /// <summary>A mailed link that is not genuine, is for something else, has expired or has been used.</summary>
+    private static Error InvalidLink(string message) => new(ErrorType.Validation, "Link.Invalid", message);
 
     /// <summary>E1: one message whether the email or the password was wrong.</summary>
     private static Error InvalidCredentials =>

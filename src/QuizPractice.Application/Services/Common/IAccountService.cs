@@ -26,6 +26,12 @@ public interface IAccountService
     Task<Result<RegisteredDto>> RegisterAsync(RegisterRequest request, CancellationToken ct = default);
 
     /// <summary>
+    /// UC-03: a genuine, unexpired link of an Unverified account makes it Active with a
+    /// generated password, which is mailed. E1: a link that is not genuine or has expired.
+    /// </summary>
+    Task<Result<VerifyEmailDto>> VerifyEmailAsync(VerifyEmailRequest request, CancellationToken ct = default);
+
+    /// <summary>
     /// UC-01 E2, UC-02 E3, UC-03 E1: a new verification link for an account still
     /// Unverified. Succeeds for any email, so it never tells which emails have an account.
     /// </summary>
