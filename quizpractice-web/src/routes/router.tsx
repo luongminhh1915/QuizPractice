@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { DashboardPage } from '../pages/marketing/DashboardPage'
 import { PostDetailsPage } from '../pages/marketing/PostDetailsPage'
 import { PostsListPage } from '../pages/marketing/PostsListPage'
 import { SliderDetailsPage } from '../pages/marketing/SliderDetailsPage'
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
     path: '/manage',
     element: <ManagementLayout />,
     children: [
+      { path: 'dashboard', element: <DashboardPage /> },
       { path: 'posts', element: <PostsListPage /> },
       { path: 'posts/new', element: <PostDetailsPage /> },
       { path: 'posts/:id', element: <PostDetailsPage /> },

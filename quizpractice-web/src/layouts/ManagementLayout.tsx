@@ -26,6 +26,7 @@ const ROLE_MENU = [
 // Breadcrumb labels by path segment; a number is a record id.
 const CRUMBS: Record<string, string> = {
   manage: 'Management',
+  dashboard: 'Dashboard',
   posts: 'Posts',
   sliders: 'Sliders',
   questions: 'Questions',
