@@ -60,6 +60,12 @@ public class PostRepository(AppDbContext db) : IPostRepository
             .Take(take)
             .ToListAsync(ct);
 
+    public Task<Post?> GetShownAsync(int id, CancellationToken ct = default) =>
+        db.Posts.AsNoTracking()
+            .Include(p => p.Category)
+            .Include(p => p.Author)
+            .FirstOrDefaultAsync(p => p.Id == id && p.Status == VisibilityStatus.Shown, ct);
+
     public async Task<Page<Post>> SearchShownAsync(ShownPostSearch search, PageRequest page, CancellationToken ct = default)
     {
         var query = db.Posts.AsNoTracking().Include(p => p.Category).Where(p => p.Status == VisibilityStatus.Shown);

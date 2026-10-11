@@ -80,6 +80,9 @@ public sealed class FakePostRepository : IPostRepository
             .Where(p => p.Status == VisibilityStatus.Shown && (!featuredOnly || p.IsFeatured))
             .OrderByDescending(p => p.UpdatedAt).Take(take).ToList());
 
+    public Task<Post?> GetShownAsync(int id, CancellationToken ct = default) =>
+        Task.FromResult(Rows.FirstOrDefault(p => p.Id == id && p.Status == VisibilityStatus.Shown));
+
     public Task<Page<Post>> SearchShownAsync(ShownPostSearch search, PageRequest page, CancellationToken ct = default) =>
         throw new NotSupportedException("Not used by the tests of the Marketing services.");
 

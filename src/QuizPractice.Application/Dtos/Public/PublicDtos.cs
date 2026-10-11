@@ -44,6 +44,26 @@ public sealed record BlogListRequest(string? Search = null, int? CategoryId = nu
 /// <summary>The sider of Blogs List and Blog Details: active post categories and the latest posts.</summary>
 public sealed record BlogSiderDto(IReadOnlyList<CategoryDto> Categories, IReadOnlyList<PostCardDto> LatestPosts);
 
+/// <summary>
+/// Blog Details (UC-11): the post as a reader sees it. Content is the HTML stored by Post
+/// Details, already cleaned by the sanitizer when it was saved (UC-36).
+/// </summary>
+public sealed record BlogPostDto(
+    int Id,
+    string Title,
+    string Thumbnail,
+    string Brief,
+    string Content,
+    int CategoryId,
+    string Category,
+    string Author,
+    DateTime UpdatedAt)
+{
+    public static BlogPostDto From(Post p) =>
+        new(p.Id, p.Title, p.Thumbnail, p.Brief, p.Content, p.CategoryId, p.Category.Value, p.Author.FullName,
+            DateTime.SpecifyKind(p.UpdatedAt, DateTimeKind.Utc));
+}
+
 /// <summary>Home Page (UC-09): the blocks besides the sliders, which have their own endpoint.</summary>
 public sealed record HomeDto(
     IReadOnlyList<PostCardDto> HotPosts,

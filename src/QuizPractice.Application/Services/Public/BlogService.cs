@@ -26,6 +26,15 @@ public class BlogService(
         return page.Map(PostCardDto.From);
     }
 
+    public async Task<Result<BlogPostDto>> GetAsync(int id, CancellationToken ct = default)
+    {
+        // A hidden post answers like a missing one: a visitor learns nothing about drafts.
+        var post = await posts.GetShownAsync(id, ct);
+        return post is null
+            ? new Error(ErrorType.NotFound, "Post.NotAvailable", "This post is not available.")
+            : BlogPostDto.From(post);
+    }
+
     public async Task<BlogSiderDto> GetSiderAsync(CancellationToken ct = default)
     {
         var categories = await settings.ListActiveAsync(SettingType.PostCategory, ct);

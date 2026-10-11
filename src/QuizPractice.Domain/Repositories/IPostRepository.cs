@@ -29,6 +29,9 @@ public interface IPostRepository
     /// </summary>
     Task<IReadOnlyList<Post>> ListShownAsync(bool featuredOnly, int take, CancellationToken ct = default);
 
+    /// <summary>UC-11: the post with its category and author, or null when it does not exist or is Hidden.</summary>
+    Task<Post?> GetShownAsync(int id, CancellationToken ct = default);
+
     /// <summary>UC-10: a page of shown posts matching the criteria, most recently updated first.</summary>
     Task<Page<Post>> SearchShownAsync(ShownPostSearch search, PageRequest page, CancellationToken ct = default);
 
