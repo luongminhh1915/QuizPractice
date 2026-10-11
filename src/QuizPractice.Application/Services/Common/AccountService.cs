@@ -27,6 +27,7 @@ public class AccountService(
     IValidator<PasswordResetLinkRequest> resetLinkValidator,
     IValidator<ResetPasswordRequest> resetValidator,
     IValidator<SaveProfileRequest> profileValidator,
+    IValidator<ChangePasswordRequest> passwordValidator,
     IValidator<SendVerificationLinkRequest> linkValidator) : IAccountService
 {
     public async Task<CurrentUserDto?> GetCurrentAsync(CancellationToken ct = default)
@@ -255,6 +256,30 @@ public class AccountService(
         }
 
         return ProfileOf(user);
+    }
+
+    public async Task<Result> ChangePasswordAsync(ChangePasswordRequest request, CancellationToken ct = default)
+    {
+        var user = await SignedInUserAsync(ct);
+        if (user is null)
+        {
+            return SignInRequired;
+        }
+
+        if (await passwordValidator.CheckAsync(request, ct) is { } invalid)
+        {
+            return invalid;
+        }
+
+        // E1: shown under the field; the pop-up stays open.
+        if (user.PasswordHash is null || !hasher.Verify(user.PasswordHash, request.CurrentPassword))
+        {
+            return Error.Invalid(nameof(request.CurrentPassword), "The current password is wrong.");
+        }
+
+        user.PasswordHash = hasher.Hash(request.NewPassword);
+        await unitOfWork.SaveChangesAsync(ct);
+        return Result.Success();
     }
 
     public async Task<Result> SendVerificationLinkAsync(SendVerificationLinkRequest request, CancellationToken ct = default)

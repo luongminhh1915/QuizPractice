@@ -53,6 +53,17 @@ public class SaveProfileRequestValidator : AbstractValidator<SaveProfileRequest>
     }
 }
 
+/// <summary>UC-07 step 4 and E2. Whether the current password is right is checked by the service (E1).</summary>
+public class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRequest>
+{
+    public ChangePasswordRequestValidator()
+    {
+        RuleFor(x => x.CurrentPassword).NotEmpty().WithMessage("Enter the current password.");
+        RuleFor(x => x.NewPassword).NewPassword();
+        RuleFor(x => x.ConfirmPassword).SameAs(x => x.NewPassword);
+    }
+}
+
 /// <summary>UC-02 step 3 and E2: the formats of BR-17.</summary>
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {

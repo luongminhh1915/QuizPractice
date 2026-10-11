@@ -54,5 +54,8 @@ public sealed record ProfileDto(string Email, string FullName, Gender Gender, st
 /// </summary>
 public sealed record SaveProfileRequest(string FullName, Gender? Gender, string Mobile, FileUpload? Avatar = null, bool RemoveAvatar = false);
 
+/// <summary>UC-07 Change Password pop-up.</summary>
+public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword, string ConfirmPassword);
+
 /// <summary>Send the verification link again (UC-01 E2, UC-02 E3, UC-03 E1).</summary>
 public sealed record SendVerificationLinkRequest(string Email);

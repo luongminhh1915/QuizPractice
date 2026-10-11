@@ -49,6 +49,9 @@ public interface IAccountService
     /// <summary>UC-06: stores the changed fields and avatar; the email never changes (BR-04).</summary>
     Task<Result<ProfileDto>> UpdateProfileAsync(SaveProfileRequest request, CancellationToken ct = default);
 
+    /// <summary>UC-07: replaces the password once the current one is proved. Every reset link made before ends.</summary>
+    Task<Result> ChangePasswordAsync(ChangePasswordRequest request, CancellationToken ct = default);
+
     /// <summary>
     /// UC-01 E2, UC-02 E3, UC-03 E1: a new verification link for an account still
     /// Unverified. Succeeds for any email, so it never tells which emails have an account.
