@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
@@ -47,6 +48,19 @@ public class AccountController(IAccountService accounts) : ApiControllerBase
         HttpContext.User = principal;
         CookieSignIn.IssueAntiforgeryToken(HttpContext);
         return Ok(await accounts.GetCurrentAsync(ct));
+    }
+
+    /// <summary>
+    /// UC-08: ends the session. A1: a session that has already expired gets the same
+    /// 204, so the page returns home without an error.
+    /// </summary>
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
+        CookieSignIn.IssueAntiforgeryToken(HttpContext);
+        return NoContent();
     }
 
     /// <summary>UC-01 E2, UC-02 E3, UC-03 E1: the same 204 whether or not the email has an account.</summary>
