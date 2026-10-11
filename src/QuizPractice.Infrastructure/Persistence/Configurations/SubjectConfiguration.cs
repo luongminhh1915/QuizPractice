@@ -21,6 +21,7 @@ public class SubjectConfiguration : IEntityTypeConfiguration<Subject>
         b.Property(x => x.PassRate).HasDbDefault(Subject.DefaultPassRate);
         b.HasCheck("pass_rate", "[pass_rate] BETWEEN 0 AND 100");
         b.HasEnumColumn(x => x.Status, 12, SubjectStatus.Unpublished);
+        b.Property(x => x.CreatedAt).HasUtcNowDefault();
         b.Property(x => x.UpdatedAt).HasUtcNowDefault();
     }
 }

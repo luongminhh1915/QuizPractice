@@ -27,6 +27,12 @@ public class Subject
     public byte PassRate { get; set; } = DefaultPassRate;
 
     public SubjectStatus Status { get; set; } = SubjectStatus.Unpublished;
+    /// <summary>
+    /// When the subject was created (UC-34: new subjects in a range). Filled by the database
+    /// (SYSUTCDATETIME) when left at its default, so creating code need not set it.
+    /// </summary>
+    public DateTime CreatedAt { get; set; }
+
     public DateTime UpdatedAt { get; set; }
 
     public List<PricePackage> PricePackages { get; set; } = [];
