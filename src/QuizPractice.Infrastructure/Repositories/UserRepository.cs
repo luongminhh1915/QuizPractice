@@ -16,4 +16,6 @@ public class UserRepository(AppDbContext db) : IUserRepository
         var trimmed = email.Trim();
         return db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == trimmed, ct);
     }
+
+    public void Add(User user) => db.Users.Add(user);
 }

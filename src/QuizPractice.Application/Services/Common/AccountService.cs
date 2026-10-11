@@ -3,6 +3,8 @@ using QuizPractice.Application.Abstractions;
 using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Common;
 using QuizPractice.Application.Validators;
+using QuizPractice.Domain.Constants;
+using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
 
@@ -11,12 +13,14 @@ namespace QuizPractice.Application.Services.Common;
 public class AccountService(
     IUserRepository users,
     ISettingRepository settings,
+    IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IPermissionTable permissions,
     IPasswordHasher hasher,
     ITokenService tokens,
     IEmailSender mail,
     IValidator<LoginRequest> loginValidator,
+    IValidator<RegisterRequest> registerValidator,
     IValidator<SendVerificationLinkRequest> linkValidator) : IAccountService
 {
     public async Task<CurrentUserDto?> GetCurrentAsync(CancellationToken ct = default)
@@ -82,6 +86,46 @@ public class AccountService(
         }
 
         return new SignedInUser(user.Id, user.Email, user.Role.Value);
+    }
+
+    public async Task<Result<RegisteredDto>> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
+    {
+        if (await registerValidator.CheckAsync(request, ct) is { } invalid)
+        {
+            return invalid;
+        }
+
+        var email = request.Email.Trim();
+        if (await users.GetByEmailAsync(email, ct) is not null)
+        {
+            // E1: the page offers Login and Reset Password instead.
+            return Error.Conflict("Account.EmailTaken",
+                "This email is already registered. Log in, or reset the password if you have forgotten it.");
+        }
+
+        // Only a customer registers alone (OI-15); the other roles are added by the Admin (UC-63).
+        var customerRole = (await settings.ListActiveAsync(SettingType.UserRole, ct)).FirstOrDefault(r => r.Value == Roles.Customer)
+            ?? throw new InvalidOperationException($"The User Role setting '{Roles.Customer}' is missing or inactive.");
+
+        var user = new User
+        {
+            Email = email,
+            FullName = request.FullName.Trim(),
+            Gender = request.Gender!.Value,
+            Mobile = request.Mobile.Trim(),
+            RoleId = customerRole.Id,
+            Status = UserStatus.Unverified,
+        };
+        users.Add(user);
+        await unitOfWork.SaveChangesAsync(ct);
+
+        if (!await SendVerificationMailAsync(user.Id, user.Email, user.FullName, ct))
+        {
+            return new Error(ErrorType.ExternalFailure, "Mail.NotSent",
+                "Your account was created, but the verification mail could not be sent. Send the link again in a moment.");
+        }
+
+        return new RegisteredDto(user.Email);
     }
 
     public async Task<Result> SendVerificationLinkAsync(SendVerificationLinkRequest request, CancellationToken ct = default)

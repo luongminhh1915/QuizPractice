@@ -20,6 +20,12 @@ public interface IAccountService
     Task<Result<SignedInUser>> LoginAsync(LoginRequest request, CancellationToken ct = default);
 
     /// <summary>
+    /// UC-02: stores a Customer account as Unverified and mails the verification link.
+    /// E3: when the mail fails the account stays and the error offers a new link.
+    /// </summary>
+    Task<Result<RegisteredDto>> RegisterAsync(RegisterRequest request, CancellationToken ct = default);
+
+    /// <summary>
     /// UC-01 E2, UC-02 E3, UC-03 E1: a new verification link for an account still
     /// Unverified. Succeeds for any email, so it never tells which emails have an account.
     /// </summary>

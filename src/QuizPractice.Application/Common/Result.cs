@@ -17,6 +17,9 @@ public enum ErrorType
 
     /// <summary>401: who the caller is could not be proved, e.g. a wrong email or password (UC-01 E1).</summary>
     Unauthorized,
+
+    /// <summary>502: a service outside the system failed, e.g. the mail server (UC-02 E3).</summary>
+    ExternalFailure,
 }
 
 public sealed record Error(ErrorType Type, string Code, string Message, IReadOnlyDictionary<string, string[]>? Fields = null)
