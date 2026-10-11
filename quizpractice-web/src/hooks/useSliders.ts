@@ -19,6 +19,11 @@ export function useSliderList(criteria: SliderCriteria) {
   })
 }
 
+/** UC-09: the Home Page carousel. Its own key under ['sliders'], so a change in Sliders reloads it too. */
+export function useShownSliders() {
+  return useQuery({ queryKey: ['sliders', 'home'], queryFn: slidersApi.listShown })
+}
+
 export function useSlider(id: number | undefined) {
   return useQuery({
     queryKey: keys.detail(id ?? 0),

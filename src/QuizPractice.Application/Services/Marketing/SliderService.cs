@@ -5,6 +5,7 @@ using QuizPractice.Application.Dtos.Marketing;
 using QuizPractice.Application.Validators;
 using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
+using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
 
 namespace QuizPractice.Application.Services.Marketing;
@@ -32,6 +33,13 @@ public class SliderService(
         var search = new SliderSearch(request.Search, request.Status, request.SortBy, request.Descending);
         var page = await sliders.SearchAsync(search, new PageRequest(request.Page, request.PageSize), ct);
         return page.Map(SliderDto.From);
+    }
+
+    public async Task<IReadOnlyList<SliderDto>> ListShownAsync(CancellationToken ct = default)
+    {
+        var search = new SliderSearch(null, VisibilityStatus.Shown, null, false);
+        var page = await sliders.SearchAsync(search, new PageRequest(1, PageRequest.MaxPageSize), ct);
+        return page.Items.Select(SliderDto.From).ToList();
     }
 
     public async Task<Result<SliderDto>> GetAsync(int id, CancellationToken ct = default)

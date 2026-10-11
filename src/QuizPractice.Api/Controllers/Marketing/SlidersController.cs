@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Marketing;
@@ -22,6 +23,12 @@ public class SlidersController(ISliderService sliders) : ApiControllerBase
     [HttpGet]
     public async Task<ActionResult<Page<SliderDto>>> List([FromQuery] SliderListRequest request, CancellationToken ct) =>
         FromResult(await sliders.ListAsync(request, ct));
+
+    /// <summary>Home Page carousel (UC-09): shown sliders only, for guests too.</summary>
+    [HttpGet("home")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IReadOnlyList<SliderDto>>> Home(CancellationToken ct) =>
+        Ok(await sliders.ListShownAsync(ct));
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<SliderDto>> Get(int id, CancellationToken ct) =>

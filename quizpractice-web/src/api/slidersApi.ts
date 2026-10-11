@@ -35,10 +35,13 @@ function toFormData(input: SliderInput): FormData {
   return data
 }
 
-/** /api/sliders — UC-38 View Sliders List, UC-39 Add or Edit Slider, UC-40 Show or Hide Slider. */
+/** /api/sliders — UC-09 Home carousel, UC-38 View Sliders List, UC-39 Add or Edit Slider, UC-40 Show or Hide Slider. */
 export const slidersApi = {
   list: (criteria: SliderCriteria) =>
     http.get<Page<Slider>>('/sliders', { params: criteria }).then((r) => r.data),
+
+  /** UC-09: the shown sliders of the Home Page carousel, in display order. */
+  listShown: () => http.get<Slider[]>('/sliders/home').then((r) => r.data),
 
   get: (id: number) => http.get<Slider>(`/sliders/${id}`).then((r) => r.data),
 

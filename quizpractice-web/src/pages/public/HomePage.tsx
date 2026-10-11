@@ -1,13 +1,13 @@
 import { Card, Carousel, Empty, Typography } from 'antd'
 import { PublicSider } from '../../layouts/PublicLayout'
-import { useSliderList } from '../../hooks/useSliders'
+import { useShownSliders } from '../../hooks/useSliders'
 
 /**
  * Home Page (SRS III 2.1; F#7), only the slider part for now: shown sliders, in their
  * display order. The rest of the page belongs to feature/kiet-public.
  */
 export function HomePage() {
-  const sliders = useSliderList({ page: 1, pageSize: 10, status: 'Shown' })
+  const sliders = useShownSliders()
 
   return (
     <PublicSider
@@ -22,9 +22,9 @@ export function HomePage() {
         </>
       }
     >
-      {sliders.data?.items.length ? (
+      {sliders.data?.length ? (
         <Carousel autoplay>
-          {sliders.data.items.map((s) => (
+          {sliders.data.map((s) => (
             <a key={s.id} href={s.backlink ?? undefined} target="_blank" rel="noopener noreferrer">
               <div style={{ position: 'relative' }}>
                 <img src={s.image} alt={s.title} style={{ width: '100%', height: 320, objectFit: 'cover', borderRadius: 8 }} />

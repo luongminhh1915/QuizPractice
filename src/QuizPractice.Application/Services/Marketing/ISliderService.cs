@@ -9,6 +9,9 @@ public interface ISliderService
 {
     Task<Result<Page<SliderDto>>> ListAsync(SliderListRequest request, CancellationToken ct = default);
 
+    /// <summary>UC-09: the shown sliders of the Home Page carousel, in display order. Open to everyone.</summary>
+    Task<IReadOnlyList<SliderDto>> ListShownAsync(CancellationToken ct = default);
+
     Task<Result<SliderDto>> GetAsync(int id, CancellationToken ct = default);
 
     Task<Result<SliderDto>> CreateAsync(SaveSliderRequest request, CancellationToken ct = default);
