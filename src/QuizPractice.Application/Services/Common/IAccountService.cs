@@ -32,6 +32,12 @@ public interface IAccountService
     Task<Result<VerifyEmailDto>> VerifyEmailAsync(VerifyEmailRequest request, CancellationToken ct = default);
 
     /// <summary>
+    /// UC-04: mails a reset link when the email belongs to an Active account. Succeeds
+    /// the same way for any email (step 6); fails only when the mail cannot be sent (E1).
+    /// </summary>
+    Task<Result> SendPasswordResetLinkAsync(PasswordResetLinkRequest request, CancellationToken ct = default);
+
+    /// <summary>
     /// UC-01 E2, UC-02 E3, UC-03 E1: a new verification link for an account still
     /// Unverified. Succeeds for any email, so it never tells which emails have an account.
     /// </summary>

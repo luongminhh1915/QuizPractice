@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using FluentValidation;
 using QuizPractice.Application.Abstractions;
 using QuizPractice.Application.Common;
@@ -21,6 +23,7 @@ public class AccountService(
     IEmailSender mail,
     IValidator<LoginRequest> loginValidator,
     IValidator<RegisterRequest> registerValidator,
+    IValidator<PasswordResetLinkRequest> resetLinkValidator,
     IValidator<SendVerificationLinkRequest> linkValidator) : IAccountService
 {
     public async Task<CurrentUserDto?> GetCurrentAsync(CancellationToken ct = default)
@@ -154,6 +157,34 @@ public class AccountService(
         return new VerifyEmailDto(user.Email, AlreadyVerified: false, PasswordSent: sent);
     }
 
+    public async Task<Result> SendPasswordResetLinkAsync(PasswordResetLinkRequest request, CancellationToken ct = default)
+    {
+        if (await resetLinkValidator.CheckAsync(request, ct) is { } invalid)
+        {
+            return invalid;
+        }
+
+        // Only an account that can sign in gets a link. An Unverified one verifies first
+        // (UC-01 E2 offers a new verification link); an Inactive one stays closed.
+        var user = await users.GetByEmailAsync(request.Email, ct);
+        if (user is not { Status: UserStatus.Active, PasswordHash: { } hash })
+        {
+            return Result.Success();
+        }
+
+        // Step 4 (BR-02): the stamp ties the link to the current password, so setting a
+        // new one ends this link and every other (UC-05 step 6). A1: a second request
+        // gives a second link; both work until one of them is used or they expire.
+        var token = tokens.Create(LinkPurpose.ResetPassword, user.Id, PasswordStamp(hash));
+        if (!await mail.SendPasswordResetLinkAsync(user.Email, user.FullName, token, ct))
+        {
+            // E1, worded so that it does not say the email is registered.
+            return new Error(ErrorType.ExternalFailure, "Mail.NotSent", "The mail could not be sent. Try again in a moment.");
+        }
+
+        return Result.Success();
+    }
+
     public async Task<Result> SendVerificationLinkAsync(SendVerificationLinkRequest request, CancellationToken ct = default)
     {
         if (await linkValidator.CheckAsync(request, ct) is { } invalid)
@@ -179,6 +210,13 @@ public class AccountService(
     /// </summary>
     private Task<bool> SendVerificationMailAsync(int userId, string email, string fullName, CancellationToken ct) =>
         mail.SendVerificationLinkAsync(email, fullName, tokens.Create(LinkPurpose.VerifyEmail, userId, string.Empty), ct);
+
+    /// <summary>
+    /// Part of a hash of the stored password hash: enough to notice that the password
+    /// changed, and the link never carries the hash itself.
+    /// </summary>
+    private static string PasswordStamp(string passwordHash) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(passwordHash)))[..16];
 
     /// <summary>A mailed link that is not genuine, is for something else, has expired or has been used.</summary>
     private static Error InvalidLink(string message) => new(ErrorType.Validation, "Link.Invalid", message);

@@ -22,6 +22,15 @@ public class SendVerificationLinkRequestValidator : AbstractValidator<SendVerifi
     }
 }
 
+/// <summary>UC-04 step 3: only the format; whether the email has an account is never told.</summary>
+public class PasswordResetLinkRequestValidator : AbstractValidator<PasswordResetLinkRequest>
+{
+    public PasswordResetLinkRequestValidator()
+    {
+        RuleFor(x => x.Email).LoginEmail();
+    }
+}
+
 /// <summary>UC-02 step 3 and E2: the formats of BR-17.</summary>
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {
