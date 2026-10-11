@@ -1,4 +1,5 @@
 import { http } from './client'
+import type { Page } from './types'
 
 /** Matches PostCardDto: a shown post as a card or a sider line. */
 export interface PostCard {
@@ -30,6 +31,26 @@ export interface SubjectCard {
   lowestPrice: Price | null
 }
 
+/** A post or subject category of the system settings (BR-16). */
+export interface Category {
+  id: number
+  name: string
+}
+
+/** Criteria of Blogs List (UC-10). */
+export interface BlogCriteria {
+  page: number
+  pageSize: number
+  search?: string
+  categoryId?: number
+}
+
+/** Matches BlogSiderDto. */
+export interface BlogSider {
+  categories: Category[]
+  latestPosts: PostCard[]
+}
+
 /** Matches HomeDto (UC-09). */
 export interface Home {
   hotPosts: PostCard[]
@@ -41,4 +62,10 @@ export interface Home {
 export const publicApi = {
   /** UC-09: the blocks of the Home Page besides the sliders. */
   home: () => http.get<Home>('/public/home').then((r) => r.data),
+
+  /** UC-10: a page of shown posts. */
+  blogs: (criteria: BlogCriteria) => http.get<Page<PostCard>>('/public/blogs', { params: criteria }).then((r) => r.data),
+
+  /** The sider of both blog pages. */
+  blogSider: () => http.get<BlogSider>('/public/blogs/sider').then((r) => r.data),
 }
