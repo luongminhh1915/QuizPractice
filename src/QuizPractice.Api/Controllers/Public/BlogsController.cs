@@ -13,6 +13,9 @@ public class BlogsController(IBlogService blogs) : ApiControllerBase
     public async Task<ActionResult<Page<PostCardDto>>> List([FromQuery] BlogListRequest request, CancellationToken ct) =>
         FromResult(await blogs.ListAsync(request, ct));
 
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<BlogPostDto>> Get(int id, CancellationToken ct) => FromResult(await blogs.GetAsync(id, ct));
+
     /// <summary>Post categories and latest posts for the sider of both blog pages.</summary>
     [HttpGet("sider")]
     public async Task<ActionResult<BlogSiderDto>> Sider(CancellationToken ct) => Ok(await blogs.GetSiderAsync(ct));
