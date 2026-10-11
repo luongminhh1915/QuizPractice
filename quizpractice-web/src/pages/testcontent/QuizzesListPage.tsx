@@ -1,4 +1,6 @@
 import { App, Button, Input, Popconfirm, Select, Space, Tag, Tooltip, Typography } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
+import { Link, useLocation } from 'react-router'
 import type { QuizSummary } from '../../api/quizzesApi'
 import { errorMessage } from '../../api/client'
 import { DataTable, type DataTableColumn } from '../../components/DataTable'
@@ -8,9 +10,10 @@ import { useDeleteQuiz, useQuizFilters, useQuizList } from '../../hooks/useQuizz
 
 const toNumber = (value: string | undefined) => (value ? Number(value) : undefined)
 
-/** Quizzes List (SRS III 7.4; PDF II.7, F#33; UC-56 View Quizzes List, UC-58 Delete Quiz). */
+/** Quizzes List (SRS III 7.4; PDF II.7, F#33; UC-56 View Quizzes List, UC-58 Delete Quiz; Add, Edit and View open UC-57). */
 export function QuizzesListPage() {
   const { message } = App.useApp()
+  const location = useLocation()
   const list = useListParams()
   const subjectId = toNumber(list.get('subjectId'))
   const typeId = toNumber(list.get('typeId'))
@@ -18,6 +21,9 @@ export function QuizzesListPage() {
   const query = useQuizList({ ...list.criteria, subjectId, typeId })
   const filters = useQuizFilters()
   const remove = useDeleteQuiz()
+
+  // Quiz Details returns to this list with the same criteria (SRS III 0.3).
+  const back = { state: { back: location.pathname + location.search } }
 
   const deleteQuiz = (quiz: QuizSummary) =>
     remove.mutate(quiz.id, {
@@ -47,37 +53,43 @@ export function QuizzesListPage() {
         </Space>
       ),
     },
-    { title: 'Subject', key: 'subject', sortable: true, width: 220 },
-    { title: 'Level', key: 'level', sortable: true, width: 100 },
-    { title: 'Questions', key: 'questionCount', width: 100 },
-    { title: 'Duration', key: 'durationMin', width: 100, render: (q) => `${q.durationMin} min` },
-    { title: 'Pass Rate', key: 'passRate', width: 100, render: (q) => `${q.passRate}%` },
+    { title: 'Subject', key: 'subject', sortable: true, width: 180 },
+    { title: 'Level', key: 'level', sortable: true, width: 90 },
+    { title: 'Questions', key: 'questionCount', width: 90 },
+    { title: 'Duration', key: 'durationMin', width: 90, render: (q) => `${q.durationMin} min` },
+    { title: 'Pass Rate', key: 'passRate', width: 90, render: (q) => `${q.passRate}%` },
     {
       title: 'Type',
       key: 'type',
-      width: 120,
+      width: 110,
       render: (q) => <Tag color={q.type === 'Simulation' ? 'purple' : 'cyan'}>{q.type}</Tag>,
     },
     {
       title: 'Action',
       key: 'action',
-      width: 100,
-      // A taken quiz keeps its results: no Delete (BR-13, UC-58 E2).
-      render: (q) =>
-        q.isTaken ? null : (
-          <Popconfirm
-            title="Delete this quiz?"
-            description={`"${q.name}" and its question rules are removed for good.`}
-            okText="Delete"
-            okButtonProps={{ danger: true }}
-            cancelText="Cancel"
-            onConfirm={() => deleteQuiz(q)}
-          >
-            <Button size="small" danger loading={remove.isPending && remove.variables === q.id}>
-              Delete
-            </Button>
-          </Popconfirm>
-        ),
+      width: 140,
+      // A taken quiz opens read only (View) and keeps its results: no Delete (BR-13, UC-57 A2, UC-58 E2).
+      render: (q) => (
+        <Space>
+          <Link to={`/manage/quizzes/${q.id}`} {...back}>
+            <Button size="small">{q.isTaken ? 'View' : 'Edit'}</Button>
+          </Link>
+          {!q.isTaken && (
+            <Popconfirm
+              title="Delete this quiz?"
+              description={`"${q.name}" and its question rules are removed for good.`}
+              okText="Delete"
+              okButtonProps={{ danger: true }}
+              cancelText="Cancel"
+              onConfirm={() => deleteQuiz(q)}
+            >
+              <Button size="small" danger loading={remove.isPending && remove.variables === q.id}>
+                Delete
+              </Button>
+            </Popconfirm>
+          )}
+        </Space>
+      ),
     },
   ]
 
@@ -85,7 +97,16 @@ export function QuizzesListPage() {
 
   return (
     <>
-      <PageHeader title="Quizzes List" />
+      <PageHeader
+        title="Quizzes List"
+        action={
+          <Link to="/manage/quizzes/new" {...back}>
+            <Button type="primary" icon={<PlusOutlined />}>
+              Add New Quiz
+            </Button>
+          </Link>
+        }
+      />
 
       <Space wrap style={{ marginBottom: 16 }}>
         {/* key resets the box when the criteria are cleared */}

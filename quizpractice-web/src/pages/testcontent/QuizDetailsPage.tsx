@@ -6,7 +6,7 @@ import type { QuizInput } from '../../api/quizzesApi'
 import { applyFieldErrors, errorMessage, problemOf } from '../../api/client'
 import { PageHeader } from '../../components/PageHeader'
 import { LONG_TEXT_MAX, NAME_MAX } from '../../constants/fieldLength'
-import { useQuiz, useQuizChoices, useQuizGroups, useSaveQuiz } from '../../hooks/useQuizzes'
+import { useChangeQuizStatus, useQuiz, useQuizChoices, useQuizGroups, useSaveQuiz } from '../../hooks/useQuizzes'
 
 type RuleRow = { groupId?: number; questionCount?: number }
 type FormValues = Omit<QuizInput, 'rules'> & { rules: RuleRow[] }
@@ -34,6 +34,7 @@ export function QuizDetailsPage() {
   const stored = useQuiz(id)
   const choices = useQuizChoices()
   const save = useSaveQuiz(id)
+  const changeStatus = useChangeQuizStatus(id ?? 0)
 
   const subjectId = Form.useWatch('subjectId', form)
   const drawnBy = Form.useWatch('selectionType', form)
@@ -43,6 +44,9 @@ export function QuizDetailsPage() {
   const available = new Map((groups.data?.groups ?? []).map((g) => [g.id, g.available]))
 
   const backTo = (location.state as { back?: string } | null)?.back ?? '/manage/quizzes'
+  // UC-57 A2 (BR-13): a taken quiz is shown read only; only its status may change.
+  const taken = stored.data?.isTaken === true
+  // Form disabled={taken} covers every control except those given their own disabled: those add `taken` themselves.
 
   useEffect(() => {
     if (stored.data) {
@@ -84,6 +88,17 @@ export function QuizDetailsPage() {
     setRulesErrors([])
   }
 
+  const saveStatus = () => {
+    const status = form.getFieldValue('status') as QuizInput['status']
+    changeStatus.mutate(status, {
+      onSuccess: (quiz) => {
+        message.success(`Quiz "${quiz.name}" is now ${quiz.status}.`)
+        navigate(backTo)
+      },
+      onError: (e) => message.error(errorMessage(e), 8),
+    })
+  }
+
   const onFinish = (values: FormValues) => {
     // E3 before the request: the API checks it again.
     if (total !== values.questionCount) {
@@ -102,6 +117,7 @@ export function QuizDetailsPage() {
       },
       onError: (e) => {
         const problem = problemOf(e)
+        // E5: the first attempt arrived meanwhile; the reload opens the quiz read only.
         if (problem?.code === 'Quiz.Taken') {
           message.warning(errorMessage(e), 8)
           void stored.refetch()
@@ -131,7 +147,8 @@ export function QuizDetailsPage() {
           <Input />
         </Form.Item>
         <Form.Item label="Status" name="status" extra="Only an active simulation exam is offered to customers.">
-          <Radio.Group optionType="button" options={['Active', 'Inactive']} />
+          {/* The one field that stays changeable on a taken quiz (A2, BR-23). */}
+          <Radio.Group optionType="button" options={['Active', 'Inactive']} disabled={false} />
         </Form.Item>
       </Flex>
       <Flex gap={16} wrap>
@@ -181,7 +198,7 @@ export function QuizDetailsPage() {
         </Form.Item>
         <Form.Item label="Drawn By" name="selectionType" rules={[{ required: true }]} style={{ width: 220 }}>
           <Select
-            disabled={!subjectId}
+            disabled={taken || !subjectId}
             options={(groups.data?.drawnBy ?? [TOPIC]).map((d) => ({ value: d, label: d === TOPIC ? 'Topic' : `Dimension: ${d}` }))}
             onChange={restartGroups}
           />
@@ -207,7 +224,7 @@ export function QuizDetailsPage() {
                     <Select
                       aria-label={`Group ${field.name + 1}`}
                       placeholder={subjectId ? 'Choose a group' : 'Choose a subject first'}
-                      disabled={!subjectId}
+                      disabled={taken || !subjectId}
                       loading={groups.isFetching}
                       // E3: a group may appear once.
                       options={(groups.data?.groups ?? []).map((g) => ({
@@ -227,12 +244,12 @@ export function QuizDetailsPage() {
                   >
                     {holds ?? '—'}
                   </Typography.Text>
-                  <Button icon={<DeleteOutlined />} aria-label={`Remove group ${field.name + 1}`} disabled={fields.length <= 1} onClick={() => remove(field.name)} />
+                  <Button icon={<DeleteOutlined />} aria-label={`Remove group ${field.name + 1}`} disabled={taken || fields.length <= 1} onClick={() => remove(field.name)} />
                 </Flex>
               )
             })}
             <Flex justify="space-between" align="center">
-              <Button icon={<PlusOutlined />} disabled={!subjectId} onClick={() => add({})}>
+              <Button icon={<PlusOutlined />} disabled={taken || !subjectId} onClick={() => add({})}>
                 Add Group
               </Button>
               {/* E3: the counts must add up to the number of questions. */}
@@ -271,8 +288,18 @@ export function QuizDetailsPage() {
   return (
     <>
       <PageHeader title={isNew ? 'New Quiz' : `Quiz Details #${id}`} />
+      {taken && (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16, maxWidth: 900 }}
+          title="Customers have taken this quiz"
+          description="It is shown read only so that every stored result keeps the quiz it was scored against (BR-13). Only the status can still change."
+        />
+      )}
       <Form<FormValues>
         form={form}
+        disabled={taken}
         layout="vertical"
         initialValues={{ status: 'Active', selectionType: TOPIC, rules: [{}] }}
         onFinish={onFinish}
@@ -291,10 +318,18 @@ export function QuizDetailsPage() {
           ]}
         />
         <Space style={{ marginTop: 8 }}>
-          <Button type="primary" htmlType="submit" loading={save.isPending}>
-            Save
+          {taken ? (
+            <Button type="primary" disabled={false} loading={changeStatus.isPending} onClick={saveStatus}>
+              Save status
+            </Button>
+          ) : (
+            <Button type="primary" htmlType="submit" loading={save.isPending}>
+              Save
+            </Button>
+          )}
+          <Button disabled={false} onClick={() => navigate(backTo)}>
+            Cancel
           </Button>
-          <Button onClick={() => navigate(backTo)}>Cancel</Button>
         </Space>
       </Form>
     </>
