@@ -1,3 +1,4 @@
+using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Common;
 
 namespace QuizPractice.Application.Services.Common;
@@ -14,4 +15,13 @@ public interface IAccountService
     /// Admin deactivates or moves to another role is signed out at once.
     /// </summary>
     Task<bool> IsSessionValidAsync(int userId, string role, CancellationToken ct = default);
+
+    /// <summary>UC-01: checks the credentials and the account status; the Api then writes the cookie.</summary>
+    Task<Result<SignedInUser>> LoginAsync(LoginRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// UC-01 E2, UC-02 E3, UC-03 E1: a new verification link for an account still
+    /// Unverified. Succeeds for any email, so it never tells which emails have an account.
+    /// </summary>
+    Task<Result> SendVerificationLinkAsync(SendVerificationLinkRequest request, CancellationToken ct = default);
 }

@@ -7,4 +7,7 @@ public interface IUserRepository
 {
     /// <summary>The account with its role setting, tracked so the service can change it.</summary>
     Task<User?> GetByIdAsync(int id, CancellationToken ct = default);
+
+    /// <summary>The account of a login email, with its role; the match ignores case and surrounding spaces.</summary>
+    Task<User?> GetByEmailAsync(string email, CancellationToken ct = default);
 }

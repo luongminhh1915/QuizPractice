@@ -6,3 +6,12 @@ namespace QuizPractice.Application.Dtos.Common;
 /// maps each item to its screen.
 /// </summary>
 public sealed record CurrentUserDto(int Id, string Email, string FullName, string Role, string? Avatar, IReadOnlyList<string> Menu);
+
+/// <summary>UC-01 Login pop-up.</summary>
+public sealed record LoginRequest(string Email, string Password);
+
+/// <summary>Who signed in: what the Api writes into the cookie.</summary>
+public sealed record SignedInUser(int Id, string Email, string Role);
+
+/// <summary>Send the verification link again (UC-01 E2, UC-02 E3, UC-03 E1).</summary>
+public sealed record SendVerificationLinkRequest(string Email);
