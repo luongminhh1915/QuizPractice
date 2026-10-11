@@ -111,6 +111,15 @@ public class AccountController(IAccountService accounts) : ApiControllerBase
     public async Task<ActionResult<ProfileDto>> UpdateProfile([FromForm] ProfileForm form, CancellationToken ct) =>
         FromResult(await accounts.UpdateProfileAsync(await form.ToRequestAsync(ct), ct));
 
+    /// <summary>UC-07: 204 when stored; 400 with the CurrentPassword field when it is wrong (E1).</summary>
+    [HttpPut("password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest request, CancellationToken ct)
+    {
+        var result = await accounts.ChangePasswordAsync(request, ct);
+        return result.IsSuccess ? NoContent() : Problem(result.Error!);
+    }
+
     /// <summary>
     /// UC-08: ends the session. A1: a session that has already expired gets the same
     /// 204, so the page returns home without an error.
