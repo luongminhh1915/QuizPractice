@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { accountApi, type CurrentUser, type LoginInput } from '../api/accountApi'
+import { accountApi, type CurrentUser, type LoginInput, type RegisterInput } from '../api/accountApi'
 
 // ['account'] holds who is signed in. Signing in or out refetches it, which also
 // renews the antiforgery token for the new user.
@@ -45,6 +45,10 @@ export function useLogout() {
       void queryClient.invalidateQueries({ queryKey: keys.me })
     },
   })
+}
+
+export function useRegister() {
+  return useMutation({ mutationFn: (input: RegisterInput) => accountApi.register(input) })
 }
 
 export function useSendVerificationLink() {

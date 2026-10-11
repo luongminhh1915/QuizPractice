@@ -24,6 +24,9 @@ export function AccountMenu({ area }: { area: 'public' | 'manage' }) {
     return (
       <Space>
         <Button onClick={() => openModal('login')}>Login</Button>
+        <Button type="primary" onClick={() => openModal('register')}>
+          Register
+        </Button>
       </Space>
     )
   }

@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { AccountModalsContext, type AccountModal } from './accountModalContext'
 import { LoginModal } from './LoginModal'
+import { RegisterModal } from './RegisterModal'
 
 /**
  * Holds the account pop-ups (SRS III 0.5: a pop-up over the page it was opened from).
@@ -14,6 +15,7 @@ export function AccountModals({ children }: { children: ReactNode }) {
     <AccountModalsContext.Provider value={setOpen}>
       {children}
       <LoginModal open={open === 'login'} onClose={close} />
+      <RegisterModal open={open === 'register'} onClose={close} />
     </AccountModalsContext.Provider>
   )
 }

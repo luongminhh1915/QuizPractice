@@ -2,6 +2,11 @@
 // The API is the authority; these only let the form answer before the request is sent.
 // Change both files together.
 
+/** Account fields (UC-02, UC-06). */
+export const FULL_NAME_MIN = 2
+export const FULL_NAME_MAX = 100
+export const MOBILE_PATTERN = /^0[0-9]{9}$/
+
 export const NAME_MAX = 200
 export const BRIEF_MAX = 500
 export const URL_MAX = 500

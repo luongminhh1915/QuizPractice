@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Alert, App, Button, Flex, Form, Input, Modal } from 'antd'
+import { Alert, App, Button, Flex, Form, Input, Modal, Typography } from 'antd'
 import { Link, useNavigate } from 'react-router'
 import type { LoginInput } from '../../api/accountApi'
 import { applyFieldErrors, errorMessage, problemOf } from '../../api/client'
 import { firstScreen } from '../../constants/menu'
 import { useLogin, useSendVerificationLink } from '../../hooks/useAccount'
+import { useOpenAccountModal } from './accountModalContext'
 
 /**
  * User Login (SRS III 1.1; F#1; UC-01). A management role lands on the first screen
@@ -13,6 +14,7 @@ import { useLogin, useSendVerificationLink } from '../../hooks/useAccount'
 export function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { message } = App.useApp()
   const navigate = useNavigate()
+  const openModal = useOpenAccountModal()
   const [form] = Form.useForm<LoginInput>()
   const login = useLogin()
   const resend = useSendVerificationLink()
@@ -82,6 +84,9 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
         <Button type="primary" htmlType="submit" block loading={login.isPending}>
           Login
         </Button>
+        <Typography.Paragraph type="secondary" style={{ textAlign: 'center', margin: '16px 0 0' }}>
+          No account yet? <Typography.Link onClick={() => openModal('register')}>Register</Typography.Link>
+        </Typography.Paragraph>
       </Form>
     </Modal>
   )

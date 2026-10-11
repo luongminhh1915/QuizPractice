@@ -16,6 +16,16 @@ export interface LoginInput {
   password: string
 }
 
+export type Gender = 'Male' | 'Female' | 'Other'
+
+/** User Register form (UC-02). */
+export interface RegisterInput {
+  fullName: string
+  gender: Gender
+  email: string
+  mobile: string
+}
+
 /** /api/account — the caller's own account (Common feature, UC-01 to UC-08). */
 export const accountApi = {
   /** Signed-in user, or null for a Guest (204). Also hands out the antiforgery token. */
@@ -23,6 +33,9 @@ export const accountApi = {
 
   /** UC-01. Answers with the user and the menu of the role. */
   login: (input: LoginInput) => http.post<CurrentUser>('/account/login', input).then((r) => r.data),
+
+  /** UC-02. Answers with the email the verification link went to. */
+  register: (input: RegisterInput) => http.post<{ email: string }>('/account/register', input).then((r) => r.data),
 
   /** UC-08. Also succeeds when the session has already expired (A1). */
   logout: () => http.post('/account/logout').then(() => undefined),
