@@ -43,6 +43,12 @@ public interface IAccountService
     /// <summary>UC-05: stores the new password, which ends every reset link of the account.</summary>
     Task<Result> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default);
 
+    /// <summary>UC-06: the profile of the signed-in user.</summary>
+    Task<Result<ProfileDto>> GetProfileAsync(CancellationToken ct = default);
+
+    /// <summary>UC-06: stores the changed fields and avatar; the email never changes (BR-04).</summary>
+    Task<Result<ProfileDto>> UpdateProfileAsync(SaveProfileRequest request, CancellationToken ct = default);
+
     /// <summary>
     /// UC-01 E2, UC-02 E3, UC-03 E1: a new verification link for an account still
     /// Unverified. Succeeds for any email, so it never tells which emails have an account.

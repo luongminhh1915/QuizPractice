@@ -16,6 +16,7 @@ public class AccountService(
     IUserRepository users,
     ISettingRepository settings,
     IUnitOfWork unitOfWork,
+    IFileStorage files,
     ICurrentUser currentUser,
     IPermissionTable permissions,
     IPasswordHasher hasher,
@@ -25,6 +26,7 @@ public class AccountService(
     IValidator<RegisterRequest> registerValidator,
     IValidator<PasswordResetLinkRequest> resetLinkValidator,
     IValidator<ResetPasswordRequest> resetValidator,
+    IValidator<SaveProfileRequest> profileValidator,
     IValidator<SendVerificationLinkRequest> linkValidator) : IAccountService
 {
     public async Task<CurrentUserDto?> GetCurrentAsync(CancellationToken ct = default)
@@ -209,6 +211,52 @@ public class AccountService(
         return Result.Success();
     }
 
+    public async Task<Result<ProfileDto>> GetProfileAsync(CancellationToken ct = default)
+    {
+        var user = await SignedInUserAsync(ct);
+        return user is null ? SignInRequired : ProfileOf(user);
+    }
+
+    public async Task<Result<ProfileDto>> UpdateProfileAsync(SaveProfileRequest request, CancellationToken ct = default)
+    {
+        var user = await SignedInUserAsync(ct);
+        if (user is null)
+        {
+            return SignInRequired;
+        }
+
+        // E1, E2: nothing is stored and the previous avatar stays.
+        if (await profileValidator.CheckAsync(request, ct) is { } invalid)
+        {
+            return invalid;
+        }
+
+        string? oldAvatar = null;
+        if (request.Avatar is not null)
+        {
+            oldAvatar = user.Avatar;
+            user.Avatar = await files.SaveAsync(request.Avatar.Content, request.Avatar.Extension, AvatarFolder, ct);
+        }
+        else if (request.RemoveAvatar)
+        {
+            oldAvatar = user.Avatar;
+            user.Avatar = null;
+        }
+
+        user.FullName = request.FullName.Trim();
+        user.Gender = request.Gender!.Value;
+        user.Mobile = request.Mobile.Trim();
+        await unitOfWork.SaveChangesAsync(ct);
+
+        // Only after the commit: if it had failed, the row would still point at the old file.
+        if (oldAvatar is not null)
+        {
+            files.Delete(oldAvatar);
+        }
+
+        return ProfileOf(user);
+    }
+
     public async Task<Result> SendVerificationLinkAsync(SendVerificationLinkRequest request, CancellationToken ct = default)
     {
         if (await linkValidator.CheckAsync(request, ct) is { } invalid)
@@ -234,6 +282,15 @@ public class AccountService(
     /// </summary>
     private Task<bool> SendVerificationMailAsync(int userId, string email, string fullName, CancellationToken ct) =>
         mail.SendVerificationLinkAsync(email, fullName, tokens.Create(LinkPurpose.VerifyEmail, userId, string.Empty), ct);
+
+    private const string AvatarFolder = "avatars";
+
+    private async Task<User?> SignedInUserAsync(CancellationToken ct) =>
+        currentUser.Id is { } id ? await users.GetByIdAsync(id, ct) : null;
+
+    private static ProfileDto ProfileOf(User user) => new(user.Email, user.FullName, user.Gender, user.Mobile, user.Avatar);
+
+    private static Error SignInRequired => new(ErrorType.Unauthorized, "Auth.Required", "Sign in to see your account.");
 
     /// <summary>
     /// UC-05 step 2: genuine and unexpired (BR-02), an account that can still sign in,

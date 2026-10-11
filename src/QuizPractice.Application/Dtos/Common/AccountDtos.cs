@@ -1,3 +1,4 @@
+using QuizPractice.Application.Common;
 using QuizPractice.Domain.Enums;
 
 namespace QuizPractice.Application.Dtos.Common;
@@ -43,6 +44,15 @@ public sealed record CheckResetLinkRequest(string Token);
 
 /// <summary>UC-05: the new password, twice, with the token of the link.</summary>
 public sealed record ResetPasswordRequest(string Token, string NewPassword, string ConfirmPassword);
+
+/// <summary>UC-06 User Profile: what the pop-up shows. Email is read-only (BR-04).</summary>
+public sealed record ProfileDto(string Email, string FullName, Gender Gender, string Mobile, string? Avatar);
+
+/// <summary>
+/// UC-06: the fields a user may change. Avatar is a new picture; RemoveAvatar clears
+/// the stored one; neither keeps it as it is.
+/// </summary>
+public sealed record SaveProfileRequest(string FullName, Gender? Gender, string Mobile, FileUpload? Avatar = null, bool RemoveAvatar = false);
 
 /// <summary>Send the verification link again (UC-01 E2, UC-02 E3, UC-03 E1).</summary>
 public sealed record SendVerificationLinkRequest(string Email);

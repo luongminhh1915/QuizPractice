@@ -41,6 +41,18 @@ public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequ
     }
 }
 
+/// <summary>UC-06 E1 and E2: the formats of BR-17 and the image rule.</summary>
+public class SaveProfileRequestValidator : AbstractValidator<SaveProfileRequest>
+{
+    public SaveProfileRequestValidator()
+    {
+        RuleFor(x => x.FullName).FullName();
+        RuleFor(x => x.Gender).NotNull().WithMessage("Choose the gender.").IsInEnum();
+        RuleFor(x => x.Mobile).Mobile();
+        RuleFor(x => x.Avatar!).SetValidator(new ImageUploadValidator()).When(x => x.Avatar is not null);
+    }
+}
+
 /// <summary>UC-02 step 3 and E2: the formats of BR-17.</summary>
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {
