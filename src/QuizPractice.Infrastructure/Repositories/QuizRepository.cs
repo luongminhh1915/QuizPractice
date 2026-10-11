@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using QuizPractice.Domain.Common;
+using QuizPractice.Domain.Constants;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
@@ -11,6 +12,53 @@ public class QuizRepository(AppDbContext db) : IQuizRepository
 {
     public Task<Quiz?> GetByIdAsync(int id, CancellationToken ct = default) =>
         db.Quizzes.Include(q => q.Subject).FirstOrDefaultAsync(q => q.Id == id, ct);
+
+    public Task<Quiz?> GetWithRulesAsync(int id, CancellationToken ct = default) =>
+        db.Quizzes
+            .Include(q => q.Subject)
+            .Include(q => q.Level)
+            .Include(q => q.Type)
+            .Include(q => q.Rules)
+            .Include(q => q.Questions)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(q => q.Id == id, ct);
+
+    public async Task<IReadOnlyList<Lesson>> GetTopicsAsync(int subjectId, CancellationToken ct = default) =>
+        await db.Lessons.AsNoTracking()
+            .Where(l => l.SubjectId == subjectId && l.TopicId == null && l.Type.Value == SettingValues.LessonTypes.SubjectTopic)
+            .OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<SubjectDimension>> GetDimensionsAsync(int subjectId, CancellationToken ct = default) =>
+        await db.SubjectDimensions.AsNoTracking()
+            .Include(d => d.Type)
+            .Where(d => d.SubjectId == subjectId)
+            .OrderBy(d => d.Type.DisplayOrder).ThenBy(d => d.Name).ThenBy(d => d.Id)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<GroupMember>> GetTopicMembersAsync(int subjectId, CancellationToken ct = default) =>
+        await db.Questions.AsNoTracking()
+            .Where(q => q.SubjectId == subjectId && q.Status == VisibilityStatus.Shown && q.LessonId != null)
+            .Select(q => new GroupMember(q.Lesson!.TopicId ?? q.Lesson.Id, q.Id))
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<GroupMember>> GetDimensionMembersAsync(int subjectId, CancellationToken ct = default) =>
+        await db.QuestionDimensions.AsNoTracking()
+            .Where(x => x.Question.SubjectId == subjectId && x.Question.Status == VisibilityStatus.Shown)
+            .Select(x => new GroupMember(x.DimensionId, x.QuestionId))
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Setting>> GetLevelsAsync(CancellationToken ct = default) =>
+        await db.Settings.AsNoTracking()
+            .Where(s => s.Type == SettingType.QuestionLevel)
+            .OrderBy(s => s.DisplayOrder).ThenBy(s => s.Id)
+            .ToListAsync(ct);
+
+    public void Add(Quiz quiz) => db.Quizzes.Add(quiz);
+
+    public void RemoveRule(QuizRule rule) => db.QuizRules.Remove(rule);
+
+    public void RemoveQuestion(QuizQuestion question) => db.QuizQuestions.Remove(question);
 
     public async Task<IReadOnlyList<string>> GetLessonsUsingAsync(int quizId, CancellationToken ct = default) =>
         await db.Lessons.Where(l => l.QuizId == quizId).OrderBy(l => l.Name).Select(l => l.Name).ToListAsync(ct);
