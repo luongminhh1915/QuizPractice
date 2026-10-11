@@ -16,6 +16,9 @@ public class CatalogController(ISubjectCatalogService catalog) : ApiControllerBa
     public async Task<ActionResult<Page<SubjectCardDto>>> List([FromQuery] SubjectListRequest request, CancellationToken ct) =>
         FromResult(await catalog.ListAsync(request, ct));
 
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<SubjectDetailsDto>> Get(int id, CancellationToken ct) => FromResult(await catalog.GetAsync(id, ct));
+
     /// <summary>Subject categories and featured subjects for the sider of both subject pages.</summary>
     [HttpGet("sider")]
     public async Task<ActionResult<SubjectSiderDto>> Sider(CancellationToken ct) => Ok(await catalog.GetSiderAsync(ct));
