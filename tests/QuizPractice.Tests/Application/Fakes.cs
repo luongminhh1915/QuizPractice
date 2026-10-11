@@ -80,6 +80,9 @@ public sealed class FakePostRepository : IPostRepository
             .Where(p => p.Status == VisibilityStatus.Shown && (!featuredOnly || p.IsFeatured))
             .OrderByDescending(p => p.UpdatedAt).Take(take).ToList());
 
+    public Task<Page<Post>> SearchShownAsync(ShownPostSearch search, PageRequest page, CancellationToken ct = default) =>
+        throw new NotSupportedException("Not used by the tests of the Marketing services.");
+
     /// <summary>Gives the post an id and its author, as the database and Include would.</summary>
     public void Add(Post post)
     {

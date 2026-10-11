@@ -60,6 +60,30 @@ public class PostRepository(AppDbContext db) : IPostRepository
             .Take(take)
             .ToListAsync(ct);
 
+    public async Task<Page<Post>> SearchShownAsync(ShownPostSearch search, PageRequest page, CancellationToken ct = default)
+    {
+        var query = db.Posts.AsNoTracking().Include(p => p.Category).Where(p => p.Status == VisibilityStatus.Shown);
+
+        if (!string.IsNullOrWhiteSpace(search.Text))
+        {
+            var text = search.Text.Trim();
+            query = query.Where(p => p.Title.Contains(text));
+        }
+
+        if (search.CategoryId is { } categoryId)
+        {
+            query = query.Where(p => p.CategoryId == categoryId);
+        }
+
+        var total = await query.CountAsync(ct);
+        var items = await query
+            .OrderByDescending(p => p.UpdatedAt).ThenByDescending(p => p.Id)
+            .Skip(page.Skip)
+            .Take(page.PageSize)
+            .ToListAsync(ct);
+        return new Page<Post>(items, total, page.PageNumber, page.PageSize);
+    }
+
     public void Add(Post post) => db.Posts.Add(post);
 
     // Every heading of the table sorts except the thumbnail (SRS III 5.2); without a

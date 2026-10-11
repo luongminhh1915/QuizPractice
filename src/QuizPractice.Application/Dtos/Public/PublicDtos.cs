@@ -32,6 +32,18 @@ public sealed record SubjectCardDto(int Id, string Name, string Thumbnail, strin
         new(s.Id, s.Name, s.Thumbnail, s.Tagline, s.Category.Value, PriceDto.LowestOf(s));
 }
 
+/// <summary>A post or subject category of the system settings, as the sider lists it (BR-16).</summary>
+public sealed record CategoryDto(int Id, string Name)
+{
+    public static CategoryDto From(Setting s) => new(s.Id, s.Value);
+}
+
+/// <summary>Criteria of Blogs List (UC-10). Ten posts a page, as every list (SRS III 0.3).</summary>
+public sealed record BlogListRequest(string? Search = null, int? CategoryId = null, int Page = 1, int PageSize = 10);
+
+/// <summary>The sider of Blogs List and Blog Details: active post categories and the latest posts.</summary>
+public sealed record BlogSiderDto(IReadOnlyList<CategoryDto> Categories, IReadOnlyList<PostCardDto> LatestPosts);
+
 /// <summary>Home Page (UC-09): the blocks besides the sliders, which have their own endpoint.</summary>
 public sealed record HomeDto(
     IReadOnlyList<PostCardDto> HotPosts,
