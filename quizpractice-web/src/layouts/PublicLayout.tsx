@@ -1,6 +1,7 @@
 import { Flex, Layout, Menu, Typography } from 'antd'
 import { Link, Outlet, useLocation } from 'react-router'
 import { AccountMenu } from '../components/account/AccountMenu'
+import { MyLearningMenu } from '../components/account/MyLearningMenu'
 import { useCurrentUser } from '../hooks/useAccount'
 
 const { Header, Content, Footer } = Layout
@@ -37,6 +38,7 @@ export function PublicLayout() {
             items={PUBLIC_MENU.map((m) => ({ key: m.key, label: <Link to={m.key}>{m.label}</Link> }))}
             style={{ flex: 1, borderBottom: 0 }}
           />
+          <MyLearningMenu />
           <AccountMenu area="public" />
         </Flex>
       </Header>

@@ -1,27 +1,12 @@
-import { Breadcrumb, Flex, Layout, Menu, Typography } from 'antd'
-import {
-  DashboardOutlined,
-  FileTextOutlined,
-  FormOutlined,
-  PictureOutlined,
-  QuestionCircleOutlined,
-} from '@ant-design/icons'
+import type { ReactNode } from 'react'
+import { Breadcrumb, Button, Flex, Layout, Menu, Result, Spin, Typography } from 'antd'
 import { Link, Outlet, useLocation } from 'react-router'
 import { AccountMenu } from '../components/account/AccountMenu'
+import { useOpenAccountModal } from '../components/account/accountModalContext'
+import { firstScreen, MENU_SCREENS } from '../constants/menu'
 import { useCurrentUser } from '../hooks/useAccount'
 
 const { Header, Sider, Content } = Layout
-
-// TODO(auth, BR-16, D23): build this from the System Menu settings the signed-in role
-// may open. Until sign-in exists it is the Marketing menu, the role of the sample,
-// followed by the Expert screens built so far.
-const ROLE_MENU = [
-  { key: '/manage/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
-  { key: '/manage/posts', icon: <FileTextOutlined />, label: 'Posts' },
-  { key: '/manage/sliders', icon: <PictureOutlined />, label: 'Sliders' },
-  { key: '/manage/questions', icon: <QuestionCircleOutlined />, label: 'Questions' },
-  { key: '/manage/quizzes', icon: <FormOutlined />, label: 'Quizzes' },
-]
 
 // Breadcrumb labels by path segment; a number is a record id.
 const CRUMBS: Record<string, string> = {
@@ -34,15 +19,24 @@ const CRUMBS: Record<string, string> = {
   new: 'New',
 }
 
+const MANAGE_SCREENS = Object.entries(MENU_SCREENS).filter(([, s]) => s.area === 'manage')
+
 /**
  * Frame of every Marketing, Sale, Expert and Admin screen (SRS III 0.1): system name,
  * role menu, account menu, breadcrumb; the screen fills the content area.
+ *
+ * The role menu is the one the API sends (D23). A screen whose menu item the role does
+ * not have is refused here too, so typing its address shows a refusal instead of an
+ * empty screen (BR-03). This only hides screens: the API checks every request again.
  */
 export function ManagementLayout() {
-  // Loads who is signed in and the antiforgery token every change needs.
-  useCurrentUser()
+  const me = useCurrentUser()
   const { pathname } = useLocation()
-  const selected = ROLE_MENU.find((m) => pathname.startsWith(m.key))?.key
+  const user = me.data
+
+  // The menu item this address belongs to, e.g. /manage/posts/7 → Posts.
+  const [currentItem] = MANAGE_SCREENS.find(([, s]) => pathname === s.path || pathname.startsWith(s.path + '/')) ?? []
+  const menu = (user?.menu ?? []).filter((item) => MENU_SCREENS[item]?.area === 'manage')
 
   const segments = pathname.split('/').filter(Boolean)
   const crumbs = segments.map((s, i) => {
@@ -50,6 +44,11 @@ export function ManagementLayout() {
     const to = '/' + segments.slice(0, i + 1).join('/')
     return { title: i < segments.length - 1 && i > 0 ? <Link to={to}>{label}</Link> : label }
   })
+
+  let body: ReactNode = <Outlet />
+  if (me.isPending) body = <Spin style={{ display: 'block', padding: 48 }} />
+  else if (!user) body = <SignInFirst />
+  else if (currentItem && !menu.includes(currentItem)) body = <NotForRole home={firstScreen(user.menu)} />
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -61,8 +60,16 @@ export function ManagementLayout() {
         </Link>
         <Menu
           mode="inline"
-          selectedKeys={selected ? [selected] : []}
-          items={ROLE_MENU.map((m) => ({ key: m.key, icon: m.icon, label: <Link to={m.key}>{m.label}</Link> }))}
+          selectedKeys={currentItem ? [currentItem] : []}
+          items={menu.map((item) => {
+            const screen = MENU_SCREENS[item]
+            return {
+              key: item,
+              icon: screen.icon,
+              disabled: !screen.ready,
+              label: screen.ready ? <Link to={screen.path}>{item}</Link> : `${item} (coming soon)`,
+            }
+          })}
           style={{ borderInlineEnd: 0 }}
         />
       </Sider>
@@ -74,11 +81,40 @@ export function ManagementLayout() {
           </Flex>
         </Header>
         <Content style={{ margin: 24 }}>
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8 }}>
-            <Outlet />
-          </div>
+          <div style={{ background: '#fff', padding: 24, borderRadius: 8 }}>{body}</div>
         </Content>
       </Layout>
     </Layout>
+  )
+}
+
+/** A Guest who opened a management address, or whose session ended. */
+function SignInFirst() {
+  const openModal = useOpenAccountModal()
+  return (
+    <Result
+      status="403"
+      title="Sign in to open this screen"
+      extra={
+        <Button type="primary" onClick={() => openModal('login')}>
+          Login
+        </Button>
+      }
+    />
+  )
+}
+
+/** BR-03: signed in, but the role does not have this screen. */
+function NotForRole({ home }: { home?: string }) {
+  return (
+    <Result
+      status="403"
+      title="Your role cannot open this screen"
+      extra={
+        <Link to={home ?? '/'}>
+          <Button type="primary">{home ? 'Back to your first screen' : 'Home Page'}</Button>
+        </Link>
+      }
+    />
   )
 }

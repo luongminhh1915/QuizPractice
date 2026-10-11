@@ -19,10 +19,8 @@ import { QuizzesListPage } from '../pages/testcontent/QuizzesListPage'
 /**
  * Every screen of SRS III gets one route here. Public and customer pages sit under
  * PublicLayout (III 0.2); Marketing, Sale, Expert and Admin screens under /manage with
- * ManagementLayout (III 0.1).
- *
- * TODO(auth): a role guard on /manage, from the same permission table the API uses
- * (BR-03, D23). It only hides screens; the API checks every request again.
+ * ManagementLayout (III 0.1), which refuses a screen the role's menu does not have
+ * (BR-03). A new screen also needs ready: true in constants/menu.tsx.
  */
 export const router = createBrowserRouter([
   {
