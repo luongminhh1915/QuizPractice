@@ -52,6 +52,14 @@ public class PostRepository(AppDbContext db) : IPostRepository
     public Task<Setting?> GetCategoryAsync(int id, CancellationToken ct = default) =>
         db.Settings.FirstOrDefaultAsync(s => s.Id == id && s.Type == SettingType.PostCategory, ct);
 
+    public async Task<IReadOnlyList<Post>> ListShownAsync(bool featuredOnly, int take, CancellationToken ct = default) =>
+        await db.Posts.AsNoTracking()
+            .Include(p => p.Category)
+            .Where(p => p.Status == VisibilityStatus.Shown && (!featuredOnly || p.IsFeatured))
+            .OrderByDescending(p => p.UpdatedAt).ThenByDescending(p => p.Id)
+            .Take(take)
+            .ToListAsync(ct);
+
     public void Add(Post post) => db.Posts.Add(post);
 
     // Every heading of the table sorts except the thumbnail (SRS III 5.2); without a

@@ -1,6 +1,7 @@
 using QuizPractice.Application.Abstractions;
 using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
+using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
 
 namespace QuizPractice.Tests.Application;
@@ -73,6 +74,11 @@ public sealed class FakePostRepository : IPostRepository
 
     public Task<Setting?> GetCategoryAsync(int id, CancellationToken ct = default) =>
         Task.FromResult(Categories.FirstOrDefault(s => s.Id == id));
+
+    public Task<IReadOnlyList<Post>> ListShownAsync(bool featuredOnly, int take, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Post>>(Rows
+            .Where(p => p.Status == VisibilityStatus.Shown && (!featuredOnly || p.IsFeatured))
+            .OrderByDescending(p => p.UpdatedAt).Take(take).ToList());
 
     /// <summary>Gives the post an id and its author, as the database and Include would.</summary>
     public void Add(Post post)

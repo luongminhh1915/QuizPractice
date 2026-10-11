@@ -20,6 +20,12 @@ public interface IPostRepository
     /// <summary>A setting of type Post Category, or null when the id is another type or does not exist.</summary>
     Task<Setting?> GetCategoryAsync(int id, CancellationToken ct = default);
 
+    /// <summary>
+    /// Shown posts for the public pages, most recently updated first, with their category:
+    /// all of them, or only the featured ones (Hot Posts of the Home Page, UC-09).
+    /// </summary>
+    Task<IReadOnlyList<Post>> ListShownAsync(bool featuredOnly, int take, CancellationToken ct = default);
+
     /// <summary>Stages a new post; the service commits through IUnitOfWork.</summary>
     void Add(Post post);
 }
