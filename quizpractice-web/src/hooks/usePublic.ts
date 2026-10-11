@@ -20,6 +20,11 @@ export function useBlogs(criteria: BlogCriteria) {
   })
 }
 
+/** UC-11. Not retried: a 404 sends the reader back to the list at once (E1). */
+export function useBlogPost(id: number) {
+  return useQuery({ queryKey: ['public', 'blogs', 'post', id], queryFn: () => publicApi.blogPost(id), staleTime: STALE, retry: false })
+}
+
 export function useBlogSider() {
   return useQuery({ queryKey: ['public', 'blogs', 'sider'], queryFn: publicApi.blogSider, staleTime: STALE })
 }

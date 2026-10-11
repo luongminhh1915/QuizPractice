@@ -51,6 +51,19 @@ export interface BlogSider {
   latestPosts: PostCard[]
 }
 
+/** Matches BlogPostDto (UC-11). content is HTML cleaned by the API when saved. */
+export interface BlogPost {
+  id: number
+  title: string
+  thumbnail: string
+  brief: string
+  content: string
+  categoryId: number
+  category: string
+  author: string
+  updatedAt: string
+}
+
 /** Matches HomeDto (UC-09). */
 export interface Home {
   hotPosts: PostCard[]
@@ -65,6 +78,9 @@ export const publicApi = {
 
   /** UC-10: a page of shown posts. */
   blogs: (criteria: BlogCriteria) => http.get<Page<PostCard>>('/public/blogs', { params: criteria }).then((r) => r.data),
+
+  /** UC-11. 404 when the post does not exist or is hidden (E1). */
+  blogPost: (id: number) => http.get<BlogPost>(`/public/blogs/${id}`).then((r) => r.data),
 
   /** The sider of both blog pages. */
   blogSider: () => http.get<BlogSider>('/public/blogs/sider').then((r) => r.data),
