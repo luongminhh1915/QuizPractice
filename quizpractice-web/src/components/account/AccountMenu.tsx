@@ -1,5 +1,5 @@
 import { App, Avatar, Button, Dropdown, Flex, Space, type MenuProps } from 'antd'
-import { AppstoreOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, KeyOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router'
 import { firstScreen } from '../../constants/menu'
 import { useCurrentUser, useLogout } from '../../hooks/useAccount'
@@ -37,12 +37,14 @@ export function AccountMenu({ area }: { area: 'public' | 'manage' }) {
       ? [{ key: 'manage', icon: <AppstoreOutlined />, label: <Link to={home}>Management</Link> }]
       : []),
     { key: 'profile', icon: <UserOutlined />, label: 'User Profile' },
+    { key: 'password', icon: <KeyOutlined />, label: 'Change Password' },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, label: 'Logout' },
   ]
 
   const onMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key === 'profile') openModal('profile')
+    if (key === 'password') openModal('password')
     // UC-08: back to the public home page with the guest menu.
     if (key === 'logout') {
       logout.mutate(undefined, {

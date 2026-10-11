@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import {
   accountApi,
+  type ChangePasswordInput,
   type CurrentUser,
   type LoginInput,
   type NewPasswordInput,
@@ -96,6 +97,10 @@ export function useSaveProfile() {
       void queryClient.invalidateQueries({ queryKey: keys.me })
     },
   })
+}
+
+export function useChangePassword() {
+  return useMutation({ mutationFn: (input: ChangePasswordInput) => accountApi.changePassword(input) })
 }
 
 export function useSendVerificationLink() {

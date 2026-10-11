@@ -39,6 +39,11 @@ export interface NewPasswordInput {
   confirmPassword: string
 }
 
+/** Change Password form (UC-07). */
+export interface ChangePasswordInput extends NewPasswordInput {
+  currentPassword: string
+}
+
 /** Matches ProfileDto of the API (UC-06). */
 export interface Profile {
   email: string
@@ -97,6 +102,9 @@ export const accountApi = {
 
   /** UC-06. Answers with the stored profile. */
   saveProfile: (input: ProfileInput) => http.put<Profile>('/account/profile', profileFormData(input)).then((r) => r.data),
+
+  /** UC-07. 400 with the currentPassword field when it is wrong (E1). */
+  changePassword: (input: ChangePasswordInput) => http.put('/account/password', input).then(() => undefined),
 
   /** UC-08. Also succeeds when the session has already expired (A1). */
   logout: () => http.post('/account/logout').then(() => undefined),
