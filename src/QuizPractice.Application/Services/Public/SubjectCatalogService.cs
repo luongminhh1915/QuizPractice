@@ -32,6 +32,15 @@ public class SubjectCatalogService(
         return page.Map(SubjectCardDto.From);
     }
 
+    public async Task<Result<SubjectDetailsDto>> GetAsync(int id, CancellationToken ct = default)
+    {
+        // An unpublished subject answers like a missing one (E1).
+        var subject = await subjects.GetPublishedAsync(id, ct);
+        return subject is null
+            ? new Error(ErrorType.NotFound, "Subject.NotAvailable", "This subject is not available.")
+            : SubjectDetailsDto.From(subject);
+    }
+
     public async Task<SubjectSiderDto> GetSiderAsync(CancellationToken ct = default)
     {
         var categories = await settings.ListActiveAsync(SettingType.SubjectCategory, ct);

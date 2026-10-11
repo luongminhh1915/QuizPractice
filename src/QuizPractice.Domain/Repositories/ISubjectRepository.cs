@@ -12,6 +12,9 @@ public interface ISubjectRepository
     /// <summary>Published subjects whose featured flag is on, most recently updated first, with their category and active packages.</summary>
     Task<IReadOnlyList<Subject>> ListFeaturedPublishedAsync(int take, CancellationToken ct = default);
 
+    /// <summary>UC-13: the subject with its category and active packages, or null when it does not exist or is not published.</summary>
+    Task<Subject?> GetPublishedAsync(int id, CancellationToken ct = default);
+
     /// <summary>UC-12: a page of published subjects matching the criteria, most recently updated first.</summary>
     Task<Page<Subject>> SearchPublishedAsync(PublishedSubjectSearch search, PageRequest page, CancellationToken ct = default);
 }

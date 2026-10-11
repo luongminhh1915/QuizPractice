@@ -64,6 +64,22 @@ public sealed record BlogPostDto(
             DateTime.SpecifyKind(p.UpdatedAt, DateTimeKind.Utc));
 }
 
+/// <summary>Subject Details (UC-13): what a visitor reads before registering.</summary>
+public sealed record SubjectDetailsDto(
+    int Id,
+    string Name,
+    string? Tagline,
+    string Thumbnail,
+    string Brief,
+    string Description,
+    int CategoryId,
+    string Category,
+    PriceDto? LowestPrice)
+{
+    public static SubjectDetailsDto From(Subject s) =>
+        new(s.Id, s.Name, s.Tagline, s.Thumbnail, s.Brief, s.Description, s.CategoryId, s.Category.Value, PriceDto.LowestOf(s));
+}
+
 /// <summary>Criteria of Subjects List (UC-12). Nine a page: three rows of three cards.</summary>
 public sealed record SubjectListRequest(string? Search = null, int? CategoryId = null, int Page = 1, int PageSize = 9);
 

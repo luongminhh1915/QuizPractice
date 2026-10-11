@@ -16,6 +16,9 @@ public class SubjectRepository(AppDbContext db) : ISubjectRepository
             .Take(take)
             .ToListAsync(ct);
 
+    public Task<Subject?> GetPublishedAsync(int id, CancellationToken ct = default) =>
+        Published().FirstOrDefaultAsync(s => s.Id == id, ct);
+
     public async Task<Page<Subject>> SearchPublishedAsync(PublishedSubjectSearch search, PageRequest page, CancellationToken ct = default)
     {
         var query = Published();
