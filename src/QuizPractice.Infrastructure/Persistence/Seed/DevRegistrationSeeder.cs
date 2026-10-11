@@ -22,11 +22,11 @@ internal static class DevRegistrationSeeder
     /// <summary>New customers: email, name, gender, mobile, days ago the account was created.</summary>
     private static readonly (string Email, string Name, Gender Gender, string Mobile, int DaysAgo)[] Customers =
     [
-        ("an.tran@qps.vn", "Trần Bình An", Gender.Male, "0901000006", 13),
-        ("linh.vu@qps.vn", "Vũ Khánh Linh", Gender.Female, "0901000007", 11),
-        ("huy.hoang@qps.vn", "Hoàng Gia Huy", Gender.Male, "0901000008", 8),
-        ("thao.ngo@qps.vn", "Ngô Phương Thảo", Gender.Female, "0901000009", 7),
-        ("khoa.dang@qps.vn", "Đặng Anh Khoa", Gender.Male, "0901000010", 2),
+        ("an.tran@gmail.com", "Trần Bình An", Gender.Male, "0901000006", 13),
+        ("linh.vu@gmail.com", "Vũ Khánh Linh", Gender.Female, "0901000007", 11),
+        ("huy.hoang@gmail.com", "Hoàng Gia Huy", Gender.Male, "0901000008", 8),
+        ("thao.ngo@gmail.com", "Ngô Phương Thảo", Gender.Female, "0901000009", 7),
+        ("khoa.dang@gmail.com", "Đặng Anh Khoa", Gender.Male, "0901000010", 2),
     ];
 
     /// <summary>

@@ -42,16 +42,16 @@ Lần đầu API chạy ở môi trường Development trên database đã migra
 |---|---|
 | Settings | Đủ 8 type (BR-16, D24): 5 role, 14 mục System Menu, post/subject category (Soft Skills để Inactive), Simulation / Lesson quiz, Easy / Medium / Hard, Subject Topic / Lesson / Quiz, Domain / Group |
 | Tài khoản | Mỗi role một tài khoản, đều Active, **mật khẩu chung `Qps@12345`** (chỉ dùng khi phát triển) |
-| Môn học | *Java Object-Oriented Programming*: giao cho `expert@qps.vn`, featured, 3 chủ đề × 2 bài, 6 dimension, 4 gói giá (gói 1 tháng Inactive), 12 câu hỏi (1 câu Hidden như vừa import). *SQL Fundamentals*: **chưa giao Expert**, 2 chủ đề × 2 bài, 5 dimension, 2 gói, 6 câu |
+| Môn học | *Java Object-Oriented Programming*: giao cho `expert@gmail.com`, featured, 3 chủ đề × 2 bài, 6 dimension, 4 gói giá (gói 1 tháng Inactive), 12 câu hỏi (1 câu Hidden như vừa import). *SQL Fundamentals*: **chưa giao Expert**, 2 chủ đề × 2 bài, 5 dimension, 2 gói, 6 câu |
 | Tài khoản nhận tiền | Một dòng `BankAccounts`, số tài khoản giả `0000000000` — Admin sửa ở UC-70 |
 
 | Email | Role |
 |---|---|
-| `admin@qps.vn` | Admin |
-| `expert@qps.vn` | Expert |
-| `marketing@qps.vn` | Marketing |
-| `sale@qps.vn` | Sale |
-| `customer@qps.vn` | Customer |
+| `admin@gmail.com` | Admin |
+| `expert@gmail.com` | Expert |
+| `marketing@gmail.com` | Marketing |
+| `sale@gmail.com` | Sale |
+| `customer@gmail.com` | Customer |
 
 Chưa có quiz, đăng ký môn, hoá đơn, bài làm, post: mỗi feature tự tạo qua màn của mình.
 

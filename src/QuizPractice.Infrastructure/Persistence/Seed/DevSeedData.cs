@@ -16,11 +16,11 @@ public sealed class DevSeedData
     /// <summary>Password of every sample account. Development only; also in the README.</summary>
     public const string Password = "Qps@12345";
 
-    public const string AdminEmail = "admin@qps.vn";
-    public const string ExpertEmail = "expert@qps.vn";
-    public const string MarketingEmail = "marketing@qps.vn";
-    public const string SaleEmail = "sale@qps.vn";
-    public const string CustomerEmail = "customer@qps.vn";
+    public const string AdminEmail = "admin@gmail.com";
+    public const string ExpertEmail = "expert@gmail.com";
+    public const string MarketingEmail = "marketing@gmail.com";
+    public const string SaleEmail = "sale@gmail.com";
+    public const string CustomerEmail = "customer@gmail.com";
 
     public List<Setting> Settings { get; } = [];
     public List<User> Users { get; } = [];
