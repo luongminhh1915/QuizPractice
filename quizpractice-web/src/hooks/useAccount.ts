@@ -30,6 +30,23 @@ export function useLogin() {
   })
 }
 
+/**
+ * UC-08. Whatever the answer, the page forgets the user: a session that had already
+ * expired (A1) is refused by the antiforgery check, and that must not keep anyone on
+ * screen as signed in. Reloading the account then hands out a fresh token.
+ */
+export function useLogout() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: accountApi.logout,
+    onSettled: () => {
+      queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== 'account' })
+      queryClient.setQueryData(keys.me, null)
+      void queryClient.invalidateQueries({ queryKey: keys.me })
+    },
+  })
+}
+
 export function useSendVerificationLink() {
   return useMutation({ mutationFn: (email: string) => accountApi.sendVerificationLink(email) })
 }

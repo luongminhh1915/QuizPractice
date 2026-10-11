@@ -24,6 +24,9 @@ export const accountApi = {
   /** UC-01. Answers with the user and the menu of the role. */
   login: (input: LoginInput) => http.post<CurrentUser>('/account/login', input).then((r) => r.data),
 
+  /** UC-08. Also succeeds when the session has already expired (A1). */
+  logout: () => http.post('/account/logout').then(() => undefined),
+
   /** UC-01 E2, UC-02 E3, UC-03 E1. The same answer whatever the email. */
   sendVerificationLink: (email: string) => http.post('/account/verification-link', { email }).then(() => undefined),
 }
