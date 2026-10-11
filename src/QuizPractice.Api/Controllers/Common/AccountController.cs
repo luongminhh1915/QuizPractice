@@ -1,11 +1,15 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using QuizPractice.Api.Auth;
+using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Common;
 using QuizPractice.Application.Services.Common;
+using QuizPractice.Domain.Constants;
+using QuizPractice.Domain.Enums;
 
 namespace QuizPractice.Api.Controllers.Common;
 
@@ -93,6 +97,20 @@ public class AccountController(IAccountService accounts) : ApiControllerBase
         return result.IsSuccess ? NoContent() : Problem(result.Error!);
     }
 
+    /// <summary>UC-06: the profile of the signed-in user.</summary>
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<ActionResult<ProfileDto>> Profile(CancellationToken ct) =>
+        FromResult(await accounts.GetProfileAsync(ct));
+
+    /// <summary>UC-06: the changed fields, with a new avatar or RemoveAvatar.</summary>
+    [HttpPut("profile")]
+    [Authorize]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(ProfileForm.Limit)]
+    public async Task<ActionResult<ProfileDto>> UpdateProfile([FromForm] ProfileForm form, CancellationToken ct) =>
+        FromResult(await accounts.UpdateProfileAsync(await form.ToRequestAsync(ct), ct));
+
     /// <summary>
     /// UC-08: ends the session. A1: a session that has already expired gets the same
     /// 204, so the page returns home without an error.
@@ -113,5 +131,35 @@ public class AccountController(IAccountService accounts) : ApiControllerBase
     {
         var result = await accounts.SendVerificationLinkAsync(request, ct);
         return result.IsSuccess ? NoContent() : Problem(result.Error!);
+    }
+}
+
+/// <summary>
+/// Transport shape of the User Profile form (UC-06). It exists only because IFormFile
+/// is an ASP.NET type that Application must not see; the rules live on SaveProfileRequest.
+/// </summary>
+public sealed class ProfileForm
+{
+    /// <summary>The 2 MB avatar of BR-17 plus the text fields.</summary>
+    public const long Limit = FieldLength.ImageMaxBytes + 64 * 1024;
+
+    public string FullName { get; set; } = string.Empty;
+    public Gender? Gender { get; set; }
+    public string Mobile { get; set; } = string.Empty;
+    public IFormFile? Avatar { get; set; }
+    public bool RemoveAvatar { get; set; }
+
+    public async Task<SaveProfileRequest> ToRequestAsync(CancellationToken ct)
+    {
+        FileUpload? avatar = null;
+        if (Avatar is not null)
+        {
+            // Buffered so the validator can read the signature and rewind.
+            var buffer = new MemoryStream();
+            await Avatar.CopyToAsync(buffer, ct);
+            avatar = new FileUpload(buffer, Avatar.FileName, Avatar.Length);
+        }
+
+        return new SaveProfileRequest(FullName, Gender, Mobile, avatar, RemoveAvatar);
     }
 }
