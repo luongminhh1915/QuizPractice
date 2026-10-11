@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Marketing;
@@ -10,10 +11,9 @@ namespace QuizPractice.Api.Controllers.Marketing;
 
 /// <summary>
 /// Posts List and Post Details (PDF II.5, F#20; UC-35 to UC-37).
-/// TODO(auth): restrict to the Marketing role once cookie sign-in and the role table
-/// (BR-03, D23) are in place. Until then the endpoints are open — development only.
 /// </summary>
 [Route("api/posts")]
+[Authorize(Policy = SettingValues.MenuItems.Posts)]
 public class PostsController(IPostService posts) : ApiControllerBase
 {
     /// <summary>The 2 MB thumbnail of BR-17 plus a body of up to 20,000 characters (UTF-8, up to 4 bytes each).</summary>

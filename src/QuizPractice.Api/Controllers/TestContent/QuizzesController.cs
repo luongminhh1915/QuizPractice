@@ -1,16 +1,18 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuizPractice.Application.Dtos.TestContent;
 using QuizPractice.Application.Services.TestContent;
 using QuizPractice.Domain.Common;
+using QuizPractice.Domain.Constants;
 
 namespace QuizPractice.Api.Controllers.TestContent;
 
 /// <summary>
 /// Quizzes List and Quiz Details (PDF II.7, F#33, F#34; UC-56 to UC-58). The service already refuses every role but the
 /// Admin and the Expert, and limits an Expert to the assigned subjects (BR-11).
-/// TODO(auth): add the role attribute once cookie sign-in and the role table (BR-03, D23) are in place.
 /// </summary>
 [Route("api/quizzes")]
+[Authorize(Policy = SettingValues.MenuItems.Quizzes)]
 public class QuizzesController(IQuizService quizzes) : ApiControllerBase
 {
     [HttpGet]

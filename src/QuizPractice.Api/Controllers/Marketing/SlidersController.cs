@@ -11,10 +11,10 @@ namespace QuizPractice.Api.Controllers.Marketing;
 
 /// <summary>
 /// Sliders List and Slider Details (F#21, F#22; UC-38 to UC-40).
-/// TODO(auth): restrict to the Marketing role once cookie sign-in and the role table
-/// (BR-03, D23) are in place. Until then the endpoints are open — development only.
+/// The carousel of the Home Page has its own open endpoint (UC-09).
 /// </summary>
 [Route("api/sliders")]
+[Authorize(Policy = SettingValues.MenuItems.Sliders)]
 public class SlidersController(ISliderService sliders) : ApiControllerBase
 {
     /// <summary>Upload limit of the form: the 2 MB image of BR-17 plus the text fields.</summary>

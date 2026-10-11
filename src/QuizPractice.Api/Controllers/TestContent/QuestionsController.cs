@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuizPractice.Api.Controllers.Marketing;
 using QuizPractice.Application.Common;
@@ -12,9 +13,9 @@ namespace QuizPractice.Api.Controllers.TestContent;
 /// <summary>
 /// Questions List, Question Details and Question Import (PDF II.7, F#30 to F#32; UC-52 to UC-55). The service already refuses every role but the
 /// Admin and the Expert, and limits an Expert to the assigned subjects (BR-11).
-/// TODO(auth): add the role attribute once cookie sign-in and the role table (BR-03, D23) are in place.
 /// </summary>
 [Route("api/questions")]
+[Authorize(Policy = SettingValues.MenuItems.Questions)]
 public class QuestionsController(IQuestionService questions, IQuestionImportService imports) : ApiControllerBase
 {
     /// <summary>The largest media file (an MP4, UC-53 E3) plus the text of the form.</summary>

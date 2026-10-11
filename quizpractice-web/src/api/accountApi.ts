@@ -7,6 +7,8 @@ export interface CurrentUser {
   fullName: string
   role: string
   avatar: string | null
+  /** System Menu items the role may open, in display order (D23). */
+  menu: string[]
 }
 
 /** /api/account — the caller's own account (Common feature, UC-01 to UC-08). */

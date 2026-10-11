@@ -26,7 +26,7 @@ builder.Services.AddInfrastructure(connectionString,
     Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 
 builder.Services.AddCookieSignIn();
-builder.Services.AddAuthorization();
+builder.Services.AddPermissionTable(builder.Configuration);
 
 // Signs the sign-in cookie and the links of the account mails. Kept on disk: with
 // keys only in memory, every restart would sign everyone out and kill every link

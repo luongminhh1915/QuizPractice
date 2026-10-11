@@ -69,20 +69,20 @@ public sealed class DevSeedData
 
         // Labels only; who sees an item is the authorization map of the configuration (D23).
         Add(SettingType.SystemMenu,
-            Menu("Dashboard", "the dashboard of the role"),
-            Menu("Posts", "Posts List"),
-            Menu("Sliders", "Sliders List"),
-            Menu("Registrations", "Registrations List"),
-            Menu("Invoices", "Invoices List"),
-            Menu("Subjects", "Subject Management List"),
-            Menu("Questions", "Questions List"),
-            Menu("Quizzes", "Quizzes List"),
-            Menu("Users", "Users List"),
-            Menu("Settings", "Settings List"),
-            Menu("My Registrations", "My Registrations"),
-            Menu("Practices", "Practices List"),
-            Menu("Simulation Exams", "Simulation Exams"),
-            Menu("My Invoices", "My Invoices"));
+            Menu(SettingValues.MenuItems.Dashboard, "the dashboard of the role"),
+            Menu(SettingValues.MenuItems.Posts, "Posts List"),
+            Menu(SettingValues.MenuItems.Sliders, "Sliders List"),
+            Menu(SettingValues.MenuItems.Registrations, "Registrations List"),
+            Menu(SettingValues.MenuItems.Invoices, "Invoices List"),
+            Menu(SettingValues.MenuItems.Subjects, "Subject Management List"),
+            Menu(SettingValues.MenuItems.Questions, "Questions List"),
+            Menu(SettingValues.MenuItems.Quizzes, "Quizzes List"),
+            Menu(SettingValues.MenuItems.Users, "Users List"),
+            Menu(SettingValues.MenuItems.Settings, "Settings List"),
+            Menu(SettingValues.MenuItems.MyRegistrations, "My Registrations"),
+            Menu(SettingValues.MenuItems.Practices, "Practices List"),
+            Menu(SettingValues.MenuItems.SimulationExams, "Simulation Exams"),
+            Menu(SettingValues.MenuItems.MyInvoices, "My Invoices"));
 
         Add(SettingType.PostCategory,
             ("Study Tips", null), ("Exam Guides", null), ("News", null), ("Career", null));
