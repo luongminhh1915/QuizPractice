@@ -30,7 +30,7 @@ body {
   background: #f5f5f5;
 }
 
-/* Body of a post on Blog Details (pages/public/BlogDetailsPage.tsx). */
+/* Body of a post on Blog Details and the description on Subject Details (pages/public/). */
 .post-content {
   font-size: 15px;
   line-height: 1.7;

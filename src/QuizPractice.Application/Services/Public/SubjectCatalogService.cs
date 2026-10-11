@@ -1,4 +1,5 @@
 using FluentValidation;
+using QuizPractice.Application.Abstractions;
 using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Public;
 using QuizPractice.Application.Validators;
@@ -15,6 +16,7 @@ namespace QuizPractice.Application.Services.Public;
 public class SubjectCatalogService(
     ISubjectRepository subjects,
     ISettingRepository settings,
+    IHtmlSanitizer sanitizer,
     IValidator<SubjectListRequest> listValidator) : ISubjectCatalogService
 {
     public const int SiderFeaturedCount = 5;
@@ -36,9 +38,14 @@ public class SubjectCatalogService(
     {
         // An unpublished subject answers like a missing one (E1).
         var subject = await subjects.GetPublishedAsync(id, ct);
-        return subject is null
-            ? new Error(ErrorType.NotFound, "Subject.NotAvailable", "This subject is not available.")
-            : SubjectDetailsDto.From(subject);
+        if (subject is null)
+        {
+            return new Error(ErrorType.NotFound, "Subject.NotAvailable", "This subject is not available.");
+        }
+
+        // The description is HTML. It is cleaned here, on the way out, so the public page is
+        // safe whatever wrote it: the seed today, Subject Details (UC-44) later.
+        return SubjectDetailsDto.From(subject) with { Description = sanitizer.Sanitize(subject.Description) };
     }
 
     public async Task<SubjectSiderDto> GetSiderAsync(CancellationToken ct = default)

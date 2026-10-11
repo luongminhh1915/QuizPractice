@@ -20,6 +20,11 @@ export function useSubjects(criteria: SubjectCriteria) {
   })
 }
 
+/** UC-13. Not retried: a 404 sends the visitor back to the list at once (E1). */
+export function useSubject(id: number) {
+  return useQuery({ queryKey: ['public', 'subjects', 'detail', id], queryFn: () => publicApi.subject(id), staleTime: STALE, retry: false })
+}
+
 export function useSubjectSider() {
   return useQuery({ queryKey: ['public', 'subjects', 'sider'], queryFn: publicApi.subjectSider, staleTime: STALE })
 }

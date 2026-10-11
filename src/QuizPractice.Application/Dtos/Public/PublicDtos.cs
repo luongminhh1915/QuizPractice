@@ -64,7 +64,7 @@ public sealed record BlogPostDto(
             DateTime.SpecifyKind(p.UpdatedAt, DateTimeKind.Utc));
 }
 
-/// <summary>Subject Details (UC-13): what a visitor reads before registering.</summary>
+/// <summary>Subject Details (UC-13): what a visitor reads before registering. Description is cleaned HTML.</summary>
 public sealed record SubjectDetailsDto(
     int Id,
     string Name,

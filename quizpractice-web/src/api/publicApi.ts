@@ -45,6 +45,19 @@ export interface BlogCriteria {
   categoryId?: number
 }
 
+/** Matches SubjectDetailsDto (UC-13). description is HTML cleaned by the API. */
+export interface SubjectDetails {
+  id: number
+  name: string
+  tagline: string | null
+  thumbnail: string
+  brief: string
+  description: string
+  categoryId: number
+  category: string
+  lowestPrice: Price | null
+}
+
 /** Criteria of Subjects List (UC-12). */
 export interface SubjectCriteria {
   page: number
@@ -93,6 +106,9 @@ export const publicApi = {
   /** UC-12: a page of published subjects, each with its cheapest active package. */
   subjects: (criteria: SubjectCriteria) =>
     http.get<Page<SubjectCard>>('/public/subjects', { params: criteria }).then((r) => r.data),
+
+  /** UC-13. 404 when the subject does not exist or is not published (E1). */
+  subject: (id: number) => http.get<SubjectDetails>(`/public/subjects/${id}`).then((r) => r.data),
 
   /** The sider of both subject pages. */
   subjectSider: () => http.get<SubjectSider>('/public/subjects/sider').then((r) => r.data),
