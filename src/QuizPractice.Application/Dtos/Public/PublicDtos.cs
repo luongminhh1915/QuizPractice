@@ -64,6 +64,12 @@ public sealed record BlogPostDto(
             DateTime.SpecifyKind(p.UpdatedAt, DateTimeKind.Utc));
 }
 
+/// <summary>Criteria of Subjects List (UC-12). Nine a page: three rows of three cards.</summary>
+public sealed record SubjectListRequest(string? Search = null, int? CategoryId = null, int Page = 1, int PageSize = 9);
+
+/// <summary>The sider of Subjects List and Subject Details: active subject categories and the featured subjects.</summary>
+public sealed record SubjectSiderDto(IReadOnlyList<CategoryDto> Categories, IReadOnlyList<SubjectCardDto> FeaturedSubjects);
+
 /// <summary>Home Page (UC-09): the blocks besides the sliders, which have their own endpoint.</summary>
 public sealed record HomeDto(
     IReadOnlyList<PostCardDto> HotPosts,
