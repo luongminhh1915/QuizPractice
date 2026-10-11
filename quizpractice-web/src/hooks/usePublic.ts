@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { publicApi, type BlogCriteria } from '../api/publicApi'
+import { publicApi, type BlogCriteria, type SubjectCriteria } from '../api/publicApi'
 
 // ['public', ...] holds what the public pages show. It changes only when a Marketing
 // or Admin user edits something, so a minute without reloading is fine.
@@ -8,6 +8,20 @@ const STALE = 60 * 1000
 /** UC-09. */
 export function useHome() {
   return useQuery({ queryKey: ['public', 'home'], queryFn: publicApi.home, staleTime: STALE })
+}
+
+/** UC-12. */
+export function useSubjects(criteria: SubjectCriteria) {
+  return useQuery({
+    queryKey: ['public', 'subjects', criteria],
+    queryFn: () => publicApi.subjects(criteria),
+    staleTime: STALE,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useSubjectSider() {
+  return useQuery({ queryKey: ['public', 'subjects', 'sider'], queryFn: publicApi.subjectSider, staleTime: STALE })
 }
 
 /** UC-10. */

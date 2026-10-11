@@ -45,6 +45,20 @@ export interface BlogCriteria {
   categoryId?: number
 }
 
+/** Criteria of Subjects List (UC-12). */
+export interface SubjectCriteria {
+  page: number
+  pageSize: number
+  search?: string
+  categoryId?: number
+}
+
+/** Matches SubjectSiderDto. */
+export interface SubjectSider {
+  categories: Category[]
+  featuredSubjects: SubjectCard[]
+}
+
 /** Matches BlogSiderDto. */
 export interface BlogSider {
   categories: Category[]
@@ -75,6 +89,13 @@ export interface Home {
 export const publicApi = {
   /** UC-09: the blocks of the Home Page besides the sliders. */
   home: () => http.get<Home>('/public/home').then((r) => r.data),
+
+  /** UC-12: a page of published subjects, each with its cheapest active package. */
+  subjects: (criteria: SubjectCriteria) =>
+    http.get<Page<SubjectCard>>('/public/subjects', { params: criteria }).then((r) => r.data),
+
+  /** The sider of both subject pages. */
+  subjectSider: () => http.get<SubjectSider>('/public/subjects/sider').then((r) => r.data),
 
   /** UC-10: a page of shown posts. */
   blogs: (criteria: BlogCriteria) => http.get<Page<PostCard>>('/public/blogs', { params: criteria }).then((r) => r.data),

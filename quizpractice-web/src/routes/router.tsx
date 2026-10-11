@@ -13,6 +13,7 @@ import { SlidersListPage } from '../pages/marketing/SlidersListPage'
 import { BlogDetailsPage } from '../pages/public/BlogDetailsPage'
 import { BlogsListPage } from '../pages/public/BlogsListPage'
 import { HomePage } from '../pages/public/HomePage'
+import { SubjectsListPage } from '../pages/public/SubjectsListPage'
 import { QuestionDetailsPage } from '../pages/testcontent/QuestionDetailsPage'
 import { QuestionsListPage } from '../pages/testcontent/QuestionsListPage'
 import { QuizDetailsPage } from '../pages/testcontent/QuizDetailsPage'
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
         element: <PublicLayout />,
         children: [
           { path: '/', element: <HomePage /> },
+          { path: '/subjects', element: <SubjectsListPage /> },
           { path: '/blogs', element: <BlogsListPage /> },
           { path: '/blogs/:id', element: <BlogDetailsPage /> },
           { path: '/verify-email', element: <VerifyEmailPage /> },
