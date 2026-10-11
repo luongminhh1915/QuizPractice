@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { AccountModalsContext, type AccountModal } from './accountModalContext'
 import { LoginModal } from './LoginModal'
+import { ProfileModal } from './ProfileModal'
 import { RegisterModal } from './RegisterModal'
 
 /**
@@ -16,6 +17,7 @@ export function AccountModals({ children }: { children: ReactNode }) {
       {children}
       <LoginModal open={open === 'login'} onClose={close} />
       <RegisterModal open={open === 'register'} onClose={close} />
+      <ProfileModal open={open === 'profile'} onClose={close} />
     </AccountModalsContext.Provider>
   )
 }

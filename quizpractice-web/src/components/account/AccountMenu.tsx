@@ -36,11 +36,13 @@ export function AccountMenu({ area }: { area: 'public' | 'manage' }) {
     ...(area === 'public' && home
       ? [{ key: 'manage', icon: <AppstoreOutlined />, label: <Link to={home}>Management</Link> }]
       : []),
+    { key: 'profile', icon: <UserOutlined />, label: 'User Profile' },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, label: 'Logout' },
   ]
 
   const onMenuClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'profile') openModal('profile')
     // UC-08: back to the public home page with the guest menu.
     if (key === 'logout') {
       logout.mutate(undefined, {

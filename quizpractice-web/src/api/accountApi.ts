@@ -39,6 +39,34 @@ export interface NewPasswordInput {
   confirmPassword: string
 }
 
+/** Matches ProfileDto of the API (UC-06). */
+export interface Profile {
+  email: string
+  fullName: string
+  gender: Gender
+  mobile: string
+  avatar: string | null
+}
+
+/** User Profile form (UC-06). avatar is a new picture; removeAvatar clears the stored one. */
+export interface ProfileInput {
+  fullName: string
+  gender: Gender
+  mobile: string
+  avatar?: File
+  removeAvatar: boolean
+}
+
+function profileFormData(input: ProfileInput): FormData {
+  const data = new FormData()
+  data.append('fullName', input.fullName)
+  data.append('gender', input.gender)
+  data.append('mobile', input.mobile)
+  if (input.avatar) data.append('avatar', input.avatar)
+  if (input.removeAvatar) data.append('removeAvatar', 'true')
+  return data
+}
+
 /** /api/account — the caller's own account (Common feature, UC-01 to UC-08). */
 export const accountApi = {
   /** Signed-in user, or null for a Guest (204). Also hands out the antiforgery token. */
@@ -63,6 +91,12 @@ export const accountApi = {
   /** UC-05. */
   resetPassword: (token: string, input: NewPasswordInput) =>
     http.post('/account/password-reset', { token, ...input }).then(() => undefined),
+
+  /** UC-06. */
+  profile: () => http.get<Profile>('/account/profile').then((r) => r.data),
+
+  /** UC-06. Answers with the stored profile. */
+  saveProfile: (input: ProfileInput) => http.put<Profile>('/account/profile', profileFormData(input)).then((r) => r.data),
 
   /** UC-08. Also succeeds when the session has already expired (A1). */
   logout: () => http.post('/account/logout').then(() => undefined),

@@ -1,10 +1,18 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { accountApi, type CurrentUser, type LoginInput, type NewPasswordInput, type RegisterInput } from '../api/accountApi'
+import {
+  accountApi,
+  type CurrentUser,
+  type LoginInput,
+  type NewPasswordInput,
+  type ProfileInput,
+  type RegisterInput,
+} from '../api/accountApi'
 
 // ['account'] holds who is signed in. Signing in or out refetches it, which also
 // renews the antiforgery token for the new user.
 const keys = {
   me: ['account', 'me'] as const,
+  profile: ['account', 'profile'] as const,
 }
 
 /** The signed-in user; data is null for a Guest. Both layouts call it, so it loads on every page. */
@@ -71,6 +79,23 @@ export function useResetLinkCheck(token: string) {
 
 export function useResetPassword(token: string) {
   return useMutation({ mutationFn: (input: NewPasswordInput) => accountApi.resetPassword(token, input) })
+}
+
+/** UC-06: loads while the pop-up is open. */
+export function useProfile(open: boolean) {
+  return useQuery({ queryKey: keys.profile, queryFn: accountApi.profile, enabled: open })
+}
+
+/** UC-06. The header shows the name and avatar too, so the account is reloaded with the profile. */
+export function useSaveProfile() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ProfileInput) => accountApi.saveProfile(input),
+    onSuccess: (profile) => {
+      queryClient.setQueryData(keys.profile, profile)
+      void queryClient.invalidateQueries({ queryKey: keys.me })
+    },
+  })
 }
 
 export function useSendVerificationLink() {
