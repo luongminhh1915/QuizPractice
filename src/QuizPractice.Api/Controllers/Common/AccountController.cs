@@ -50,6 +50,15 @@ public class AccountController(IAccountService accounts) : ApiControllerBase
         return Ok(await accounts.GetCurrentAsync(ct));
     }
 
+    /// <summary>UC-02: 201 with the email the verification link went to.</summary>
+    [HttpPost("register")]
+    [EnableRateLimiting(AccountRateLimit.Policy)]
+    public async Task<ActionResult<RegisteredDto>> Register(RegisterRequest request, CancellationToken ct)
+    {
+        var result = await accounts.RegisterAsync(request, ct);
+        return result.IsSuccess ? StatusCode(StatusCodes.Status201Created, result.Value) : Problem(result.Error!);
+    }
+
     /// <summary>
     /// UC-08: ends the session. A1: a session that has already expired gets the same
     /// 204, so the page returns home without an error.
