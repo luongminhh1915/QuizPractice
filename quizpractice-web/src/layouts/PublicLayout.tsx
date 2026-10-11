@@ -1,5 +1,6 @@
-import { Button, Flex, Layout, Menu, Space, Typography } from 'antd'
+import { Flex, Layout, Menu, Typography } from 'antd'
 import { Link, Outlet, useLocation } from 'react-router'
+import { AccountMenu } from '../components/account/AccountMenu'
 import { useCurrentUser } from '../hooks/useAccount'
 
 const { Header, Content, Footer } = Layout
@@ -36,12 +37,7 @@ export function PublicLayout() {
             items={PUBLIC_MENU.map((m) => ({ key: m.key, label: <Link to={m.key}>{m.label}</Link> }))}
             style={{ flex: 1, borderBottom: 0 }}
           />
-          {/* TODO(auth): a signed-in user sees My Learning and the account menu here. */}
-          <Space>
-            <Button>Login</Button>
-            <Button type="primary">Register</Button>
-            <Link to="/manage/sliders">Management</Link>
-          </Space>
+          <AccountMenu area="public" />
         </Flex>
       </Header>
       <Content style={{ padding: '24px 32px', maxWidth: 1200, width: '100%', margin: '0 auto' }}>

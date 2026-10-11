@@ -1,14 +1,13 @@
-import { Avatar, Breadcrumb, Dropdown, Flex, Layout, Menu, Typography } from 'antd'
+import { Breadcrumb, Flex, Layout, Menu, Typography } from 'antd'
 import {
   DashboardOutlined,
   FileTextOutlined,
   FormOutlined,
-  LogoutOutlined,
   PictureOutlined,
   QuestionCircleOutlined,
-  UserOutlined,
 } from '@ant-design/icons'
 import { Link, Outlet, useLocation } from 'react-router'
+import { AccountMenu } from '../components/account/AccountMenu'
 import { useCurrentUser } from '../hooks/useAccount'
 
 const { Header, Sider, Content } = Layout
@@ -71,22 +70,7 @@ export function ManagementLayout() {
         <Header style={{ background: '#fff', padding: '0 24px', borderBottom: '1px solid #f0f0f0' }}>
           <Flex justify="space-between" align="center" style={{ height: '100%' }}>
             <Breadcrumb items={crumbs} />
-            {/* TODO(auth): email and role of the signed-in user (UC-06, UC-07, UC-08). */}
-            <Dropdown
-              menu={{
-                items: [
-                  { key: 'profile', icon: <UserOutlined />, label: 'User Profile' },
-                  { key: 'password', label: 'Change Password' },
-                  { type: 'divider' },
-                  { key: 'logout', icon: <LogoutOutlined />, label: 'Logout' },
-                ],
-              }}
-            >
-              <Flex gap={8} align="center" style={{ cursor: 'pointer' }}>
-                <Avatar size="small" icon={<UserOutlined />} />
-                <span>marketing@quizpractice.vn · Marketing</span>
-              </Flex>
-            </Dropdown>
+            <AccountMenu area="manage" />
           </Flex>
         </Header>
         <Content style={{ margin: 24 }}>

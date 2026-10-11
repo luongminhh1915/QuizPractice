@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router'
+import { AppShell } from '../layouts/AppShell'
 import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
@@ -23,30 +24,35 @@ import { QuizzesListPage } from '../pages/testcontent/QuizzesListPage'
  */
 export const router = createBrowserRouter([
   {
-    element: <PublicLayout />,
+    element: <AppShell />,
     children: [
-      { path: '/', element: <HomePage /> },
-      { path: '*', element: <NotFoundPage /> },
-    ],
-  },
-  {
-    path: '/manage',
-    element: <ManagementLayout />,
-    children: [
-      { path: 'dashboard', element: <DashboardPage /> },
-      { path: 'posts', element: <PostsListPage /> },
-      { path: 'posts/new', element: <PostDetailsPage /> },
-      { path: 'posts/:id', element: <PostDetailsPage /> },
-      { path: 'sliders', element: <SlidersListPage /> },
-      { path: 'sliders/new', element: <SliderDetailsPage /> },
-      { path: 'sliders/:id', element: <SliderDetailsPage /> },
-      { path: 'questions', element: <QuestionsListPage /> },
-      { path: 'questions/new', element: <QuestionDetailsPage /> },
-      { path: 'questions/:id', element: <QuestionDetailsPage /> },
-      { path: 'quizzes', element: <QuizzesListPage /> },
-      { path: 'quizzes/new', element: <QuizDetailsPage /> },
-      { path: 'quizzes/:id', element: <QuizDetailsPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      {
+        element: <PublicLayout />,
+        children: [
+          { path: '/', element: <HomePage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
+      {
+        path: '/manage',
+        element: <ManagementLayout />,
+        children: [
+          { path: 'dashboard', element: <DashboardPage /> },
+          { path: 'posts', element: <PostsListPage /> },
+          { path: 'posts/new', element: <PostDetailsPage /> },
+          { path: 'posts/:id', element: <PostDetailsPage /> },
+          { path: 'sliders', element: <SlidersListPage /> },
+          { path: 'sliders/new', element: <SliderDetailsPage /> },
+          { path: 'sliders/:id', element: <SliderDetailsPage /> },
+          { path: 'questions', element: <QuestionsListPage /> },
+          { path: 'questions/new', element: <QuestionDetailsPage /> },
+          { path: 'questions/:id', element: <QuestionDetailsPage /> },
+          { path: 'quizzes', element: <QuizzesListPage /> },
+          { path: 'quizzes/new', element: <QuizDetailsPage /> },
+          { path: 'quizzes/:id', element: <QuizDetailsPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 ])
