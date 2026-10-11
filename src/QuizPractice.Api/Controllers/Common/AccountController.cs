@@ -59,6 +59,11 @@ public class AccountController(IAccountService accounts) : ApiControllerBase
         return result.IsSuccess ? StatusCode(StatusCodes.Status201Created, result.Value) : Problem(result.Error!);
     }
 
+    /// <summary>UC-03: the page posts the token of the link; 400 Link.Invalid for E1.</summary>
+    [HttpPost("verify")]
+    public async Task<ActionResult<VerifyEmailDto>> VerifyEmail(VerifyEmailRequest request, CancellationToken ct) =>
+        FromResult(await accounts.VerifyEmailAsync(request, ct));
+
     /// <summary>
     /// UC-08: ends the session. A1: a session that has already expired gets the same
     /// 204, so the page returns home without an error.
