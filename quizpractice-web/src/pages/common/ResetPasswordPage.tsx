@@ -1,20 +1,83 @@
 import { useState } from 'react'
-import { Alert, Button, Card, Flex, Form, Input, Result, Typography } from 'antd'
-import { errorMessage } from '../../api/client'
+import { Alert, App, Button, Card, Flex, Form, Input, Result, Space, Spin, Typography } from 'antd'
+import { useNavigate, useSearchParams } from 'react-router'
+import type { NewPasswordInput } from '../../api/accountApi'
+import { applyFieldErrors, errorMessage, problemOf } from '../../api/client'
 import { useOpenAccountModal } from '../../components/account/accountModalContext'
-import { useSendPasswordResetLink } from '../../hooks/useAccount'
+import { NewPasswordFields } from '../../components/account/NewPasswordFields'
+import { useResetLinkCheck, useResetPassword, useSendPasswordResetLink } from '../../hooks/useAccount'
 
 /**
- * Reset Password (SRS III 1.3; F#3). The request form, opened from the login pop-up
- * (UC-04).
+ * Reset Password (SRS III 1.3; F#3). Two views of one page: the request form, opened
+ * from the login pop-up (UC-04), and the new password form, opened from the link in
+ * the mailbox, /reset-password?token=… (UC-05).
  */
 export function ResetPasswordPage() {
+  const [params] = useSearchParams()
+  const token = params.get('token') ?? ''
+
   return (
     <Flex justify="center" style={{ paddingTop: 48 }}>
       <Card title="Reset Password" style={{ width: 440 }}>
-        <RequestLinkForm />
+        {token ? <NewPasswordForm key={token} token={token} /> : <RequestLinkForm />}
       </Card>
     </Flex>
+  )
+}
+
+/** UC-05: the link is checked first (step 2); the form only shows for a link that still works. */
+function NewPasswordForm({ token }: { token: string }) {
+  const { message } = App.useApp()
+  const navigate = useNavigate()
+  const openModal = useOpenAccountModal()
+  const [form] = Form.useForm<NewPasswordInput>()
+  const check = useResetLinkCheck(token)
+  const reset = useResetPassword(token)
+  const [linkDead, setLinkDead] = useState(false)
+
+  if (check.isPending) return <Spin description="Checking the link…" style={{ display: 'block', padding: 32 }} />
+
+  // E1: expired, already used, or ended by another link that set a password (A1 of UC-04).
+  if (check.isError || linkDead) {
+    return (
+      <Result
+        status="error"
+        title="This reset link no longer works"
+        subTitle="It has expired or has already been used. Ask for a new one."
+        extra={
+          <Button type="primary" onClick={() => navigate('/reset-password')}>
+            Ask for a new link
+          </Button>
+        }
+      />
+    )
+  }
+
+  const onFinish = (values: NewPasswordInput) =>
+    reset.mutate(values, {
+      onSuccess: () => {
+        message.success('Your password has been changed. Log in with the new one.')
+        navigate('/')
+        openModal('login')
+      },
+      onError: (e) => {
+        if (problemOf(e)?.code === 'Link.Invalid') setLinkDead(true)
+        else if (!applyFieldErrors(form, e)) message.error(errorMessage(e))
+      },
+    })
+
+  return (
+    <Form<NewPasswordInput> form={form} layout="vertical" onFinish={onFinish}>
+      <NewPasswordFields />
+      <Flex justify="end">
+        <Space>
+          <Button onClick={() => navigate('/')}>Cancel</Button>
+          <Button type="primary" htmlType="submit" loading={reset.isPending}>
+            Save Password
+          </Button>
+        </Space>
+      </Flex>
+    </Form>
   )
 }
 

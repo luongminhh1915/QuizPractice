@@ -33,6 +33,12 @@ export interface VerifyEmailResult {
   passwordSent: boolean
 }
 
+/** New password form (UC-05, UC-07). */
+export interface NewPasswordInput {
+  newPassword: string
+  confirmPassword: string
+}
+
 /** /api/account — the caller's own account (Common feature, UC-01 to UC-08). */
 export const accountApi = {
   /** Signed-in user, or null for a Guest (204). Also hands out the antiforgery token. */
@@ -50,6 +56,13 @@ export const accountApi = {
   /** UC-04. The same answer whatever the email; 502 when the mail could not be sent (E1). */
   sendPasswordResetLink: (email: string) =>
     http.post('/account/password-reset-link', { email }).then(() => undefined),
+
+  /** UC-05 step 2. 400 Link.Invalid when the link is not genuine, has expired or was used (E1). */
+  checkResetLink: (token: string) => http.post('/account/password-reset/check', { token }).then(() => true),
+
+  /** UC-05. */
+  resetPassword: (token: string, input: NewPasswordInput) =>
+    http.post('/account/password-reset', { token, ...input }).then(() => undefined),
 
   /** UC-08. Also succeeds when the session has already expired (A1). */
   logout: () => http.post('/account/logout').then(() => undefined),

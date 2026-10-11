@@ -6,6 +6,10 @@
 export const FULL_NAME_MIN = 2
 export const FULL_NAME_MAX = 100
 export const MOBILE_PATTERN = /^0[0-9]{9}$/
+/** A password the user sets (UC-05, UC-07): 8 to 64 characters, a letter and a digit. */
+export const PASSWORD_MIN = 8
+export const PASSWORD_MAX = 64
+export const PASSWORD_PATTERN = /^(?=.*\p{L})(?=.*\d)/u
 
 export const NAME_MAX = 200
 export const BRIEF_MAX = 500

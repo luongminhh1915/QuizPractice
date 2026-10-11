@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { accountApi, type CurrentUser, type LoginInput, type RegisterInput } from '../api/accountApi'
+import { accountApi, type CurrentUser, type LoginInput, type NewPasswordInput, type RegisterInput } from '../api/accountApi'
 
 // ['account'] holds who is signed in. Signing in or out refetches it, which also
 // renews the antiforgery token for the new user.
@@ -57,6 +57,20 @@ export function useVerifyEmail() {
 
 export function useSendPasswordResetLink() {
   return useMutation({ mutationFn: (email: string) => accountApi.sendPasswordResetLink(email) })
+}
+
+/** UC-05 step 2: whether the reset link still works, before the form is shown. */
+export function useResetLinkCheck(token: string) {
+  return useQuery({
+    queryKey: ['account', 'reset-link', token],
+    queryFn: () => accountApi.checkResetLink(token),
+    enabled: token !== '',
+    retry: false,
+  })
+}
+
+export function useResetPassword(token: string) {
+  return useMutation({ mutationFn: (input: NewPasswordInput) => accountApi.resetPassword(token, input) })
 }
 
 export function useSendVerificationLink() {
