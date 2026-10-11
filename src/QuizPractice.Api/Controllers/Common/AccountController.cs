@@ -65,6 +65,18 @@ public class AccountController(IAccountService accounts) : ApiControllerBase
         FromResult(await accounts.VerifyEmailAsync(request, ct));
 
     /// <summary>
+    /// UC-04: 204 whether or not the email has an account (step 6); 502 Mail.NotSent
+    /// when the mail could not be sent (E1).
+    /// </summary>
+    [HttpPost("password-reset-link")]
+    [EnableRateLimiting(AccountRateLimit.Policy)]
+    public async Task<IActionResult> SendPasswordResetLink(PasswordResetLinkRequest request, CancellationToken ct)
+    {
+        var result = await accounts.SendPasswordResetLinkAsync(request, ct);
+        return result.IsSuccess ? NoContent() : Problem(result.Error!);
+    }
+
+    /// <summary>
     /// UC-08: ends the session. A1: a session that has already expired gets the same
     /// 204, so the page returns home without an error.
     /// </summary>
