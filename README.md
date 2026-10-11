@@ -55,13 +55,9 @@ Lần đầu API chạy ở môi trường Development trên database đã migra
 
 Chưa có quiz, đăng ký môn, hoá đơn, bài làm, post: mỗi feature tự tạo qua màn của mình.
 
-**Người dùng giả lập.** Chưa có đăng nhập, nên service hỏi "ai đang gọi" qua `ICurrentUser` (`Application/Abstractions`) và bản Development đọc mục `DevUser` trong `appsettings.Development.json`:
+**Đổi góc nhìn = đăng nhập tài khoản khác.** Bấm **Login** trên header, dùng một tài khoản ở bảng trên. Marketing, Sale, Admin vào Dashboard; Expert vào Questions; Customer ở lại trang đang xem và có menu **My Learning**. Mục `DevUser` cũ trong `appsettings.Development.json` không còn được đọc, xoá đi cũng được.
 
-```json
-"DevUser": { "Role": "Expert", "Email": "" }
-```
-
-Chỉ cần `Role`: API lấy tài khoản Active đầu tiên của role đó. Điền thêm `Email` để chọn một tài khoản cụ thể (role phải khớp, sai thì API dừng và nói rõ). Đổi xong thì chạy lại API; log khởi động in `Development user: expert@qps.vn (Expert, user_id 2)`. Ví dụ: đặt Expert để thấy Expert không xem được câu hỏi môn SQL. Khi phần Common (Kiệt) có đăng nhập bằng cookie, bản này được thay, code service không đổi.
+**Mail ở máy dev.** Mục `Email:Host` trong `appsettings.json` để trống, nên không mail nào ra khỏi máy: mỗi mail (link xác thực, mật khẩu, link đặt lại mật khẩu) là một file `.eml` trong `src/QuizPractice.Api/App_Data/mails/`. Mở bằng Outlook hoặc Notepad rồi bấm link. Muốn gửi thật thì điền `Email:Host`, `Port`, `UserName`, `Password` vào `appsettings.Development.json`, **không** vào `appsettings.json`.
 
 **Muốn seed lại từ đầu** (xoá **toàn bộ** dữ liệu trên máy mình):
 
@@ -170,6 +166,23 @@ Không phải sửa `Program.cs` hay `DependencyInjection.cs` khi thêm service 
 - Giá trị setting mà code phải nhận ra (role, loại bài học Subject Topic / Lesson / Quiz, loại quiz Simulation / Lesson quiz) là hằng số ở `Domain/Constants/Roles.cs` và `SettingValues.cs`. So với hằng số, đừng gõ chuỗi. Đổi tên các giá trị này ở màn Settings là hỏng hành vi đọc chúng.
 - Độ dài và giới hạn của BR-17 nằm ở `Domain/Constants/FieldLength.cs`. Thầy duyệt OI-11 mà đổi số thì sửa ở đó một lần rồi tạo migration.
 
+## Đăng nhập và phân quyền
+
+- **Cookie** `qps.auth` (HttpOnly, đóng trình duyệt là hết, 8 giờ tự gia hạn khi đang dùng). Mỗi request API kiểm lại tài khoản còn Active và đúng role; Admin khoá tài khoản là người đó bị đăng xuất ngay.
+- **Antiforgery.** Mọi POST/PUT/DELETE phải có header `X-XSRF-TOKEN`. `GET /api/account/me` phát token qua cookie `XSRF-TOKEN`, axios (`api/client.ts`) tự gửi, màn hình không phải làm gì. Gọi API bằng script thì GET `/api/account/me` trước rồi copy cookie `XSRF-TOKEN` vào header.
+- **Bảng phân quyền** ở mục `Permissions` của `appsettings.json`: mỗi mục System Menu → các role được vào (F#4, D23). Mỗi mục là một policy cùng tên:
+
+  ```csharp
+  [Authorize(Policy = SettingValues.MenuItems.Registrations)]
+  public class RegistrationsController ...
+  ```
+
+  Menu của role = mục System Menu đang Active ∩ bảng này. Gõ URL màn không có trong menu thì web báo "Your role cannot open this screen" và API trả 403. Sai tên mục hay tên role trong bảng thì API dừng ngay lúc khởi động.
+- **Làm màn mới:** gắn `[Authorize(Policy = ...)]` lên controller, thêm route vào `router.tsx`, rồi đặt `ready: true` cho mục đó trong `quizpractice-web/src/constants/menu.tsx` (mục chưa `ready` vẫn hiện trong menu, mờ, kèm chữ "coming soon").
+- Service hỏi "ai đang gọi" qua `ICurrentUser`, không nhận user id từ client.
+- **Link trong mail** không lưu trong database: token ký bằng Data Protection, khoá nằm ở `App_Data/keys/` (không lên Git, xoá thư mục này là mọi link đã gửi và mọi phiên đăng nhập đều hết hiệu lực). Hạn link ở mục `Links` của `appsettings.json` (BR-01, BR-02).
+- Login, register và hai loại link bị giới hạn **10 lần/phút mỗi IP**; quá thì nhận 429.
+
 ## Upload file
 
 - Ảnh public lưu ở `wwwroot/uploads/<loại>/<guid>.png`, database chỉ giữ đường dẫn tương đối. Thư mục này không lên Git.
@@ -178,7 +191,5 @@ Không phải sửa `Program.cs` hay `DependencyInjection.cs` khi thêm service 
 
 ## Chưa có trong khung
 
-- **Đăng nhập và phân quyền.** Cookie auth, chặn theo role (BR-03, D23) và antiforgery sẽ có ở phần Common (Kiệt, UC-01→08). Tới lúc đó **mọi API đều mở**, chỉ dùng khi phát triển, và "người đang dùng" là `DevUser` giả lập (xem *Dữ liệu mẫu*). Trong `SlidersController` có `TODO(auth)` đánh dấu chỗ phải gắn `[Authorize]`. Đã có sẵn cho Kiệt: `IPasswordHasher` (bản Identity, tài khoản mẫu băm bằng nó), `ICurrentUser`, hằng số `Roles`.
-- Menu quản trị đang cố định là menu Marketing; sẽ đọc từ System Menu theo role (BR-16, D23) khi có đăng nhập.
 - API host chưa phục vụ bản build React (`dist/`); hiện chỉ chạy kiểu dev qua Vite. Thêm khi chuẩn bị bản demo.
 - Bundle 1,36 MB (gzip 436 KB) vì Ant Design; khi số màn tăng thì tải route theo kiểu lazy để chia nhỏ.
