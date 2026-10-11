@@ -9,6 +9,7 @@ import { SlidersListPage } from '../pages/marketing/SlidersListPage'
 import { HomePage } from '../pages/public/HomePage'
 import { QuestionDetailsPage } from '../pages/testcontent/QuestionDetailsPage'
 import { QuestionsListPage } from '../pages/testcontent/QuestionsListPage'
+import { QuizDetailsPage } from '../pages/testcontent/QuizDetailsPage'
 import { QuizzesListPage } from '../pages/testcontent/QuizzesListPage'
 
 /**
@@ -41,6 +42,8 @@ export const router = createBrowserRouter([
       { path: 'questions/new', element: <QuestionDetailsPage /> },
       { path: 'questions/:id', element: <QuestionDetailsPage /> },
       { path: 'quizzes', element: <QuizzesListPage /> },
+      { path: 'quizzes/new', element: <QuizDetailsPage /> },
+      { path: 'quizzes/:id', element: <QuizDetailsPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
