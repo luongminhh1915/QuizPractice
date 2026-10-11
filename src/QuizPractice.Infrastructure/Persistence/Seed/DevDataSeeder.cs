@@ -7,8 +7,9 @@ namespace QuizPractice.Infrastructure.Persistence.Seed;
 
 /// <summary>
 /// Writes <see cref="DevSeedData"/> once, into a migrated database whose Settings
-/// table is empty, then the sample quizzes and registrations while their tables are
-/// empty (<see cref="DevQuizSeeder"/>, <see cref="DevRegistrationSeeder"/>), so an older
+/// table is empty, then the sample quizzes, posts and registrations while they are
+/// missing (<see cref="DevQuizSeeder"/>, <see cref="DevPostSeeder"/>,
+/// <see cref="DevRegistrationSeeder"/>), so an older
 /// database gets them too. Program.cs calls
 /// it in Development only: the sample accounts share one known password. To seed
 /// again, drop and re-create the database (README).
@@ -42,6 +43,7 @@ public static class DevDataSeeder
         }
 
         await DevQuizSeeder.SeedAsync(db, logger, DateTime.UtcNow, ct);
+        await DevPostSeeder.SeedAsync(db, logger, DateTime.UtcNow, ct);
         await DevRegistrationSeeder.SeedAsync(db, hasher, logger, DateTime.UtcNow, ct);
         return true;
     }
