@@ -3,6 +3,7 @@ import { App, Card, Col, Flex, Result, Row, Spin, Tag, Typography } from 'antd'
 import { Link, useNavigate, useParams } from 'react-router'
 import { errorMessage, problemOf } from '../../api/client'
 import { PriceTag } from '../../components/public/PriceTag'
+import { RegisterSubjectButton } from '../../components/public/RegisterSubjectButton'
 import { CategoriesBlock, ContactsBlock, FeaturedSubjectsBlock, SearchBlock } from '../../components/public/SiderBlocks'
 import { useSubject, useSubjectSider } from '../../hooks/usePublic'
 import { PublicSider } from '../../layouts/PublicLayout'
@@ -73,6 +74,7 @@ export function SubjectDetailsPage() {
                       Starting price ({s.lowestPrice.packageName}). The other packages are offered when you register.
                     </Typography.Text>
                   )}
+                  <RegisterSubjectButton subjectId={s.id} price={s.lowestPrice} block />
                 </Flex>
               </Card>
             </Col>

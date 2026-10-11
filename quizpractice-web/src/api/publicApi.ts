@@ -91,6 +91,27 @@ export interface BlogPost {
   updatedAt: string
 }
 
+/** Matches SubjectRegisterFormDto (UC-14). */
+export interface RegisterForm {
+  subjectId: number
+  subjectName: string
+  packages: { id: number; name: string; accessMonths: number; listPrice: number; salePrice: number; description: string | null }[]
+  contact: { fullName: string; email: string; mobile: string; gender: string }
+  /** Profile fields that block Submit, by field (E1). */
+  contactProblems: Record<string, string[]>
+  /** A3: the Submitted registration the account already has for the subject. */
+  existing: { id: number; packageName: string; totalCost: number; registeredAt: string } | null
+}
+
+/** Matches SubjectRegisteredDto (UC-14). */
+export interface SubjectRegistered {
+  id: number
+  subjectName: string
+  packageName: string
+  totalCost: number
+  status: string
+}
+
 /** Matches HomeDto (UC-09). */
 export interface Home {
   hotPosts: PostCard[]
@@ -112,6 +133,13 @@ export const publicApi = {
 
   /** The sider of both subject pages. */
   subjectSider: () => http.get<SubjectSider>('/public/subjects/sider').then((r) => r.data),
+
+  /** UC-14, customer only: packages, contact from the profile, what blocks a registration. */
+  registerForm: (subjectId: number) => http.get<RegisterForm>(`/subjects/${subjectId}/registration`).then((r) => r.data),
+
+  /** UC-14. 409 for A3 and E2, 400 Profile.Incomplete for E1. */
+  register: (subjectId: number, packageId: number) =>
+    http.post<SubjectRegistered>(`/subjects/${subjectId}/registration`, { packageId }).then((r) => r.data),
 
   /** UC-10: a page of shown posts. */
   blogs: (criteria: BlogCriteria) => http.get<Page<PostCard>>('/public/blogs', { params: criteria }).then((r) => r.data),

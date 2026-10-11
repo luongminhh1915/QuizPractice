@@ -2,6 +2,7 @@ import { Button, Col, Empty, Pagination, Result, Row, Spin, Typography } from 'a
 import { errorMessage } from '../../api/client'
 import { SubjectCardView } from '../../components/public/Cards'
 import { CriteriaBar } from '../../components/public/CriteriaBar'
+import { RegisterSubjectButton } from '../../components/public/RegisterSubjectButton'
 import { CategoriesBlock, ContactsBlock, FeaturedSubjectsBlock, SearchBlock } from '../../components/public/SiderBlocks'
 import { useListParams } from '../../hooks/useListParams'
 import { useSubjectSider, useSubjects } from '../../hooks/usePublic'
@@ -56,7 +57,7 @@ export function SubjectsListPage() {
           <Row gutter={[16, 16]}>
             {subjects.data.items.map((s) => (
               <Col key={s.id} xs={24} sm={12} lg={8}>
-                <SubjectCardView subject={s} withPrice />
+                <SubjectCardView subject={s} withPrice action={<RegisterSubjectButton subjectId={s.id} price={s.lowestPrice} block />} />
               </Col>
             ))}
           </Row>

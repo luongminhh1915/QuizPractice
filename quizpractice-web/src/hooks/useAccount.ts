@@ -94,7 +94,8 @@ export function useSaveProfile() {
     mutationFn: (input: ProfileInput) => accountApi.saveProfile(input),
     onSuccess: (profile) => {
       queryClient.setQueryData(keys.profile, profile)
-      void queryClient.invalidateQueries({ queryKey: keys.me })
+      // The header and an open Subject Register pop-up (UC-14 E1) show the profile too.
+      void queryClient.invalidateQueries({ queryKey: ['account'], predicate: (q) => q.queryKey[1] !== 'profile' })
     },
   })
 }

@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { publicApi, type BlogCriteria, type SubjectCriteria } from '../api/publicApi'
 
 // ['public', ...] holds what the public pages show. It changes only when a Marketing
@@ -27,6 +27,24 @@ export function useSubject(id: number) {
 
 export function useSubjectSider() {
   return useQuery({ queryKey: ['public', 'subjects', 'sider'], queryFn: publicApi.subjectSider, staleTime: STALE })
+}
+
+// The register form depends on who is signed in, so it lives under ['account']: signing
+// in or out, and saving the profile (E1), reload it.
+const registerFormKey = (subjectId: number) => ['account', 'register-form', subjectId] as const
+
+/** UC-14: loads while the pop-up is open. */
+export function useRegisterForm(subjectId: number, open: boolean) {
+  return useQuery({ queryKey: registerFormKey(subjectId), queryFn: () => publicApi.registerForm(subjectId), enabled: open })
+}
+
+export function useSubmitRegistration(subjectId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (packageId: number) => publicApi.register(subjectId, packageId),
+    // Opening the pop-up again shows the registration just made (A3).
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: registerFormKey(subjectId) }),
+  })
 }
 
 /** UC-10. */
