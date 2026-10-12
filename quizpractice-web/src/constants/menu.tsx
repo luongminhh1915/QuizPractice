@@ -38,7 +38,7 @@ export const MENU_SCREENS: Record<string, MenuScreen> = {
   Subjects: { path: '/manage/subjects', area: 'manage', icon: <BookOutlined />, ready: true },
   Questions: { path: '/manage/questions', area: 'manage', icon: <QuestionCircleOutlined />, ready: true },
   Quizzes: { path: '/manage/quizzes', area: 'manage', icon: <FormOutlined />, ready: true },
-  Users: { path: '/manage/users', area: 'manage', icon: <TeamOutlined />, ready: false },
+  Users: { path: '/manage/users', area: 'manage', icon: <TeamOutlined />, ready: true },
   Settings: { path: '/manage/settings', area: 'manage', icon: <SettingOutlined />, ready: false },
   'My Registrations': { path: '/my-registrations', area: 'learning', icon: <ShoppingCartOutlined />, ready: true },
   Practices: { path: '/practices', area: 'learning', icon: <AppstoreOutlined />, ready: true },
