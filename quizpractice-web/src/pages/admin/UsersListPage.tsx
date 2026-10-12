@@ -1,4 +1,6 @@
-import { Input, Select, Space, Typography } from 'antd'
+import { Button, Input, Select, Space, Typography } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
+import { Link, useLocation } from 'react-router'
 import type { Gender, UserStatus, UserSummary } from '../../api/usersApi'
 import { errorMessage } from '../../api/client'
 import { DataTable, type DataTableColumn } from '../../components/DataTable'
@@ -14,10 +16,14 @@ const STATUSES: UserStatus[] = ['Unverified', 'Active', 'Inactive']
 
 /** Users List (SRS III 9.1; PDF II.9, F#37; UC-62 View Users List). Admin only. */
 export function UsersListPage() {
+  const location = useLocation()
   const list = useListParams()
   const gender = list.get('gender') as Gender | undefined
   const roleId = toNumber(list.get('roleId'))
   const status = list.get('status') as UserStatus | undefined
+
+  // User Details returns to this list with the same criteria (SRS III 0.3).
+  const back = { state: { back: location.pathname + location.search } }
 
   const query = useUserList({ ...list.criteria, gender, roleId, status })
   const choices = useUserChoices()
@@ -30,13 +36,37 @@ export function UsersListPage() {
     { title: 'Mobile', key: 'mobile', sortable: true, width: 130 },
     { title: 'Role', key: 'role', sortable: true, width: 120 },
     { title: 'Status', key: 'status', sortable: true, width: 120, render: (u) => <StatusTag status={u.status} /> },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 140,
+      render: (u) => (
+        <Space>
+          <Link to={`/manage/users/${u.id}?view`} {...back}>
+            <Button size="small">View</Button>
+          </Link>
+          <Link to={`/manage/users/${u.id}`} {...back}>
+            <Button size="small">Edit</Button>
+          </Link>
+        </Space>
+      ),
+    },
   ]
 
   const error = query.error ?? choices.error
 
   return (
     <>
-      <PageHeader title="Users List" />
+      <PageHeader
+        title="Users List"
+        action={
+          <Link to="/manage/users/new" {...back}>
+            <Button type="primary" icon={<PlusOutlined />}>
+              Add New User
+            </Button>
+          </Link>
+        }
+      />
 
       <Space wrap style={{ marginBottom: 16 }}>
         {/* key resets the box when the criteria are cleared */}

@@ -4,6 +4,7 @@ import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { QuizLayout } from '../layouts/QuizLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { UserDetailsPage } from '../pages/admin/UserDetailsPage'
 import { UsersListPage } from '../pages/admin/UsersListPage'
 import { ResetPasswordPage } from '../pages/common/ResetPasswordPage'
 import { VerifyEmailPage } from '../pages/common/VerifyEmailPage'
@@ -100,6 +101,8 @@ export const router = createBrowserRouter([
           { path: 'subjects/:id/lessons/new', element: <LessonDetailsPage /> },
           { path: 'subjects/:id/lessons/:lessonId', element: <LessonDetailsPage /> },
           { path: 'users', element: <UsersListPage /> },
+          { path: 'users/new', element: <UserDetailsPage /> },
+          { path: 'users/:id', element: <UserDetailsPage /> },
           { path: 'questions', element: <QuestionsListPage /> },
           { path: 'questions/new', element: <QuestionDetailsPage /> },
           { path: 'questions/:id', element: <QuestionDetailsPage /> },
