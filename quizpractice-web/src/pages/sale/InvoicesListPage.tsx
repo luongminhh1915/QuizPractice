@@ -1,5 +1,6 @@
-import { DatePicker, Flex, Input, Select, Space, Typography } from 'antd'
+import { Button, DatePicker, Flex, Input, Select, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
+import { Link, useLocation } from 'react-router'
 import type { InvoiceStatus } from '../../api/customerApi'
 import type { SaleInvoiceSummary } from '../../api/saleApi'
 import { errorMessage } from '../../api/client'
@@ -17,7 +18,9 @@ const time = (value: string) => dayjs(value).format('DD/MM/YYYY HH:mm')
  * first, so the Sale user can find the invoice of a transfer seen on the receiving account.
  */
 export function InvoicesListPage() {
+  const location = useLocation()
   const list = useListParams()
+  const back = { state: { back: location.pathname + location.search } }
   const status = list.get('status') as InvoiceStatus | undefined
   const from = list.get('from')
   const to = list.get('to')
@@ -55,6 +58,16 @@ export function InvoicesListPage() {
         ) : (
           '—'
         ),
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 80,
+      render: (i) => (
+        <Link to={`/manage/invoices/${i.id}`} {...back}>
+          <Button size="small">View</Button>
+        </Link>
+      ),
     },
   ]
 

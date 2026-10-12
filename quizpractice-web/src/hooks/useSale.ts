@@ -7,6 +7,27 @@ export const saleKeys = {
   invoices: ['sale', 'invoices'] as const,
 }
 
+/** UC-69 step 2. Not retried, so a 404 shows at once. */
+export function useSaleInvoice(id: number) {
+  return useQuery({ queryKey: [...saleKeys.invoices, 'detail', id], queryFn: () => saleApi.saleInvoice(id), retry: false })
+}
+
+/**
+ * UC-69: Confirm Paid or Save Notes. Whatever the answer, invoices and registrations reload,
+ * since a confirmation settles registrations too.
+ */
+export function useSettleInvoice(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ confirm, notes }: { confirm: boolean; notes: string | undefined }) =>
+      confirm ? saleApi.confirmInvoice(id, notes) : saleApi.saveInvoiceNotes(id, notes),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: saleKeys.invoices })
+      void queryClient.invalidateQueries({ queryKey: saleKeys.registrations })
+    },
+  })
+}
+
 /** UC-68. */
 export function useInvoiceList(criteria: InvoiceListCriteria) {
   return useQuery({

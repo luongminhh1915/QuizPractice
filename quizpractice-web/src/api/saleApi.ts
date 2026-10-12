@@ -93,6 +93,24 @@ export interface SaleInvoiceSummary {
   confirmedBy: string | null
 }
 
+/** Matches SaleInvoiceDetailsDto (UC-69). */
+export interface SaleInvoiceDetails {
+  id: number
+  code: string
+  status: InvoiceStatus
+  createdAt: string
+  paidAt: string | null
+  confirmedBy: string | null
+  customerName: string
+  customerEmail: string
+  bankName: string
+  accountNumber: string
+  accountName: string
+  totalAmount: number
+  notes: string | null
+  registrations: { id: number; subjectName: string; packageName: string; totalCost: number; status: RegistrationStatus }[]
+}
+
 export interface InvoiceListCriteria extends ListCriteria {
   status?: InvoiceStatus
   from?: string
@@ -130,6 +148,16 @@ export const saleApi = {
 
   /** UC-68: the unpaid ones first, then the newest. */
   invoices: (criteria: InvoiceListCriteria) => http.get<Page<SaleInvoiceSummary>>('/invoices', { params: criteria }).then((r) => r.data),
+
+  saleInvoice: (id: number) => http.get<SaleInvoiceDetails>(`/invoices/${id}`).then((r) => r.data),
+
+  /** UC-69. 409 Invoice.Cancelled (E1), Invoice.Paid (E3), Registration.NoDuration (E2), Invoice.Changed. */
+  confirmInvoice: (id: number, notes: string | undefined) =>
+    http.post<SaleInvoiceDetails>(`/invoices/${id}/confirm`, { notes }).then((r) => r.data),
+
+  /** UC-69 A1–A3. */
+  saveInvoiceNotes: (id: number, notes: string | undefined) =>
+    http.put<SaleInvoiceDetails>(`/invoices/${id}/notes`, { notes }).then((r) => r.data),
 
   /** UC-59: the subjects to filter by. */
   registrationFilters: () =>
