@@ -36,9 +36,9 @@ public class SubjectRegisterService(
         return new SubjectRegisterFormDto(
             subject!.Id,
             subject.Name,
-            ActivePackages(subject).Select(PackageOptionDto.From).ToList(),
-            new ContactDto(customer.FullName, customer.Email, customer.Mobile, customer.Gender),
-            await ContactProblemsAsync(customer, ct),
+            RegistrationRules.ActivePackages(subject).Select(PackageOptionDto.From).ToList(),
+            RegistrationRules.ContactOf(customer),
+            await RegistrationRules.ContactProblemsAsync(contactValidator, customer, ct),
             existing is null ? null : new ExistingRegistrationDto(
                 existing.Id, existing.Package.Name, existing.TotalCost, DateTime.SpecifyKind(existing.RegisteredAt, DateTimeKind.Utc)));
     }
@@ -59,18 +59,17 @@ public class SubjectRegisterService(
         }
 
         // E2: deactivated (or never of this subject) since the pop-up was opened.
-        var package = ActivePackages(subject!).FirstOrDefault(p => p.Id == request.PackageId);
+        var package = RegistrationRules.ActivePackages(subject!).FirstOrDefault(p => p.Id == request.PackageId);
         if (package is null)
         {
-            return Error.Conflict("Package.NotAvailable", "This package is no longer offered. Choose another one.");
+            return RegistrationRules.PackageNotAvailable;
         }
 
         // E1: the contact must be complete and valid before anything is stored.
-        var problems = await ContactProblemsAsync(customer, ct);
+        var problems = await RegistrationRules.ContactProblemsAsync(contactValidator, customer, ct);
         if (problems.Count > 0)
         {
-            return new Error(ErrorType.Validation, "Profile.Incomplete",
-                "Your profile is missing details the registration needs. Edit your profile first.", problems);
+            return RegistrationRules.ProfileIncomplete(problems);
         }
 
         var registration = new Registration
@@ -80,14 +79,11 @@ public class SubjectRegisterService(
             UserId = customer.Id,
             CreatedById = null,
             UpdatedById = customer.Id,
-            FullName = customer.FullName,
-            Email = customer.Email,
-            Mobile = customer.Mobile,
-            Gender = customer.Gender,
             TotalCost = package.SalePrice,
             Status = RegistrationStatus.Submitted,
             RegisteredAt = DateTime.UtcNow,
         };
+        RegistrationRules.CopyContact(registration, customer);
         registrations.Add(registration);
         await unitOfWork.SaveChangesAsync(ct);
         return new SubjectRegisteredDto(registration.Id, subject.Name, package.Name, registration.TotalCost, registration.Status);
@@ -117,16 +113,4 @@ public class SubjectRegisterService(
         return (customer, subject, null);
     }
 
-    private static IEnumerable<PricePackage> ActivePackages(Subject s) =>
-        s.PricePackages.Where(p => p.Status == ActiveStatus.Active).OrderBy(p => p.SalePrice).ThenBy(p => p.AccessMonths);
-
-    /// <summary>Checks the profile with the rules of User Register (BR-17), field by field.</summary>
-    private async Task<IReadOnlyDictionary<string, string[]>> ContactProblemsAsync(User customer, CancellationToken ct)
-    {
-        var result = await contactValidator.ValidateAsync(
-            new RegisterRequest(customer.FullName, customer.Gender, customer.Email, customer.Mobile), ct);
-        return result.Errors
-            .GroupBy(e => e.PropertyName)
-            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).Distinct().ToArray());
-    }
 }

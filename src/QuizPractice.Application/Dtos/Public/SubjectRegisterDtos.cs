@@ -19,6 +19,7 @@ public sealed record ExistingRegistrationDto(int Id, string PackageName, decimal
 /// What the Subject Register pop-up needs. ContactProblems: profile fields that are empty
 /// or in the wrong format, by field; Submit stays unavailable until they are fixed (E1).
 /// Existing: set when A3 applies; the pop-up shows it instead of the form.
+/// SelectedPackageId: the stored package when the pop-up edits a registration (UC-16).
 /// </summary>
 public sealed record SubjectRegisterFormDto(
     int SubjectId,
@@ -26,7 +27,8 @@ public sealed record SubjectRegisterFormDto(
     IReadOnlyList<PackageOptionDto> Packages,
     ContactDto Contact,
     IReadOnlyDictionary<string, string[]> ContactProblems,
-    ExistingRegistrationDto? Existing);
+    ExistingRegistrationDto? Existing,
+    int? SelectedPackageId = null);
 
 /// <summary>UC-14: the chosen package; everything else comes from the profile.</summary>
 public sealed record SubjectRegisterRequest(int PackageId);

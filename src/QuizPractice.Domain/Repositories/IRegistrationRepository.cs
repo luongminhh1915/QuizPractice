@@ -12,6 +12,12 @@ public interface IRegistrationRepository
     /// <summary>UC-15: a page of the account's registrations, the newest first, with subject, package and invoice.</summary>
     Task<Page<Registration>> ListByUserAsync(int userId, PageRequest page, CancellationToken ct = default);
 
+    /// <summary>
+    /// UC-16, UC-17: one registration of the account, tracked, with subject (and its
+    /// packages), package and invoice; null when it is missing or belongs to someone else.
+    /// </summary>
+    Task<Registration?> GetOwnAsync(int id, int userId, CancellationToken ct = default);
+
     /// <summary>Stages a new registration; the service commits through IUnitOfWork.</summary>
     void Add(Registration registration);
 }

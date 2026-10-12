@@ -6,6 +6,9 @@ namespace QuizPractice.Application.Dtos.Customer;
 /// <summary>Criteria of My Registrations (UC-15): the newest first, ten a page.</summary>
 public sealed record MyRegistrationListRequest(int Page = 1, int PageSize = 10);
 
+/// <summary>UC-16: the package chosen in the reopened pop-up.</summary>
+public sealed record ChangeRegistrationRequest(int PackageId);
+
 /// <summary>The unpaid invoice a registration waits in (BR-24); its code opens Invoice QR.</summary>
 public sealed record InvoiceRefDto(int Id, string Code);
 

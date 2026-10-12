@@ -31,5 +31,12 @@ public class RegistrationRepository(AppDbContext db) : IRegistrationRepository
         return new Page<Registration>(items, total, page.PageNumber, page.PageSize);
     }
 
+    public Task<Registration?> GetOwnAsync(int id, int userId, CancellationToken ct = default) =>
+        db.Registrations
+            .Include(r => r.Subject).ThenInclude(s => s.PricePackages)
+            .Include(r => r.Package)
+            .Include(r => r.Invoice)
+            .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId, ct);
+
     public void Add(Registration registration) => db.Registrations.Add(registration);
 }
