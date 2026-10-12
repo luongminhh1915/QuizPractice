@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Button, Card, Flex, Result, Space, Spin, Tag, Typography } from 'antd'
-import { AppstoreOutlined, CheckCircleFilled, CloseCircleFilled, FlagFilled, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { Button, Card, Flex, Modal, Result, Space, Spin, Tag, Typography } from 'antd'
+import { AppstoreOutlined, BulbOutlined, CheckCircleFilled, CloseCircleFilled, FlagFilled, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router'
 import { mediaUrl, type QuizReview, type ReviewQuestion } from '../../api/attemptApi'
 import { errorMessage } from '../../api/client'
@@ -47,6 +47,7 @@ function Review({ review }: { review: QuizReview }) {
   const total = review.questions.length
   const [order, setOrder] = useState(1)
   const [filterOpen, setFilterOpen] = useState(false)
+  const [explanationOpen, setExplanationOpen] = useState(false)
   const question = review.questions[order - 1]
   const r = review.result
   const numbers = review.questions.map((q) => ({
@@ -103,6 +104,12 @@ function Review({ review }: { review: QuizReview }) {
               Review Result
             </Button>
           )}
+          {/* BR-10, A1: offered only when the question carries an explanation. */}
+          {question?.explanation && (
+            <Button icon={<BulbOutlined />} onClick={() => setExplanationOpen(true)}>
+              Explanation
+            </Button>
+          )}
         </Space>
         <Space>
           {order > 1 && (
@@ -117,6 +124,15 @@ function Review({ review }: { review: QuizReview }) {
           )}
         </Space>
       </Flex>
+
+      <Modal
+        open={explanationOpen}
+        title={`Explanation — question ${order}`}
+        onCancel={() => setExplanationOpen(false)}
+        footer={<Button onClick={() => setExplanationOpen(false)}>Close</Button>}
+      >
+        <Typography.Paragraph style={{ whiteSpace: 'pre-wrap' }}>{question?.explanation}</Typography.Paragraph>
+      </Modal>
 
       <QuestionNumbersModal
         open={filterOpen}
