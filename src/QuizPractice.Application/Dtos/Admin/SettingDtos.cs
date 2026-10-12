@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 
@@ -17,4 +19,43 @@ public sealed record SettingListRequest(
 public sealed record SettingSummaryDto(int Id, SettingType Type, string Value, int DisplayOrder, ActiveStatus Status)
 {
     public static SettingSummaryDto From(Setting s) => new(s.Id, s.Type, s.Value, s.DisplayOrder, s.Status);
+}
+
+/// <summary>New setting (UC-65 step 3): a type among the eight, then value, order, description and status.</summary>
+public sealed record CreateSettingRequest(SettingType Type, string Value, int? DisplayOrder, string? Description, ActiveStatus Status);
+
+/// <summary>
+/// A stored setting keeps its type (D24). Version: the one the form was loaded with (E2).
+/// ConfirmInUse: the Admin agreed to switch off a value records still use (UC-66 E1).
+/// </summary>
+public sealed record UpdateSettingRequest(
+    string Value, int? DisplayOrder, string? Description, ActiveStatus Status, string? Version, bool ConfirmInUse = false);
+
+/// <summary>
+/// Setting Details. ValueLocked: the code reads this type by its values (roles, menu, lesson
+/// and test types), so the value stays (Duck, 12/10). MenuRoles: who sees a System Menu item (A4).
+/// </summary>
+public sealed record SettingDto(
+    int Id,
+    SettingType Type,
+    string Value,
+    int DisplayOrder,
+    string? Description,
+    ActiveStatus Status,
+    string Version,
+    bool ValueLocked,
+    bool CanDeactivate,
+    IReadOnlyList<string> MenuRoles);
+
+/// <summary>After a save; QuizzesFollowed: quizzes that now draw by the renamed dimension type.</summary>
+public sealed record SettingSavedDto(SettingDto Setting, int QuizzesFollowed);
+
+/// <summary>E2: a fingerprint of what the form shows, so a save on stale values is refused without a schema change.</summary>
+public static class SettingVersion
+{
+    public static string Of(Setting s)
+    {
+        var text = string.Join('\u001f', s.Type, s.Value, s.DisplayOrder, s.Description ?? "", s.Status);
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)), 0, 8);
+    }
 }

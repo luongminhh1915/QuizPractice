@@ -47,6 +47,40 @@ public class SettingRepository(AppDbContext db) : ISettingRepository
         return new Page<Setting>(items, total, page.PageNumber, page.PageSize);
     }
 
+    // The column collation of SQL Server ignores case, so "easy" matches "Easy".
+    public Task<bool> ExistsAsync(SettingType type, string value, int? exceptId, CancellationToken ct = default) =>
+        db.Settings.AnyAsync(s => s.Type == type && s.Value == value && s.Id != exceptId, ct);
+
+    public async Task<IReadOnlyList<SettingUse>> GetUseAsync(Setting setting, CancellationToken ct = default)
+    {
+        var id = setting.Id;
+        var uses = setting.Type switch
+        {
+            SettingType.UserRole => [new("accounts", await db.Users.CountAsync(u => u.RoleId == id, ct))],
+            SettingType.PostCategory => [new("posts", await db.Posts.CountAsync(p => p.CategoryId == id, ct))],
+            SettingType.SubjectCategory => [new("subjects", await db.Subjects.CountAsync(s => s.CategoryId == id, ct))],
+            SettingType.TestType => [new("quizzes", await db.Quizzes.CountAsync(q => q.TypeId == id, ct))],
+            SettingType.QuestionLevel => new List<SettingUse>
+            {
+                new("questions", await db.Questions.CountAsync(q => q.LevelId == id, ct)),
+                new("quizzes", await db.Quizzes.CountAsync(q => q.LevelId == id, ct)),
+            },
+            SettingType.LessonType => [new("lessons", await db.Lessons.CountAsync(l => l.TypeId == id, ct))],
+            SettingType.DimensionType => new List<SettingUse>
+            {
+                new("subject dimensions", await db.SubjectDimensions.CountAsync(d => d.TypeId == id, ct)),
+                new("quizzes drawn by it", await db.Quizzes.CountAsync(q => q.SelectionType == setting.Value, ct)),
+            },
+            _ => new List<SettingUse>(),
+        };
+        return uses.Where(u => u.Count > 0).ToList();
+    }
+
+    public async Task<int> NextOrderAsync(SettingType type, CancellationToken ct = default) =>
+        (await db.Settings.Where(s => s.Type == type).MaxAsync(s => (int?)s.DisplayOrder, ct) ?? 0) + 1;
+
+    public void Add(Setting setting) => db.Settings.Add(setting);
+
     private static IQueryable<Setting> Sort(IQueryable<Setting> query, string? sortBy, bool descending)
     {
         IOrderedQueryable<Setting> ordered = sortBy?.ToLowerInvariant() switch

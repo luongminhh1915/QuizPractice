@@ -164,6 +164,9 @@ public class QuizRepository(AppDbContext db) : IQuizRepository
     // Id, subject and level sort the list (SRS III 7.4); the level follows its order in
     // the settings. Without a chosen heading the newest quiz comes first. The id is
     // always the last key, so rows with equal values keep their place between pages.
+    public async Task<IReadOnlyList<Quiz>> ListDrawnByAsync(string selectionType, CancellationToken ct = default) =>
+        await db.Quizzes.Where(q => q.SelectionType == selectionType).ToListAsync(ct);
+
     private static IQueryable<Quiz> Sort(IQueryable<Quiz> query, string? sortBy, bool descending)
     {
         IOrderedQueryable<Quiz> ordered = sortBy?.ToLowerInvariant() switch

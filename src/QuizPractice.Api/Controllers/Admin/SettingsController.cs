@@ -15,4 +15,20 @@ public class SettingsController(ISettingService settings) : ApiControllerBase
     [HttpGet]
     public async Task<ActionResult<Page<SettingSummaryDto>>> List([FromQuery] SettingListRequest request, CancellationToken ct) =>
         FromResult(await settings.ListAsync(request, ct));
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<SettingDto>> Get(int id, CancellationToken ct) =>
+        FromResult(await settings.GetAsync(id, ct));
+
+    [HttpPost]
+    public async Task<ActionResult<SettingSavedDto>> Create(CreateSettingRequest request, CancellationToken ct)
+    {
+        var result = await settings.CreateAsync(request, ct);
+        return result.IsSuccess ? StatusCode(StatusCodes.Status201Created, result.Value) : Problem(result.Error!);
+    }
+
+    /// <summary>409 Setting.Changed (E2), Setting.Required, or Setting.InUse until confirmInUse (UC-66 E1).</summary>
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<SettingSavedDto>> Update(int id, UpdateSettingRequest request, CancellationToken ct) =>
+        FromResult(await settings.UpdateAsync(id, request, ct));
 }

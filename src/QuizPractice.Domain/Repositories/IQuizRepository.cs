@@ -72,6 +72,9 @@ public interface IQuizRepository
     /// <summary>UC-22: a page of simulation exams a customer may take, with subject and level.</summary>
     Task<Page<Quiz>> SearchExamsAsync(ExamSearch search, PageRequest page, CancellationToken ct = default);
 
+    /// <summary>The quizzes that draw by this dimension type, tracked so a renamed type can follow (UC-65).</summary>
+    Task<IReadOnlyList<Quiz>> ListDrawnByAsync(string selectionType, CancellationToken ct = default);
+
     /// <summary>The Test Type settings in their display order (BR-16).</summary>
     Task<IReadOnlyList<Setting>> GetTypesAsync(CancellationToken ct = default);
 }
