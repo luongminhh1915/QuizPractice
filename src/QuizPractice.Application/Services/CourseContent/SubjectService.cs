@@ -186,6 +186,20 @@ public class SubjectService(
             return badOwner;
         }
 
+        // UC-45: only the Admin publishes; the assigned Expert prepares the content (BR-12).
+        var statusChanged = request.Status != subject.Status;
+        if (statusChanged && expertId is not null)
+        {
+            return CourseAccess.AdminOnly;
+        }
+
+        // E1: publishing without an active package needs the Admin's confirmation.
+        if (statusChanged && request.Status == SubjectStatus.Published && !request.ConfirmNoPackage
+            && !await subjects.HasActivePackageAsync(id, ct))
+        {
+            return CourseAccess.NoActivePackage;
+        }
+
         var description = sanitizer.Sanitize(request.Description ?? string.Empty);
         if (CheckDescription(description) is { } badDescription)
         {
@@ -204,8 +218,11 @@ public class SubjectService(
         subject.Expert = owner.Value;
         subject.ExpertId = owner.Value?.Id;
 
-        // Publication stays as it is (UC-44 post-condition); the price packages are not on
-        // this tab at all.
+        // The public catalog reads Published only (UC-45 step 4). Unpublishing keeps the
+        // access customers already paid for until it ends (A1): nothing else changes.
+        subject.Status = request.Status;
+
+        // The price packages are not on this tab at all (UC-44 post-condition).
         subject.Name = request.Name.Trim();
         subject.Tagline = string.IsNullOrWhiteSpace(request.Tagline) ? null : request.Tagline.Trim();
         subject.Brief = request.Brief?.Trim() ?? string.Empty;

@@ -55,6 +55,8 @@ public sealed record CreateSubjectRequest(
 /// Overview tab (UC-44): the general information the Admin and the assigned Expert may
 /// change. Leaving Thumbnail empty keeps the stored one. ExpertId is the owner as the form
 /// shows it: only the Admin may send another one (UC-43); null leaves the subject without owner.
+/// Status likewise: only the Admin publishes or unpublishes (UC-45). ConfirmNoPackage is the
+/// Admin's answer to the warning that a subject without an active package shows no price (E1).
 /// </summary>
 public sealed record UpdateSubjectRequest(
     string Name,
@@ -65,6 +67,8 @@ public sealed record UpdateSubjectRequest(
     int PassRate,
     string? Description,
     int? ExpertId,
+    SubjectStatus Status,
+    bool ConfirmNoPackage = false,
     FileUpload? Thumbnail = null);
 
 /// <summary>Everything Subject Management Details shows on the Overview tab (UC-43 to UC-45).</summary>

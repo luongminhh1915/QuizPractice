@@ -58,6 +58,10 @@ internal static class CourseAccess
     public static readonly Error NotAssigned =
         new(ErrorType.Forbidden, "Subject.NotAssigned", "You are not the Expert of this subject (BR-11).");
 
+    public static readonly Error NoActivePackage = Error.Conflict(
+        "Subject.NoActivePackage",
+        "The subject has no active price package, so the public pages will show no price and nobody can register. Publish it anyway?");
+
     public static readonly Error AdminOnly =
         new(ErrorType.Forbidden, "Subject.AdminOnly", "Only the Admin may do this (BR-12).");
 }

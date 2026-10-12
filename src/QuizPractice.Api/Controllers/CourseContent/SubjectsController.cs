@@ -5,6 +5,7 @@ using QuizPractice.Application.Dtos.CourseContent;
 using QuizPractice.Application.Services.CourseContent;
 using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Constants;
+using QuizPractice.Domain.Enums;
 
 namespace QuizPractice.Api.Controllers.CourseContent;
 
@@ -47,7 +48,8 @@ public class SubjectsController(ISubjectService subjects) : ApiControllerBase
             : Problem(result.Error!);
     }
 
-    /// <summary>UC-44: the Admin or the assigned Expert (403 for another Expert, E1); UC-43: an owner change is the Admin's.</summary>
+    /// <summary>UC-44: the Admin or the assigned Expert (403 for another Expert, E1); UC-43, UC-45: an owner or status change is the Admin's.
+    /// 409 Subject.NoActivePackage asks to confirm publishing without a price (UC-45 E1).</summary>
     [HttpPut("{id:int}")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormLimit)]
@@ -66,10 +68,12 @@ public sealed class SubjectOverviewForm
     public int PassRate { get; set; }
     public string? Description { get; set; }
     public int? ExpertId { get; set; }
+    public SubjectStatus Status { get; set; }
+    public bool ConfirmNoPackage { get; set; }
     public IFormFile? Thumbnail { get; set; }
 
     public async Task<UpdateSubjectRequest> ToRequestAsync(CancellationToken ct) =>
-        new(Name, Tagline, Brief, CategoryId, IsFeatured, PassRate, Description, ExpertId,
+        new(Name, Tagline, Brief, CategoryId, IsFeatured, PassRate, Description, ExpertId, Status, ConfirmNoPackage,
             Thumbnail is null ? null : await FormFiles.BufferAsync(Thumbnail, ct));
 }
 
