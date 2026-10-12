@@ -37,5 +37,8 @@ public sealed record QuizHandleDto(
 /// <summary>UC-24 step 2: the option chosen for the question.</summary>
 public sealed record AnswerRequest(int OptionId);
 
+/// <summary>UC-25 step 4: the question now on screen, kept for a reload (BR-08).</summary>
+public sealed record MoveRequest(int Order);
+
 /// <summary>What is stored for one question after a change.</summary>
 public sealed record HandleProgressDto(int Order, int? ChosenOptionId, bool IsMarked);

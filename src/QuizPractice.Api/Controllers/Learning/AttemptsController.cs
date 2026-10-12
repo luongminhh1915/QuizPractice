@@ -24,6 +24,11 @@ public class AttemptsController(IQuizHandleService handle) : ApiControllerBase
     public async Task<ActionResult<HandleProgressDto>> Answer(int id, int order, AnswerRequest request, CancellationToken ct) =>
         FromResult(await handle.AnswerAsync(id, order, request, ct));
 
+    /// <summary>UC-25: the question on screen, read back after a reload (BR-08).</summary>
+    [HttpPut("position")]
+    public async Task<ActionResult<HandleProgressDto>> Move(int id, MoveRequest request, CancellationToken ct) =>
+        FromResult(await handle.MoveAsync(id, request, ct));
+
     /// <summary>The media of a question, streamed with range support like the question bank does (UC-53).</summary>
     [HttpGet("questions/{order:int}/media")]
     public async Task<IActionResult> Media(int id, int order, CancellationToken ct)

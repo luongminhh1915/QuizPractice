@@ -66,6 +66,29 @@ public class QuizHandleService(
         return new HandleProgressDto(row.DisplayOrder, row.ChosenOptionId, row.IsMarked);
     }
 
+    public async Task<Result<HandleProgressDto>> MoveAsync(int id, MoveRequest request, CancellationToken ct = default)
+    {
+        var (attempt, refusal) = await LoadRunningAsync(id, ct);
+        if (refusal is not null)
+        {
+            return refusal;
+        }
+
+        // Previous, Next (A1, A2) or a number picked in Review Progress (A3).
+        if (QuestionAt(attempt!, request.Order) is not { } row)
+        {
+            return Error.Invalid(nameof(request.Order), $"Choose a question from 1 to {attempt!.Questions.Count}.");
+        }
+
+        if (attempt!.CurrentOrder != row.DisplayOrder)
+        {
+            attempt.CurrentOrder = row.DisplayOrder;
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+
+        return new HandleProgressDto(row.DisplayOrder, row.ChosenOptionId, row.IsMarked);
+    }
+
     public async Task<Result<MediaFile>> GetMediaAsync(int id, int order, CancellationToken ct = default)
     {
         if (currentUser.Id is not { } userId)

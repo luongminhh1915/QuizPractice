@@ -12,6 +12,9 @@ public interface IQuizHandleService
     /// <summary>UC-24 steps 2 and 3, A1: records or replaces the answer of one question.</summary>
     Task<Result<HandleProgressDto>> AnswerAsync(int id, int order, AnswerRequest request, CancellationToken ct = default);
 
+    /// <summary>UC-25 steps 3 and 4: the question now on screen; answers stay as they are.</summary>
+    Task<Result<HandleProgressDto>> MoveAsync(int id, MoveRequest request, CancellationToken ct = default);
+
     /// <summary>The image, audio or video of a question in an attempt of the customer (BR-05).</summary>
     Task<Result<MediaFile>> GetMediaAsync(int id, int order, CancellationToken ct = default);
 }
