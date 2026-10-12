@@ -13,6 +13,7 @@ namespace QuizPractice.Application.Services.CourseContent;
 public class LessonService(
     ILessonRepository lessons,
     ISubjectRepository subjects,
+    IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IValidator<LessonListRequest> listValidator) : ILessonService
 {
@@ -58,6 +59,35 @@ public class LessonService(
         var topics = rows.Where(r => r.IsTopic).Select(r => new LookupDto(r.Lesson.Id, r.Lesson.Name)).ToList();
         return new LessonListDto(subjectId, subject.Value.Name, topics,
             new Page<LessonRowDto>(items, matching.Count, page.PageNumber, page.PageSize));
+    }
+
+    public async Task<Result<LessonRowDto>> ChangeStatusAsync(
+        int subjectId, int lessonId, ChangeLessonStatusRequest request, CancellationToken ct = default)
+    {
+        if ((await CheckSubjectAsync(subjectId, ct)).Error is { } denied)
+        {
+            return denied;
+        }
+
+        if (!Enum.IsDefined(request.Status))
+        {
+            return Error.Invalid(nameof(request.Status), "Status must be Active or Inactive.");
+        }
+
+        var lesson = await lessons.GetByIdAsync(lessonId, ct);
+        if (lesson is null || lesson.SubjectId != subjectId)
+        {
+            return Error.NotFound("Lesson", lessonId);
+        }
+
+        // A1: already in the chosen state, so nothing is written.
+        if (lesson.Status != request.Status)
+        {
+            lesson.Status = request.Status;
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+
+        return LessonRows.From(lesson, IsTopic(lesson));
     }
 
     /// <summary>BR-11 for the subject the lessons belong to: E1 for another Expert's subject.</summary>

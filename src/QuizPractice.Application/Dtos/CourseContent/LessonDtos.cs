@@ -32,6 +32,9 @@ public sealed record LessonListDto(
     IReadOnlyList<LookupDto> Topics,
     Page<LessonRowDto> Lessons);
 
+/// <summary>Activate or Deactivate Lesson (UC-51).</summary>
+public sealed record ChangeLessonStatusRequest(ActiveStatus Status);
+
 public static class LessonRows
 {
     public static LessonRowDto From(Lesson l, bool isTopic) =>

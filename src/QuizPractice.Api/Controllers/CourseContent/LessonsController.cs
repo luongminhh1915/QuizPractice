@@ -17,4 +17,8 @@ public class LessonsController(ILessonService lessons) : ApiControllerBase
     [HttpGet]
     public async Task<ActionResult<LessonListDto>> List(int subjectId, [FromQuery] LessonListRequest request, CancellationToken ct) =>
         FromResult(await lessons.ListAsync(subjectId, request, ct));
+
+    [HttpPut("{id:int}/status")]
+    public async Task<ActionResult<LessonRowDto>> ChangeStatus(int subjectId, int id, ChangeLessonStatusRequest request, CancellationToken ct) =>
+        FromResult(await lessons.ChangeStatusAsync(subjectId, id, request, ct));
 }
