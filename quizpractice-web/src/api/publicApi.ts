@@ -101,6 +101,8 @@ export interface RegisterForm {
   contactProblems: Record<string, string[]>
   /** A3: the Submitted registration the account already has for the subject. */
   existing: { id: number; packageName: string; totalCost: number; registeredAt: string } | null
+  /** UC-16: the stored package when the pop-up changes a registration. */
+  selectedPackageId: number | null
 }
 
 /** Matches SubjectRegisteredDto (UC-14). */

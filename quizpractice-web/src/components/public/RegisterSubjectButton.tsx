@@ -25,7 +25,7 @@ export function RegisterSubjectButton({ subjectId, price, block }: { subjectId: 
       <Button type="primary" block={block} onClick={() => (user ? setOpen(true) : openModal('login'))}>
         Register
       </Button>
-      {user && <SubjectRegisterModal subjectId={subjectId} open={open} onClose={() => setOpen(false)} />}
+      {user && <SubjectRegisterModal target={{ subjectId }} open={open} onClose={() => setOpen(false)} />}
     </>
   )
 }

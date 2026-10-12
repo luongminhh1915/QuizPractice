@@ -1,4 +1,5 @@
 import { http } from './client'
+import type { RegisterForm } from './publicApi'
 import type { Page } from './types'
 
 export type RegistrationStatus = 'Submitted' | 'Paid' | 'Cancelled'
@@ -26,4 +27,11 @@ export const customerApi = {
   /** UC-15. */
   registrations: (page: number, pageSize: number) =>
     http.get<Page<MyRegistration>>('/my/registrations', { params: { page, pageSize } }).then((r) => r.data),
+
+  /** UC-16: the Subject Register pop-up on the stored package. */
+  changeForm: (id: number) => http.get<RegisterForm>(`/my/registrations/${id}/form`).then((r) => r.data),
+
+  /** UC-16. 409 Registration.Settled (E1) or Registration.InUnpaidInvoice (E3). */
+  change: (id: number, packageId: number) =>
+    http.put<MyRegistration>(`/my/registrations/${id}`, { packageId }).then((r) => r.data),
 }

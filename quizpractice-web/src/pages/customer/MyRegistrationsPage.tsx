@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Button, Empty, Flex, Result, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { Link, useNavigate } from 'react-router'
 import type { MyRegistration } from '../../api/customerApi'
 import { errorMessage } from '../../api/client'
 import { StatusTag } from '../../components/StatusTag'
+import { SubjectRegisterModal } from '../../components/public/SubjectRegisterModal'
 import { CategoriesBlock, ContactsBlock, SearchBlock } from '../../components/public/SiderBlocks'
 import { PAGE_SIZE, useListParams } from '../../hooks/useListParams'
 import { useMyRegistrations } from '../../hooks/useCustomer'
@@ -20,6 +22,7 @@ export function MyRegistrationsPage() {
   const { criteria, set } = useListParams()
   const list = useMyRegistrations(criteria.page, PAGE_SIZE)
   const sider = useSubjectSider()
+  const [editing, setEditing] = useState<number>()
 
   const columns: TableColumnsType<MyRegistration> = [
     { title: 'ID', dataIndex: 'id', width: 64 },
@@ -48,6 +51,16 @@ export function MyRegistrationsPage() {
       title: 'Validity',
       // Set when the registration becomes Paid (BR-14); a dash before that.
       render: (_, r) => (r.validFrom ? `${dayjs(r.validFrom).format('DD/MM/YYYY')} – ${dayjs(r.validTo).format('DD/MM/YYYY')}` : '—'),
+    },
+    {
+      title: 'Action',
+      // Submitted and in no unpaid invoice only (BR-18, BR-24).
+      render: (_, r) =>
+        r.canChange && (
+          <Button size="small" onClick={() => setEditing(r.id)}>
+            Edit
+          </Button>
+        ),
     },
   ]
 
@@ -91,6 +104,9 @@ export function MyRegistrationsPage() {
             onChange: (page) => set({ page }),
           }}
         />
+      )}
+      {editing !== undefined && (
+        <SubjectRegisterModal target={{ registrationId: editing }} open onClose={() => setEditing(undefined)} />
       )}
     </PublicSider>
   )

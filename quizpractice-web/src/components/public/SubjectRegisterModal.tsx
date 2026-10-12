@@ -3,63 +3,84 @@ import { Alert, App, Button, Descriptions, Flex, Modal, Radio, Result, Space, Sp
 import dayjs from 'dayjs'
 import { errorMessage, problemOf } from '../../api/client'
 import { useOpenAccountModal } from '../account/accountModalContext'
+import { useChangeForm, useChangeRegistration } from '../../hooks/useCustomer'
 import { useRegisterForm, useSubmitRegistration } from '../../hooks/usePublic'
 import { formatVnd } from '../../utils/money'
 
+/** A new registration of a subject (UC-14), or a change to a stored one (UC-16). */
+export type RegisterTarget = { subjectId: number; registrationId?: undefined } | { registrationId: number; subjectId?: undefined }
+
 /**
- * Subject Register (SRS III 2.6; F#12; UC-14), for a signed-in customer. The contact is
- * read from the profile and never typed here (OI-15); Edit Profile opens User Profile on
- * top, and the pop-up shows the new values once it is saved (E1). Submit and Pay by QR
- * (A2) is left out until UC-18 exists.
+ * Subject Register (SRS III 2.6; F#12; UC-14, UC-16), for a signed-in customer. The
+ * contact is read from the profile and never typed here (OI-15); Edit Profile opens
+ * User Profile on top, and the pop-up shows the new values once it is saved (UC-14 E1,
+ * UC-16 E2). Opened on a stored registration, only the package can change.
  */
-export function SubjectRegisterModal({ subjectId, open, onClose }: { subjectId: number; open: boolean; onClose: () => void }) {
+export function SubjectRegisterModal({ target, open, onClose }: { target: RegisterTarget; open: boolean; onClose: () => void }) {
   const { message } = App.useApp()
   const openModal = useOpenAccountModal()
-  const form = useRegisterForm(subjectId, open)
-  const submit = useSubmitRegistration(subjectId)
-  const [packageId, setPackageId] = useState<number>()
+  const editing = target.registrationId !== undefined
+  const newForm = useRegisterForm(target.subjectId ?? 0, open && !editing)
+  const changeForm = useChangeForm(target.registrationId ?? 0, open && editing)
+  const submit = useSubmitRegistration(target.subjectId ?? 0)
+  const change = useChangeRegistration(target.registrationId ?? 0)
+  const form = editing ? changeForm : newForm
+  const saving = editing ? change : submit
+
+  const [picked, setPicked] = useState<number>()
   const [done, setDone] = useState<{ packageName: string; totalCost: number }>()
 
   const close = () => {
-    setPackageId(undefined)
+    setPicked(undefined)
     setDone(undefined)
-    submit.reset()
+    saving.reset()
     onClose()
   }
 
-  const onSubmit = () =>
-    packageId &&
-    submit.mutate(packageId, {
-      onSuccess: (r) => setDone({ packageName: r.packageName, totalCost: r.totalCost }),
-      onError: (e) => {
-        // E2: the package went away meanwhile; reload the list and choose again.
-        if (problemOf(e)?.code === 'Package.NotAvailable') {
-          setPackageId(undefined)
-          void form.refetch()
-        }
-        message.error(errorMessage(e))
-      },
-    })
-
   const data = form.data
+  // Until the customer picks, a reopened registration shows its stored package (UC-16 step 2).
+  const packageId = picked ?? data?.selectedPackageId ?? undefined
   const chosen = data?.packages.find((p) => p.id === packageId)
   const problems = Object.entries(data?.contactProblems ?? {})
+
+  const onError = (e: unknown) => {
+    const code = problemOf(e)?.code
+    if (code === 'Package.NotAvailable') {
+      // The package went away meanwhile; reload the list and choose again (UC-14 E2).
+      setPicked(undefined)
+      void form.refetch()
+      message.error(errorMessage(e))
+    } else if (code === 'Registration.Settled' || code === 'Registration.InUnpaidInvoice') {
+      // UC-16 E1, E3: nothing to change here any more; the list reloads with the reason.
+      message.warning(errorMessage(e))
+      close()
+    } else {
+      message.error(errorMessage(e))
+    }
+  }
+
+  const onSave = () => {
+    if (!packageId) return
+    const onSuccess = (r: { packageName: string; totalCost: number }) => setDone({ packageName: r.packageName, totalCost: r.totalCost })
+    if (editing) change.mutate(packageId, { onSuccess, onError })
+    else submit.mutate(packageId, { onSuccess, onError })
+  }
 
   let body
   if (form.isPending) body = <Spin style={{ display: 'block', padding: 32 }} />
   else if (form.isError) body = <Result status="warning" title={errorMessage(form.error)} />
   else if (done) {
-    // Step 7: stored, and how it is settled.
+    // UC-14 step 7, UC-16 step 5: stored, and how it is settled.
     body = (
       <Result
         status="success"
-        title="Registration submitted"
+        title={editing ? 'Registration changed' : 'Registration submitted'}
         subTitle={`${data!.subjectName}, ${done.packageName}, ${formatVnd(done.totalCost)}. The Sale team will contact you to settle it; until then you can still change or cancel it in My Registrations.`}
         extra={<Button onClick={close}>Close</Button>}
       />
     )
   } else if (data?.existing) {
-    // A3: one Submitted registration per subject.
+    // UC-14 A3: one Submitted registration per subject.
     body = (
       <Result
         status="info"
@@ -71,10 +92,9 @@ export function SubjectRegisterModal({ subjectId, open, onClose }: { subjectId: 
   } else if (data) {
     body = (
       <Flex vertical gap={16}>
-        {/* E2 and A2: every option is an active package; the cheapest comes first. */}
         <div>
           <Typography.Text strong>Price Package</Typography.Text>
-          <Radio.Group value={packageId} onChange={(e) => setPackageId(e.target.value)} style={{ width: '100%', marginTop: 8 }}>
+          <Radio.Group value={packageId} onChange={(e) => setPicked(e.target.value)} style={{ width: '100%', marginTop: 8 }}>
             <Flex vertical gap={8}>
               {data.packages.map((p) => (
                 <Radio key={p.id} value={p.id}>
@@ -127,8 +147,8 @@ export function SubjectRegisterModal({ subjectId, open, onClose }: { subjectId: 
           </Typography.Text>
           <Space>
             <Button onClick={close}>Cancel</Button>
-            <Button type="primary" disabled={!chosen || !!problems.length} loading={submit.isPending} onClick={onSubmit}>
-              Submit
+            <Button type="primary" disabled={!chosen || !!problems.length} loading={saving.isPending} onClick={onSave}>
+              {editing ? 'Save' : 'Submit'}
             </Button>
           </Space>
         </Flex>
@@ -136,8 +156,9 @@ export function SubjectRegisterModal({ subjectId, open, onClose }: { subjectId: 
     )
   }
 
+  const title = data ? `${editing ? 'Change registration' : 'Register'}: ${data.subjectName}` : editing ? 'Change registration' : 'Register'
   return (
-    <Modal title={data ? `Register: ${data.subjectName}` : 'Register'} open={open} onCancel={close} footer={null} destroyOnHidden width={560}>
+    <Modal title={title} open={open} onCancel={close} footer={null} destroyOnHidden width={560}>
       {body}
     </Modal>
   )
