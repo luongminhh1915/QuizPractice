@@ -25,6 +25,13 @@ export function useMove(id: number) {
   return useMutation({ mutationFn: (order: number) => attemptApi.move(id, order) })
 }
 
+/** UC-26. */
+export function useMark(id: number) {
+  return useMutation({
+    mutationFn: ({ order, marked }: { order: number; marked: boolean }) => attemptApi.mark(id, order, marked),
+  })
+}
+
 /** UC-24 step 3. */
 export function useAnswer(id: number) {
   return useMutation({

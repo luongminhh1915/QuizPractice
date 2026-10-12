@@ -52,6 +52,10 @@ export const attemptApi = {
   answer: (id: number, order: number, optionId: number) =>
     http.put<HandleProgress>(`/attempts/${id}/questions/${order}/answer`, { optionId }).then((r) => r.data),
 
+  /** UC-26: marks or unmarks a question; the answer stays (A2). */
+  mark: (id: number, order: number, marked: boolean) =>
+    http.put<HandleProgress>(`/attempts/${id}/questions/${order}/mark`, { marked }).then((r) => r.data),
+
   /** UC-25: the question on screen, read back after a reload (BR-08). */
   move: (id: number, order: number) => http.put<HandleProgress>(`/attempts/${id}/position`, { order }).then((r) => r.data),
 }

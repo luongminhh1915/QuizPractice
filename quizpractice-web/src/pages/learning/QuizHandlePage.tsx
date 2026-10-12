@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { App, Button, Card, Flex, Radio, Result, Space, Spin, Tag, Typography } from 'antd'
-import { ClockCircleOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { ClockCircleOutlined, FlagFilled, FlagOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router'
 import { mediaUrl, type HandleQuestion, type QuizHandle } from '../../api/attemptApi'
 import { errorMessage, problemOf } from '../../api/client'
-import { useAnswer, useMove, useQuizHandle } from '../../hooks/useAttempt'
+import { useAnswer, useMark, useMove, useQuizHandle } from '../../hooks/useAttempt'
 import { formatDuration } from '../../utils/duration'
 
 /**
@@ -51,8 +51,12 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
   const [answers, setAnswers] = useState<Record<number, number | null>>(() =>
     Object.fromEntries(attempt.questions.map((q) => [q.order, q.chosenOptionId])),
   )
+  const [marks, setMarks] = useState<Record<number, boolean>>(() =>
+    Object.fromEntries(attempt.questions.map((q) => [q.order, q.isMarked])),
+  )
   const answer = useAnswer(attempt.id)
   const move = useMove(attempt.id)
+  const mark = useMark(attempt.id)
   const question = attempt.questions[order - 1]
 
   // A change the server refuses: a scored attempt opens its result; anything else is E2.
@@ -75,6 +79,21 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
       {
         onError: (e) => {
           setAnswers((a) => ({ ...a, [order]: before }))
+          failed(e)
+        },
+      },
+    )
+  }
+
+  // UC-26: only the marked state changes (A2); a refusal puts it back.
+  const toggleMark = () => {
+    const marked = !marks[order]
+    setMarks((m) => ({ ...m, [order]: marked }))
+    mark.mutate(
+      { order, marked },
+      {
+        onError: (e) => {
+          setMarks((m) => ({ ...m, [order]: !marked }))
           failed(e)
         },
       },
@@ -105,10 +124,21 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
         </Space>
       </Flex>
 
-      <QuestionCard attemptId={attempt.id} question={question} chosen={answers[order] ?? null} onChoose={choose} />
+      <QuestionCard
+        attemptId={attempt.id}
+        question={question}
+        chosen={answers[order] ?? null}
+        marked={marks[order] ?? false}
+        onChoose={choose}
+      />
 
       <Flex justify="space-between" align="center" wrap gap={8}>
-        <Space wrap />
+        <Space wrap>
+          {/* The label names the action available (SRS III 4.1, Mark for Review). */}
+          <Button icon={marks[order] ? <FlagFilled /> : <FlagOutlined />} onClick={toggleMark}>
+            {marks[order] ? 'Unmark' : 'Mark for Review'}
+          </Button>
+        </Space>
         {/* The first question has Next only, the last one Previous (A1, A2). */}
         <Space>
           {order > 1 && (
@@ -131,11 +161,13 @@ function QuestionCard({
   attemptId,
   question,
   chosen,
+  marked,
   onChoose,
 }: {
   attemptId: number
   question: HandleQuestion
   chosen: number | null
+  marked: boolean
   onChoose: (optionId: number) => void
 }) {
   return (
@@ -143,6 +175,11 @@ function QuestionCard({
       title={
         <Space>
           <span>Question {question.order}</span>
+          {marked && (
+            <Tag icon={<FlagFilled />} color="orange">
+              Marked
+            </Tag>
+          )}
         </Space>
       }
       extra={<Typography.Text type="secondary">Question ID: {question.questionId}</Typography.Text>}
