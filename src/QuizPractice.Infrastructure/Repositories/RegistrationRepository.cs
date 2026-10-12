@@ -113,5 +113,23 @@ public class RegistrationRepository(AppDbContext db) : IRegistrationRepository
         return descending || sortBy is null ? ordered.ThenByDescending(r => r.Id) : ordered.ThenBy(r => r.Id);
     }
 
+    public Task<Registration?> GetForSaleAsync(int id, CancellationToken ct = default) =>
+        db.Registrations
+            .Include(r => r.Subject).ThenInclude(s => s.PricePackages)
+            .Include(r => r.Package)
+            .Include(r => r.Invoice)
+            .Include(r => r.User)
+            .Include(r => r.CreatedBy)
+            .Include(r => r.UpdatedBy)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+    public async Task<IReadOnlyList<Subject>> ListOfferedSubjectsAsync(CancellationToken ct = default) =>
+        await db.Subjects.AsNoTracking()
+            .Include(s => s.PricePackages)
+            .Where(s => s.Status == SubjectStatus.Published && s.PricePackages.Any(p => p.Status == ActiveStatus.Active))
+            .OrderBy(s => s.Name).ThenBy(s => s.Id)
+            .ToListAsync(ct);
+
     public void Add(Registration registration) => db.Registrations.Add(registration);
 }

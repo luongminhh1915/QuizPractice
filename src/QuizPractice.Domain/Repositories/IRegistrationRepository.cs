@@ -45,6 +45,15 @@ public interface IRegistrationRepository
     /// <summary>UC-59: a page of every registration with subject, package and the user who last changed it.</summary>
     Task<Page<Registration>> SearchAsync(RegistrationSearch search, PageRequest page, CancellationToken ct = default);
 
+    /// <summary>
+    /// UC-60, UC-61: one registration, tracked, with its subject (and packages), package,
+    /// invoice, account, the Sale user who recorded it and the user who last changed it.
+    /// </summary>
+    Task<Registration?> GetForSaleAsync(int id, CancellationToken ct = default);
+
+    /// <summary>UC-60 step 4: the published subjects with at least one active package, with their packages, by name.</summary>
+    Task<IReadOnlyList<Subject>> ListOfferedSubjectsAsync(CancellationToken ct = default);
+
     /// <summary>Stages a new registration; the service commits through IUnitOfWork.</summary>
     void Add(Registration registration);
 }
