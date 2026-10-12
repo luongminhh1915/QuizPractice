@@ -26,4 +26,9 @@ public class MyRegistrationsController(IMyRegistrationService registrations) : A
     [HttpPut("{id:int}")]
     public async Task<ActionResult<MyRegistrationDto>> Change(int id, ChangeRegistrationRequest request, CancellationToken ct) =>
         FromResult(await registrations.ChangeAsync(id, request, ct));
+
+    /// <summary>UC-17: 409 Registration.Settled (E1) or Registration.InUnpaidInvoice (E2).</summary>
+    [HttpPost("{id:int}/cancel")]
+    public async Task<ActionResult<MyRegistrationDto>> Cancel(int id, CancellationToken ct) =>
+        FromResult(await registrations.CancelAsync(id, ct));
 }
