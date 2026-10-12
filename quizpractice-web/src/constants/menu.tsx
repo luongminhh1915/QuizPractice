@@ -33,7 +33,7 @@ export const MENU_SCREENS: Record<string, MenuScreen> = {
   Dashboard: { path: '/manage/dashboard', area: 'manage', icon: <DashboardOutlined />, ready: true },
   Posts: { path: '/manage/posts', area: 'manage', icon: <FileTextOutlined />, ready: true },
   Sliders: { path: '/manage/sliders', area: 'manage', icon: <PictureOutlined />, ready: true },
-  Registrations: { path: '/manage/registrations', area: 'manage', icon: <ShoppingCartOutlined />, ready: false },
+  Registrations: { path: '/manage/registrations', area: 'manage', icon: <ShoppingCartOutlined />, ready: true },
   Invoices: { path: '/manage/invoices', area: 'manage', icon: <FileDoneOutlined />, ready: false },
   Subjects: { path: '/manage/subjects', area: 'manage', icon: <BookOutlined />, ready: false },
   Questions: { path: '/manage/questions', area: 'manage', icon: <QuestionCircleOutlined />, ready: true },
