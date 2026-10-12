@@ -231,4 +231,7 @@ export const subjectsApi = {
 
   lessons: (subjectId: number, criteria: LessonCriteria) =>
     http.get<LessonList>(`/subjects/${subjectId}/lessons`, { params: criteria }).then((r) => r.data),
+
+  changeLessonStatus: (subjectId: number, id: number, status: ActiveStatus) =>
+    http.put<LessonRow>(`/subjects/${subjectId}/lessons/${id}/status`, { status }).then((r) => r.data),
 }

@@ -108,3 +108,12 @@ export function useLessons(subjectId: number, criteria: LessonCriteria) {
     placeholderData: keepPreviousData,
   })
 }
+
+/** UC-51: Activate or Deactivate a lesson in place; the lesson count of the list follows. */
+export function useChangeLessonStatus(subjectId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: ActiveStatus }) => subjectsApi.changeLessonStatus(subjectId, id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.lessons(subjectId) }),
+  })
+}

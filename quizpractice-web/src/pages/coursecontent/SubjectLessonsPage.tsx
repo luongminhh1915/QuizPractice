@@ -1,4 +1,4 @@
-import { Input, Select, Space, Tag, Typography } from 'antd'
+import { App, Button, Input, Select, Space, Tag, Typography } from 'antd'
 import { Link, useLocation, useParams } from 'react-router'
 import type { LessonRow } from '../../api/subjectsApi'
 import type { ActiveStatus } from '../../api/types'
@@ -7,16 +7,18 @@ import { DataTable, type DataTableColumn } from '../../components/DataTable'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusTag } from '../../components/StatusTag'
 import { useListParams } from '../../hooks/useListParams'
-import { useLessons } from '../../hooks/useSubjects'
+import { useChangeLessonStatus, useLessons } from '../../hooks/useSubjects'
 
 const toNumber = (value: string | undefined) => (value ? Number(value) : undefined)
 
 const TYPE_COLOURS: Record<string, string> = { 'Subject Topic': 'geekblue', Lesson: 'default', Quiz: 'purple' }
 
 /**
- * Subject Lessons (SRS III 6.6; PDF II.6, F#28; UC-49 View Subject Lessons). The topics in order, each followed by its lessons and quizzes, indented.
+ * Subject Lessons (SRS III 6.6; PDF II.6, F#28; UC-49 View Subject Lessons, UC-51 Activate or
+ * Deactivate Lesson). The topics in order, each followed by its lessons and quizzes, indented.
  */
 export function SubjectLessonsPage() {
+  const { message } = App.useApp()
   const location = useLocation()
   const subjectId = Number(useParams().id)
   const list = useListParams()
@@ -24,7 +26,19 @@ export function SubjectLessonsPage() {
   const status = list.get('status') as ActiveStatus | undefined
 
   const query = useLessons(subjectId, { page: list.criteria.page, pageSize: list.criteria.pageSize, search: list.criteria.search, topicId, status })
+  const changeStatus = useChangeLessonStatus(subjectId)
   const data = query.data
+
+  const toggle = (lesson: LessonRow) => {
+    const next = lesson.status === 'Active' ? 'Inactive' : 'Active'
+    changeStatus.mutate(
+      { id: lesson.id, status: next },
+      {
+        onSuccess: () => message.success(`"${lesson.name}" is now ${next}.`),
+        onError: (e) => message.error(errorMessage(e)),
+      },
+    )
+  }
 
   const columns: DataTableColumn<LessonRow>[] = [
     { title: 'ID', key: 'id', width: 80 },
@@ -37,6 +51,22 @@ export function SubjectLessonsPage() {
     { title: 'Order', key: 'displayOrder', width: 80 },
     { title: 'Type', key: 'type', width: 140, render: (l) => <Tag color={TYPE_COLOURS[l.type]}>{l.type}</Tag> },
     { title: 'Status', key: 'status', width: 110, render: (l) => <StatusTag status={l.status} /> },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 130,
+      render: (l) => (
+        // UC-51: the label names the action available.
+        <Button
+          size="small"
+          danger={l.status === 'Active'}
+          loading={changeStatus.isPending && changeStatus.variables?.id === l.id}
+          onClick={() => toggle(l)}
+        >
+          {l.status === 'Active' ? 'Deactivate' : 'Activate'}
+        </Button>
+      ),
+    },
   ]
 
   return (
