@@ -42,7 +42,7 @@ export const MENU_SCREENS: Record<string, MenuScreen> = {
   Settings: { path: '/manage/settings', area: 'manage', icon: <SettingOutlined />, ready: false },
   'My Registrations': { path: '/my-registrations', area: 'learning', icon: <ShoppingCartOutlined />, ready: true },
   Practices: { path: '/practices', area: 'learning', icon: <AppstoreOutlined />, ready: true },
-  'Simulation Exams': { path: '/simulation-exams', area: 'learning', icon: <FormOutlined />, ready: false },
+  'Simulation Exams': { path: '/simulation-exams', area: 'learning', icon: <FormOutlined />, ready: true },
   'My Invoices': { path: '/my-invoices', area: 'learning', icon: <FileDoneOutlined />, ready: true },
 }
 
