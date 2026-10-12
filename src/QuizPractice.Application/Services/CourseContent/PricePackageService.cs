@@ -18,13 +18,25 @@ public class PricePackageService(
 {
     public async Task<Result<PricePackageTabDto>> ListAsync(int subjectId, CancellationToken ct = default)
     {
-        if (await CheckAdminAsync(subjectId, ct) is { } denied)
+        // UC-48: the assigned Expert reads the tab; another Expert is refused (E1).
+        if (CourseAccess.Check(currentUser, out var expertId) is { } denied)
         {
             return denied;
         }
 
+        var subject = await subjects.GetByIdAsync(subjectId, ct);
+        if (subject is null)
+        {
+            return Error.NotFound("Subject", subjectId);
+        }
+
+        if (CourseAccess.CheckSubject(subject, expertId) is { } notAssigned)
+        {
+            return notAssigned;
+        }
+
         var stored = await packages.ListAsync(subjectId, ct);
-        return new PricePackageTabDto(CanEdit: true, stored.Select(PricePackageDto.From).ToList());
+        return new PricePackageTabDto(CanEdit: expertId is null, stored.Select(PricePackageDto.From).ToList());
     }
 
     public async Task<Result<PricePackageDto>> CreateAsync(int subjectId, SavePricePackageRequest request, CancellationToken ct = default)

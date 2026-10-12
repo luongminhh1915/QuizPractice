@@ -3,7 +3,7 @@ using QuizPractice.Application.Dtos.CourseContent;
 
 namespace QuizPractice.Application.Services.CourseContent;
 
-/// <summary>UC-47 Add or Edit Price Package (Admin).</summary>
+/// <summary>UC-47 Add or Edit Price Package (Admin), UC-48 View Price Package (assigned Expert).</summary>
 public interface IPricePackageService
 {
     Task<Result<PricePackageTabDto>> ListAsync(int subjectId, CancellationToken ct = default);
