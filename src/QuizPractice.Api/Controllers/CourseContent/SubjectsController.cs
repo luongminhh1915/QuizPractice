@@ -46,6 +46,30 @@ public class SubjectsController(ISubjectService subjects) : ApiControllerBase
             ? CreatedAtAction(nameof(Get), new { id = result.Value.Id }, result.Value)
             : Problem(result.Error!);
     }
+
+    /// <summary>UC-44: the Admin or the assigned Expert (403 for another Expert, E1).</summary>
+    [HttpPut("{id:int}")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FormLimit)]
+    public async Task<ActionResult<SubjectDto>> Update(int id, [FromForm] SubjectOverviewForm form, CancellationToken ct) =>
+        FromResult(await subjects.UpdateAsync(id, await form.ToRequestAsync(ct), ct));
+}
+
+/// <summary>Transport shape of the Overview tab; the rules live on UpdateSubjectRequest.</summary>
+public sealed class SubjectOverviewForm
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Tagline { get; set; }
+    public string? Brief { get; set; }
+    public int CategoryId { get; set; }
+    public bool IsFeatured { get; set; }
+    public int PassRate { get; set; }
+    public string? Description { get; set; }
+    public IFormFile? Thumbnail { get; set; }
+
+    public async Task<UpdateSubjectRequest> ToRequestAsync(CancellationToken ct) =>
+        new(Name, Tagline, Brief, CategoryId, IsFeatured, PassRate, Description,
+            Thumbnail is null ? null : await FormFiles.BufferAsync(Thumbnail, ct));
 }
 
 /// <summary>Transport shape of New Subject (IFormFile stays in the API); the rules live on CreateSubjectRequest.</summary>
