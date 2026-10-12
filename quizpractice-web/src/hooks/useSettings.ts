@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { settingsApi, type SettingCriteria, type SettingInput } from '../api/settingsApi'
+import { settingsApi, type SettingCriteria, type SettingInput, type SettingSummary } from '../api/settingsApi'
 
 // Query keys: ['settings'] covers every list and detail of Settings.
 const keys = {
@@ -30,5 +30,15 @@ export function useSaveSetting(id: number | undefined) {
     mutationFn: (input: SettingInput & { version?: string; confirmInUse?: boolean }) =>
       id === undefined ? settingsApi.create(input) : settingsApi.update(id, { ...input, version: input.version ?? '' }),
     onSuccess: () => queryClient.invalidateQueries(),
+  })
+}
+
+/** UC-66: Activate or Deactivate in place; every screen reads settings, so the whole cache reloads. */
+export function useChangeSettingStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ setting, confirmInUse }: { setting: SettingSummary; confirmInUse?: boolean }) =>
+      settingsApi.changeStatus(setting.id, setting.status === 'Active' ? 'Inactive' : 'Active', setting.version, confirmInUse),
+    onSettled: () => queryClient.invalidateQueries(),
   })
 }

@@ -31,6 +31,10 @@ export interface SettingSummary {
   value: string
   displayOrder: number
   status: ActiveStatus
+  /** Fingerprint the row was loaded with (E2). */
+  version: string
+  /** False for a value the system needs: it stays Active. */
+  canDeactivate: boolean
 }
 
 export interface SettingCriteria extends ListCriteria {
@@ -76,4 +80,8 @@ export const settingsApi = {
   /** 409 Setting.Changed (E2), Setting.Required, or Setting.InUse until confirmInUse (UC-66 E1). */
   update: (id: number, input: SettingInput & { version: string; confirmInUse?: boolean }) =>
     http.put<SettingSaved>(`/settings/${id}`, input).then((r) => r.data),
+
+  /** UC-66: 409 Setting.Changed (E2), Setting.Required, or Setting.InUse until confirmInUse (E1). */
+  changeStatus: (id: number, status: ActiveStatus, version: string, confirmInUse = false) =>
+    http.put<SettingSummary>(`/settings/${id}/status`, { status, version, confirmInUse }).then((r) => r.data),
 }

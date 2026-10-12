@@ -1,25 +1,55 @@
-import { Button, Input, Select, Space, Typography } from 'antd'
+import { App, Button, Input, Select, Space, Typography } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { Link, useLocation } from 'react-router'
 import { SETTING_TYPE_LABELS, type SettingSummary, type SettingType } from '../../api/settingsApi'
 import type { ActiveStatus } from '../../api/types'
-import { errorMessage } from '../../api/client'
+import { errorMessage, problemOf } from '../../api/client'
 import { DataTable, type DataTableColumn } from '../../components/DataTable'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusTag } from '../../components/StatusTag'
 import { useListParams } from '../../hooks/useListParams'
-import { useSettingList } from '../../hooks/useSettings'
+import { useChangeSettingStatus, useSettingList } from '../../hooks/useSettings'
 
 const TYPES = Object.entries(SETTING_TYPE_LABELS) as [SettingType, string][]
 
-/** Settings List (SRS III 9.3; PDF II.9, F#39; UC-64 View Settings List). Admin only. */
+/**
+ * Settings List (SRS III 9.3; PDF II.9, F#39; UC-64 View Settings List, UC-66 Activate or
+ * Deactivate Setting). Admin only.
+ */
 export function SettingsListPage() {
+  const { message, modal } = App.useApp()
   const location = useLocation()
   const list = useListParams()
   const type = list.get('type') as SettingType | undefined
   const status = list.get('status') as ActiveStatus | undefined
 
   const query = useSettingList({ ...list.criteria, type, status })
+
+  const changeStatus = useChangeSettingStatus()
+
+  const toggle = (setting: SettingSummary, confirmInUse = false) =>
+    changeStatus.mutate(
+      { setting, confirmInUse },
+      {
+        onSuccess: (saved) => message.success(`"${saved.value}" is now ${saved.status}.`),
+        onError: (e) => {
+          const code = problemOf(e)?.code
+          // E1: records still use the value; they keep it, the screens stop offering it.
+          if (code === 'Setting.InUse') {
+            modal.confirm({
+              title: 'Switch off a value in use?',
+              content: errorMessage(e),
+              okText: 'Switch off',
+              cancelText: 'Cancel',
+              onOk: () => toggle(setting, true),
+            })
+            return
+          }
+          // E2: the list has reloaded with the current status.
+          message.error(errorMessage(e), 8)
+        },
+      },
+    )
 
   // Setting Details returns to this list with the same criteria (SRS III 0.3).
   const back = { state: { back: location.pathname + location.search } }
@@ -33,7 +63,7 @@ export function SettingsListPage() {
     {
       title: 'Action',
       key: 'action',
-      width: 140,
+      width: 250,
       render: (s) => (
         <Space>
           <Link to={`/manage/settings/${s.id}?view`} {...back}>
@@ -42,6 +72,17 @@ export function SettingsListPage() {
           <Link to={`/manage/settings/${s.id}`} {...back}>
             <Button size="small">Edit</Button>
           </Link>
+          {/* UC-66: the label names the action available; a value the system needs stays Active. */}
+          {(s.status === 'Inactive' || s.canDeactivate) && (
+            <Button
+              size="small"
+              danger={s.status === 'Active'}
+              loading={changeStatus.isPending && changeStatus.variables?.setting.id === s.id}
+              onClick={() => toggle(s)}
+            >
+              {s.status === 'Active' ? 'Deactivate' : 'Activate'}
+            </Button>
+          )}
         </Space>
       ),
     },
