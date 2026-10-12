@@ -89,6 +89,26 @@ public class QuizHandleService(
         return new HandleProgressDto(row.DisplayOrder, row.ChosenOptionId, row.IsMarked);
     }
 
+    public async Task<Result<HandleProgressDto>> MarkAsync(int id, int order, MarkRequest request, CancellationToken ct = default)
+    {
+        var (attempt, refusal) = await LoadRunningAsync(id, ct);
+        if (refusal is not null)
+        {
+            return refusal;
+        }
+
+        if (QuestionAt(attempt!, order) is not { } row)
+        {
+            return Error.NotFound("Question", order);
+        }
+
+        // A2: only the marked state changes; the recorded answer stays.
+        row.IsMarked = request.Marked;
+        attempt!.CurrentOrder = row.DisplayOrder;
+        await unitOfWork.SaveChangesAsync(ct);
+        return new HandleProgressDto(row.DisplayOrder, row.ChosenOptionId, row.IsMarked);
+    }
+
     public async Task<Result<MediaFile>> GetMediaAsync(int id, int order, CancellationToken ct = default)
     {
         if (currentUser.Id is not { } userId)

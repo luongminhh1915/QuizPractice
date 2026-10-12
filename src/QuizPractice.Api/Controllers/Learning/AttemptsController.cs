@@ -24,6 +24,11 @@ public class AttemptsController(IQuizHandleService handle) : ApiControllerBase
     public async Task<ActionResult<HandleProgressDto>> Answer(int id, int order, AnswerRequest request, CancellationToken ct) =>
         FromResult(await handle.AnswerAsync(id, order, request, ct));
 
+    /// <summary>UC-26: { "marked": true } marks the question, false unmarks it (A1).</summary>
+    [HttpPut("questions/{order:int}/mark")]
+    public async Task<ActionResult<HandleProgressDto>> Mark(int id, int order, MarkRequest request, CancellationToken ct) =>
+        FromResult(await handle.MarkAsync(id, order, request, ct));
+
     /// <summary>UC-25: the question on screen, read back after a reload (BR-08).</summary>
     [HttpPut("position")]
     public async Task<ActionResult<HandleProgressDto>> Move(int id, MoveRequest request, CancellationToken ct) =>

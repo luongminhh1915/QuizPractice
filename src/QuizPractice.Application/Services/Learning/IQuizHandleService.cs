@@ -15,6 +15,9 @@ public interface IQuizHandleService
     /// <summary>UC-25 steps 3 and 4: the question now on screen; answers stay as they are.</summary>
     Task<Result<HandleProgressDto>> MoveAsync(int id, MoveRequest request, CancellationToken ct = default);
 
+    /// <summary>UC-26: marks or unmarks one question; the answer is kept (A2).</summary>
+    Task<Result<HandleProgressDto>> MarkAsync(int id, int order, MarkRequest request, CancellationToken ct = default);
+
     /// <summary>The image, audio or video of a question in an attempt of the customer (BR-05).</summary>
     Task<Result<MediaFile>> GetMediaAsync(int id, int order, CancellationToken ct = default);
 }

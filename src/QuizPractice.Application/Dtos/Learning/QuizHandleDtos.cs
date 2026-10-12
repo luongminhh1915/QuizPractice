@@ -40,5 +40,8 @@ public sealed record AnswerRequest(int OptionId);
 /// <summary>UC-25 step 4: the question now on screen, kept for a reload (BR-08).</summary>
 public sealed record MoveRequest(int Order);
 
+/// <summary>UC-26: mark the question for review, or unmark it (A1).</summary>
+public sealed record MarkRequest(bool Marked);
+
 /// <summary>What is stored for one question after a change.</summary>
 public sealed record HandleProgressDto(int Order, int? ChosenOptionId, bool IsMarked);
