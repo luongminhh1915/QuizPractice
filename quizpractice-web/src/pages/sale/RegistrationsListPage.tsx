@@ -1,6 +1,7 @@
 import { Button, DatePicker, Flex, Input, Select, Space, Tooltip, Typography } from 'antd'
-import { SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
+import { PlusOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import { Link, useLocation } from 'react-router'
 import type { RegistrationStatus } from '../../api/customerApi'
 import type { RegistrationSummary } from '../../api/saleApi'
 import { errorMessage } from '../../api/client'
@@ -28,7 +29,10 @@ const day = (value: string | null) => (value ? dayjs(value).format('DD/MM/YYYY')
 
 /** Registrations List (SRS III 8.1; F#35; UC-59): every registration, for the Sale role. */
 export function RegistrationsListPage() {
+  const location = useLocation()
   const list = useListParams()
+  // Registration Details returns to this list with the same criteria (SRS III 0.3).
+  const back = { state: { back: location.pathname + location.search } }
   const subjectId = list.get('subjectId') ? Number(list.get('subjectId')) : undefined
   const status = list.get('status') as RegistrationStatus | undefined
   const from = list.get('from')
@@ -80,11 +84,30 @@ export function RegistrationsListPage() {
       ),
     },
     { title: 'Last Updated By', key: 'updatedBy', width: 200 },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 80,
+      render: (r) => (
+        <Link to={`/manage/registrations/${r.id}`} {...back}>
+          <Button size="small">Edit</Button>
+        </Link>
+      ),
+    },
   ]
 
   return (
     <>
-      <PageHeader title="Registrations List" />
+      <PageHeader
+        title="Registrations List"
+        action={
+          <Link to="/manage/registrations/new" {...back}>
+            <Button type="primary" icon={<PlusOutlined />}>
+              Add New Registration
+            </Button>
+          </Link>
+        }
+      />
 
       <Space wrap style={{ marginBottom: 16 }}>
         <Input.Search
