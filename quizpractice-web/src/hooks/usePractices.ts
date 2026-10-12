@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { practiceApi, type CreatePractice, type SelectionType } from '../api/practiceApi'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { practiceApi, type CreatePractice, type PracticeListCriteria, type SelectionType } from '../api/practiceApi'
 
 // Under ['account', ...] like the other records of the customer, so signing in as
 // someone else drops them (switchUser in useAccount).
@@ -8,6 +8,20 @@ export const practiceKeys = {
   form: ['account', 'practices', 'form'] as const,
   detail: (id: number) => ['account', 'practices', 'detail', id] as const,
   groups: (subjectId: number, selectedBy: SelectionType) => ['account', 'practices', 'groups', subjectId, selectedBy] as const,
+}
+
+/** UC-19. */
+export function usePractices(criteria: PracticeListCriteria) {
+  return useQuery({
+    queryKey: [...practiceKeys.all, 'list', criteria],
+    queryFn: () => practiceApi.list(criteria),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** UC-19: the Subject filter. */
+export function usePracticeFilters() {
+  return useQuery({ queryKey: [...practiceKeys.all, 'filters'], queryFn: practiceApi.filters })
 }
 
 /** UC-21. */

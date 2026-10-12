@@ -10,6 +10,7 @@ import { InvoiceQrPage } from '../pages/customer/InvoiceQrPage'
 import { MyInvoicesPage } from '../pages/customer/MyInvoicesPage'
 import { MyRegistrationsPage } from '../pages/customer/MyRegistrationsPage'
 import { PracticeDetailsPage } from '../pages/customer/PracticeDetailsPage'
+import { PracticesListPage } from '../pages/customer/PracticesListPage'
 import { QuizHandlePage } from '../pages/learning/QuizHandlePage'
 import { DashboardPage } from '../pages/marketing/DashboardPage'
 import { PostDetailsPage } from '../pages/marketing/PostDetailsPage'
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
           { path: '/my-registrations', element: <MyRegistrationsPage /> },
           { path: '/my-invoices', element: <MyInvoicesPage /> },
           { path: '/my-invoices/:id', element: <InvoiceQrPage /> },
+          { path: '/practices', element: <PracticesListPage /> },
           { path: '/practices/new', element: <PracticeDetailsPage /> },
           { path: '/practices/:id', element: <PracticeDetailsPage /> },
           { path: '/verify-email', element: <VerifyEmailPage /> },

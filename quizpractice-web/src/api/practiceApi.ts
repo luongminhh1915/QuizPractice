@@ -1,4 +1,5 @@
 import { http } from './client'
+import type { Page } from './types'
 
 export type SelectionType = 'Topic' | 'Dimension'
 
@@ -39,6 +40,26 @@ export interface PracticeDetails {
   outcome: AttemptOutcome | null
 }
 
+/** Matches PracticeSummaryDto (UC-19). */
+export interface PracticeSummary {
+  id: number
+  subjectName: string
+  mode: 'Practice' | 'Exam'
+  title: string
+  startedAt: string
+  status: 'InProgress' | 'Submitted'
+  questionCount: number
+  outcome: AttemptOutcome | null
+}
+
+export interface PracticeListCriteria {
+  subjectId?: number
+  mode?: 'Practice' | 'Exam'
+  oldestFirst?: boolean
+  page: number
+  pageSize: number
+}
+
 export interface CreatePractice {
   subjectId: number
   questionCount: number
@@ -49,6 +70,12 @@ export interface CreatePractice {
 
 /** /api/practices — Practices List and Practice Details (F#14, F#15). */
 export const practiceApi = {
+  /** UC-19. */
+  list: (criteria: PracticeListCriteria) => http.get<Page<PracticeSummary>>('/practices', { params: criteria }).then((r) => r.data),
+
+  /** UC-19: the subjects the customer has taken something in. */
+  filters: () => http.get<{ subjects: { id: number; name: string }[] }>('/practices/filters').then((r) => r.data),
+
   /** UC-21. 404 when missing or another customer's (E1). */
   get: (id: number) => http.get<PracticeDetails>(`/practices/${id}`).then((r) => r.data),
 
