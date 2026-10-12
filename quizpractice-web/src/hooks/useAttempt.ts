@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { attemptApi } from '../api/attemptApi'
 
 export const attemptKeys = {
@@ -35,6 +35,15 @@ export function useMark(id: number) {
 /** UC-28: read when the customer asks, never before (the answer stays on the server). */
 export function usePeek(id: number) {
   return useMutation({ mutationFn: (order: number) => attemptApi.peek(id, order) })
+}
+
+/** UC-29: the lists and details of the customer change with the result. */
+export function useSubmit(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => attemptApi.submit(id),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['account', 'practices'] }),
+  })
 }
 
 /** UC-24 step 3. */

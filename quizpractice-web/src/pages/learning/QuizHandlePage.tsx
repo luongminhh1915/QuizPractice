@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { App, Button, Card, Descriptions, Flex, Modal, Radio, Result, Space, Spin, Tag, Typography } from 'antd'
-import { AppstoreOutlined, ClockCircleOutlined, EyeOutlined, FlagFilled, FlagOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { Alert, App, Button, Card, Descriptions, Flex, Modal, Radio, Result, Space, Spin, Tag, Typography } from 'antd'
+import { AppstoreOutlined, CheckOutlined, ClockCircleOutlined, EyeOutlined, FlagFilled, FlagOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router'
 import { mediaUrl, type HandleQuestion, type QuizHandle } from '../../api/attemptApi'
 import { errorMessage, problemOf } from '../../api/client'
 import { QuestionNumbersModal, type NumberFilter } from '../../components/learning/QuestionNumbersModal'
-import { useAnswer, useMark, useMove, usePeek, useQuizHandle } from '../../hooks/useAttempt'
+import { useAnswer, useMark, useMove, usePeek, useQuizHandle, useSubmit } from '../../hooks/useAttempt'
 import { formatDuration } from '../../utils/duration'
 
 /** UC-27 step 2: the four filters of Review Progress. */
@@ -69,6 +69,8 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
   const mark = useMark(attempt.id)
   const peek = usePeek(attempt.id)
   const [peekOpen, setPeekOpen] = useState(false)
+  const submit = useSubmit(attempt.id)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const question = attempt.questions[order - 1]
 
   // A change the server refuses: a scored attempt opens its result; anything else is E2.
@@ -121,6 +123,24 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
 
   const numbers = attempt.questions.map((q) => ({ order: q.order, answered: answers[q.order] != null, marked: marks[q.order] ?? false }))
   const answeredCount = numbers.filter((n) => n.answered).length
+
+  // UC-29 steps 5 to 7: Submit opens the result in Practice Details; Exit (A1) returns
+  // to Practices List. Scored already, e.g. from another tab, counts as done.
+  const score = (then: 'details' | 'list') =>
+    submit.mutate(undefined, {
+      onSettled: (_, e) => {
+        if (e && problemOf(e)?.code !== 'Attempt.Closed') {
+          message.error(`Not submitted: ${errorMessage(e)}`)
+          return
+        }
+        navigate(then === 'details' ? `/practices/${attempt.id}` : '/practices', { replace: true })
+      },
+    })
+
+  const openConfirm = () => {
+    setProgressOpen(false)
+    setConfirmOpen(true)
+  }
 
   return (
     <Flex vertical gap={16}>
@@ -179,9 +199,13 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
               Previous
             </Button>
           )}
-          {order < total && (
+          {order < total ? (
             <Button type="primary" onClick={() => goTo(order + 1)}>
               Next <RightOutlined />
+            </Button>
+          ) : (
+            <Button type="primary" icon={<CheckOutlined />} onClick={openConfirm}>
+              Score Exam
             </Button>
           )}
         </Space>
@@ -214,6 +238,12 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
             {answeredCount} of {total} questions answered
           </Typography.Text>
         }
+        // A2: from any question.
+        footer={
+          <Button type="primary" icon={<CheckOutlined />} onClick={openConfirm}>
+            Score Exam Now
+          </Button>
+        }
         // UC-27 step 6; A1 closes and stays on the question.
         onPick={(target) => {
           setProgressOpen(false)
@@ -221,7 +251,78 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
         }}
         onClose={() => setProgressOpen(false)}
       />
+
+      <ConfirmScore
+        open={confirmOpen}
+        answered={answeredCount}
+        total={total}
+        busy={submit.isPending}
+        onBack={() => setConfirmOpen(false)}
+        onExit={() => score('list')}
+        onSubmit={() => score('details')}
+      />
     </Flex>
+  )
+}
+
+/**
+ * BR-09: the confirmation before scoring, in its three cases. Nothing answered offers
+ * Exit (A1); some unanswered warns with the count (A2); all answered just asks (A3).
+ * Back returns to the question (A4).
+ */
+function ConfirmScore({
+  open,
+  answered,
+  total,
+  busy,
+  onBack,
+  onExit,
+  onSubmit,
+}: {
+  open: boolean
+  answered: number
+  total: number
+  busy: boolean
+  onBack: () => void
+  onExit: () => void
+  onSubmit: () => void
+}) {
+  const none = answered === 0
+  return (
+    <Modal
+      open={open}
+      title={none ? 'Exit the attempt?' : 'Submit the attempt?'}
+      onCancel={onBack}
+      footer={
+        <Space>
+          <Button onClick={onBack}>Back</Button>
+          {none ? (
+            <Button danger type="primary" loading={busy} onClick={onExit}>
+              Exit
+            </Button>
+          ) : (
+            <Button type="primary" loading={busy} onClick={onSubmit}>
+              Submit
+            </Button>
+          )}
+        </Space>
+      }
+    >
+      {none ? (
+        <Typography.Paragraph>
+          You have not answered any question. Exit closes the attempt with no correct answer and returns to Practices List.
+        </Typography.Paragraph>
+      ) : answered < total ? (
+        <Alert
+          type="warning"
+          showIcon
+          title={`${answered} of ${total} questions answered.`}
+          description="An unanswered question counts as wrong. Submit now to see the result, or go back and finish."
+        />
+      ) : (
+        <Typography.Paragraph>All {total} questions are answered. Submit to see the result in Practice Details.</Typography.Paragraph>
+      )}
+    </Modal>
   )
 }
 

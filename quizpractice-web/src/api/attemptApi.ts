@@ -49,6 +49,16 @@ export interface Peek {
   dimensions: string[]
 }
 
+/** Matches AttemptResultDto (UC-29, BR-21). */
+export interface AttemptResult {
+  id: number
+  correct: number
+  questionCount: number
+  score: number
+  passRate: number
+  passed: boolean
+}
+
 /** The address of the media of a question in an attempt. */
 export const mediaUrl = (id: number, order: number) => `/api/attempts/${id}/questions/${order}/media`
 
@@ -67,6 +77,9 @@ export const attemptApi = {
 
   /** UC-28: practice only; 403 Attempt.NoPeek during an exam (BR-07). */
   peek: (id: number, order: number) => http.get<Peek>(`/attempts/${id}/questions/${order}/peek`).then((r) => r.data),
+
+  /** UC-29: scores the attempt as it stands. 409 Attempt.Closed when it was scored already. */
+  submit: (id: number) => http.post<AttemptResult>(`/attempts/${id}/submit`).then((r) => r.data),
 
   /** UC-25: the question on screen, read back after a reload (BR-08). */
   move: (id: number, order: number) => http.put<HandleProgress>(`/attempts/${id}/position`, { order }).then((r) => r.data),
