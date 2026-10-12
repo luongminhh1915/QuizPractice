@@ -10,6 +10,12 @@ namespace QuizPractice.Domain.Repositories;
 /// <summary>A shown question that belongs to a group: a topic, or a dimension (UC-57).</summary>
 public sealed record GroupMember(int GroupId, int QuestionId);
 
+/// <summary>
+/// Criteria of Simulation Exams (UC-22): only Active quizzes of type Simulation in the
+/// subjects the customer may reach (BR-05, BR-23), matched by name and by one subject.
+/// </summary>
+public sealed record ExamSearch(IReadOnlyCollection<int> SubjectIds, string? Text, int? SubjectId, string? SortBy, bool Descending);
+
 public sealed record QuizSearch(int? ExpertId, string? Text, int? SubjectId, int? TypeId, string? SortBy, bool Descending);
 
 public interface IQuizRepository
@@ -62,6 +68,9 @@ public interface IQuizRepository
 
     /// <summary>The subjects of that Expert, or every subject when expertId is null; by name.</summary>
     Task<IReadOnlyList<Subject>> GetSubjectsAsync(int? expertId, CancellationToken ct = default);
+
+    /// <summary>UC-22: a page of simulation exams a customer may take, with subject and level.</summary>
+    Task<Page<Quiz>> SearchExamsAsync(ExamSearch search, PageRequest page, CancellationToken ct = default);
 
     /// <summary>The Test Type settings in their display order (BR-16).</summary>
     Task<IReadOnlyList<Setting>> GetTypesAsync(CancellationToken ct = default);

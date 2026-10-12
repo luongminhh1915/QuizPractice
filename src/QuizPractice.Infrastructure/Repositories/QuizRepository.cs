@@ -119,6 +119,42 @@ public class QuizRepository(AppDbContext db) : IQuizRepository
             .OrderBy(s => s.Name).ThenBy(s => s.Id)
             .ToListAsync(ct);
 
+    public async Task<Page<Quiz>> SearchExamsAsync(ExamSearch search, PageRequest page, CancellationToken ct = default)
+    {
+        var subjectIds = search.SubjectIds.ToList();
+        var query = db.Quizzes.AsNoTracking()
+            .Where(q => subjectIds.Contains(q.SubjectId) && q.Status == ActiveStatus.Active
+                && q.Type.Value == SettingValues.TestTypes.Simulation);
+
+        if (!string.IsNullOrWhiteSpace(search.Text))
+        {
+            var text = search.Text.Trim();
+            query = query.Where(q => q.Name.Contains(text));
+        }
+
+        if (search.SubjectId is { } subjectId)
+        {
+            query = query.Where(q => q.SubjectId == subjectId);
+        }
+
+        var total = await query.CountAsync(ct);
+        IOrderedQueryable<Quiz> ordered = search.SortBy?.ToLowerInvariant() switch
+        {
+            "id" => search.Descending ? query.OrderByDescending(q => q.Id) : query.OrderBy(q => q.Id),
+            "subject" => search.Descending ? query.OrderByDescending(q => q.Subject.Name) : query.OrderBy(q => q.Subject.Name),
+            "name" => search.Descending ? query.OrderByDescending(q => q.Name) : query.OrderBy(q => q.Name),
+            "level" => search.Descending ? query.OrderByDescending(q => q.Level.DisplayOrder) : query.OrderBy(q => q.Level.DisplayOrder),
+            _ => query.OrderBy(q => q.Subject.Name).ThenBy(q => q.Name),
+        };
+        var items = await ordered.ThenBy(q => q.Id)
+            .Include(q => q.Subject)
+            .Include(q => q.Level)
+            .Skip(page.Skip)
+            .Take(page.PageSize)
+            .ToListAsync(ct);
+        return new Page<Quiz>(items, total, page.PageNumber, page.PageSize);
+    }
+
     public async Task<IReadOnlyList<Setting>> GetTypesAsync(CancellationToken ct = default) =>
         await db.Settings.AsNoTracking()
             .Where(s => s.Type == SettingType.TestType)
