@@ -31,4 +31,9 @@ public class SettingsController(ISettingService settings) : ApiControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<SettingSavedDto>> Update(int id, UpdateSettingRequest request, CancellationToken ct) =>
         FromResult(await settings.UpdateAsync(id, request, ct));
+
+    /// <summary>UC-66: Activate or Deactivate in place from Settings List.</summary>
+    [HttpPut("{id:int}/status")]
+    public async Task<ActionResult<SettingSummaryDto>> ChangeStatus(int id, ChangeSettingStatusRequest request, CancellationToken ct) =>
+        FromResult(await settings.ChangeStatusAsync(id, request, ct));
 }

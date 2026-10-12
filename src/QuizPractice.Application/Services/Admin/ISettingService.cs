@@ -4,7 +4,7 @@ using QuizPractice.Domain.Common;
 
 namespace QuizPractice.Application.Services.Admin;
 
-/// <summary>UC-64 View Settings List, UC-65 Add or Edit Setting.</summary>
+/// <summary>UC-64 View Settings List, UC-65 Add or Edit Setting, UC-66 Activate or Deactivate Setting.</summary>
 public interface ISettingService
 {
     Task<Result<Page<SettingSummaryDto>>> ListAsync(SettingListRequest request, CancellationToken ct = default);
@@ -16,4 +16,7 @@ public interface ISettingService
 
     /// <summary>UC-65: value, order, description and status; 409 Setting.Changed (E2), Setting.InUse (UC-66 E1).</summary>
     Task<Result<SettingSavedDto>> UpdateAsync(int id, UpdateSettingRequest request, CancellationToken ct = default);
+
+    /// <summary>UC-66 from the list: 409 Setting.Changed (E2), Setting.Required, Setting.InUse until confirmed (E1).</summary>
+    Task<Result<SettingSummaryDto>> ChangeStatusAsync(int id, ChangeSettingStatusRequest request, CancellationToken ct = default);
 }

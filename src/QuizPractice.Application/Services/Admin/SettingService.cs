@@ -42,7 +42,7 @@ public class SettingService(
 
         var search = new SettingSearch(request.Search, request.Type, request.Status, request.SortBy, request.Descending);
         var page = await settings.SearchAsync(search, new PageRequest(request.Page, request.PageSize), ct);
-        return page.Map(SettingSummaryDto.From);
+        return page.Map(s => SettingSummaryDto.From(s, CanDeactivate(s)));
     }
 
     public async Task<Result<SettingDto>> GetAsync(int id, CancellationToken ct = default)
@@ -150,6 +150,47 @@ public class SettingService(
         setting.Status = request.Status;
         await unitOfWork.SaveChangesAsync(ct);
         return new SettingSavedDto(ToDto(setting), followed);
+    }
+
+    public async Task<Result<SettingSummaryDto>> ChangeStatusAsync(int id, ChangeSettingStatusRequest request, CancellationToken ct = default)
+    {
+        if (AdminAccess.Check(currentUser) is { } denied)
+        {
+            return denied;
+        }
+
+        if (!Enum.IsDefined(request.Status))
+        {
+            return Error.Invalid(nameof(request.Status), "Status must be Active or Inactive.");
+        }
+
+        var setting = await settings.GetByIdAsync(id, ct);
+        if (setting is null)
+        {
+            return Error.NotFound("Setting", id);
+        }
+
+        // A1: already in the chosen state, so nothing is written.
+        if (setting.Status == request.Status)
+        {
+            return SettingSummaryDto.From(setting, CanDeactivate(setting));
+        }
+
+        // E2: the row was loaded before another Admin changed the setting.
+        if (request.Version != SettingVersion.Of(setting))
+        {
+            return Changed;
+        }
+
+        if (await CheckStatusAsync(setting, request.Status, request.ConfirmInUse, ct) is { } badStatus)
+        {
+            return badStatus;
+        }
+
+        // The screens that read the type offer only the active values from now on (step 4).
+        setting.Status = request.Status;
+        await unitOfWork.SaveChangesAsync(ct);
+        return SettingSummaryDto.From(setting, CanDeactivate(setting));
     }
 
     /// <summary>

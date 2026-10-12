@@ -15,11 +15,19 @@ public sealed record SettingListRequest(
     int Page = 1,
     int PageSize = 10);
 
-/// <summary>A row of Settings List.</summary>
-public sealed record SettingSummaryDto(int Id, SettingType Type, string Value, int DisplayOrder, ActiveStatus Status)
+/// <summary>
+/// A row of Settings List. Version: what the row was loaded with, so Activate / Deactivate
+/// on a row another Admin changed is refused (UC-66 E2). CanDeactivate: false for a value
+/// the system needs (roles, lesson and test types, the Settings menu item).
+/// </summary>
+public sealed record SettingSummaryDto(int Id, SettingType Type, string Value, int DisplayOrder, ActiveStatus Status, string Version, bool CanDeactivate)
 {
-    public static SettingSummaryDto From(Setting s) => new(s.Id, s.Type, s.Value, s.DisplayOrder, s.Status);
+    public static SettingSummaryDto From(Setting s, bool canDeactivate) =>
+        new(s.Id, s.Type, s.Value, s.DisplayOrder, s.Status, SettingVersion.Of(s), canDeactivate);
 }
+
+/// <summary>Activate or Deactivate Setting (UC-66); ConfirmInUse answers E1.</summary>
+public sealed record ChangeSettingStatusRequest(ActiveStatus Status, string? Version, bool ConfirmInUse = false);
 
 /// <summary>New setting (UC-65 step 3): a type among the eight, then value, order, description and status.</summary>
 public sealed record CreateSettingRequest(SettingType Type, string Value, int? DisplayOrder, string? Description, ActiveStatus Status);
