@@ -46,5 +46,12 @@ public class RegistrationRepository(AppDbContext db) : IRegistrationRepository
             .Where(r => r.UserId == userId && ids.Contains(r.Id))
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<Subject>> ListAccessibleSubjectsAsync(int userId, DateOnly day, CancellationToken ct = default) =>
+        await db.Subjects.AsNoTracking()
+            .Where(s => db.Registrations.Any(r => r.UserId == userId && r.SubjectId == s.Id
+                && r.Status == RegistrationStatus.Paid && r.ValidFrom <= day && r.ValidTo >= day))
+            .OrderBy(s => s.Name).ThenBy(s => s.Id)
+            .ToListAsync(ct);
+
     public void Add(Registration registration) => db.Registrations.Add(registration);
 }

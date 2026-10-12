@@ -21,6 +21,12 @@ public interface IRegistrationRepository
     /// <summary>UC-18: the account's registrations among the ids, tracked, with subject, package and invoice.</summary>
     Task<IReadOnlyList<Registration>> ListOwnByIdsAsync(int userId, IReadOnlyCollection<int> ids, CancellationToken ct = default);
 
+    /// <summary>
+    /// BR-05: the subjects the account may practise on that day — a Paid registration whose
+    /// validity (valid_from to valid_to, both included) covers it — by name.
+    /// </summary>
+    Task<IReadOnlyList<Subject>> ListAccessibleSubjectsAsync(int userId, DateOnly day, CancellationToken ct = default);
+
     /// <summary>Stages a new registration; the service commits through IUnitOfWork.</summary>
     void Add(Registration registration);
 }
