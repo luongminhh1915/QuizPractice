@@ -35,7 +35,7 @@ public class QuizHandleService(
             titles[attempt.Id],
             attempt.Mode,
             Utc(attempt.StartedAt),
-            EndsAt(attempt),
+            AttemptScoring.EndsAt(attempt),
             DateTime.UtcNow,
             attempt.CurrentOrder,
             attempt.Questions.Select(ToDto).ToList());
@@ -141,14 +141,17 @@ public class QuizHandleService(
 
     public async Task<Result<AttemptResultDto>> SubmitAsync(int id, CancellationToken ct = default)
     {
-        var (attempt, refusal) = await LoadRunningAsync(id, ct);
+        var (attempt, refusal) = await LoadRunningAsync(id, ct, submitting: true);
         if (refusal is not null)
         {
             return refusal;
         }
 
-        // Steps 5 and 6. The three confirmations of BR-09 are the page's; every case ends here.
-        AttemptScoring.Score(attempt!, DateTime.UtcNow);
+        // Steps 5 and 6. The three confirmations of BR-09 are the page's; every case ends
+        // here. E1: a countdown that reached zero submits too, finished at the end time.
+        var now = DateTime.UtcNow;
+        var end = AttemptScoring.EndsAt(attempt!);
+        AttemptScoring.Score(attempt!, end is { } e && now > e ? e : now);
         await unitOfWork.SaveChangesAsync(ct);
         return ResultOf(attempt!);
     }
@@ -177,9 +180,10 @@ public class QuizHandleService(
 
     /// <summary>
     /// The customer's own attempt, still running, on a subject the customer may still
-    /// reach; or the error that stops UC-24 to UC-29.
+    /// reach; or the error that stops UC-24 to UC-29. A simulation exam past its end time
+    /// is scored here as it stands (UC-30 E1), unless the call is the submission itself.
     /// </summary>
-    private async Task<(Attempt? Attempt, Error? Refusal)> LoadRunningAsync(int id, CancellationToken ct)
+    private async Task<(Attempt? Attempt, Error? Refusal)> LoadRunningAsync(int id, CancellationToken ct, bool submitting = false)
     {
         if (currentUser.Id is not { } userId)
         {
@@ -195,6 +199,12 @@ public class QuizHandleService(
         if (attempt.Status != AttemptStatus.InProgress)
         {
             return (null, Error.Conflict("Attempt.Closed", "This attempt has been scored. Its result is in Practice Details."));
+        }
+
+        if (!submitting && AttemptScoring.CloseIfTimeUp(attempt, DateTime.UtcNow))
+        {
+            await unitOfWork.SaveChangesAsync(ct);
+            return (null, Error.Conflict("Attempt.TimeUp", "Time is up: the exam was submitted with the answers recorded so far."));
         }
 
         // E1: the access ended while the attempt was running; what is stored stays.
@@ -226,10 +236,6 @@ public class QuizHandleService(
 
     /// <summary>A, B, C… by display order (SRS III 4.1, Answer Options).</summary>
     internal static string Letter(int index) => ((char)('A' + index)).ToString();
-
-    /// <summary>BR-06: a simulation exam ends its duration after it started.</summary>
-    internal static DateTime? EndsAt(Attempt attempt) =>
-        attempt is { Mode: AttemptMode.Exam, Quiz: { } quiz } ? Utc(attempt.StartedAt).AddMinutes(quiz.DurationMin) : null;
 
     internal static DateTime Utc(DateTime value) => DateTime.SpecifyKind(value, DateTimeKind.Utc);
 }

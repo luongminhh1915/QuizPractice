@@ -24,6 +24,36 @@ internal static class AttemptScoring
         attempt.Status = AttemptStatus.Submitted;
     }
 
+    /// <summary>
+    /// Time the page needs to send its last answer and the submission once the countdown
+    /// reaches zero; after it the server closes the exam by itself (UC-29 E1, UC-30 E1).
+    /// </summary>
+    public static readonly TimeSpan Grace = TimeSpan.FromSeconds(5);
+
+    /// <summary>BR-06: a simulation exam ends its duration after it started; a practice has no end.</summary>
+    public static DateTime? EndsAt(Attempt attempt) =>
+        attempt is { Mode: AttemptMode.Exam, Quiz: { } quiz }
+            ? DateTime.SpecifyKind(attempt.StartedAt, DateTimeKind.Utc).AddMinutes(quiz.DurationMin)
+            : null;
+
+    public static bool TimeIsUp(Attempt attempt, DateTime utcNow) =>
+        attempt.Status == AttemptStatus.InProgress && EndsAt(attempt) is { } end && utcNow > end + Grace;
+
+    /// <summary>
+    /// UC-30 E1: an exam whose countdown ran out while the page was closed is scored as it
+    /// stands, finished at its end time. True when the attempt was closed now.
+    /// </summary>
+    public static bool CloseIfTimeUp(Attempt attempt, DateTime utcNow)
+    {
+        if (!TimeIsUp(attempt, utcNow))
+        {
+            return false;
+        }
+
+        Score(attempt, EndsAt(attempt)!.Value);
+        return true;
+    }
+
     public static bool Passed(Attempt attempt) =>
         attempt is { Score: { } score, PassRate: { } passRate } && score >= passRate;
 }
