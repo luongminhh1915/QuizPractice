@@ -20,6 +20,7 @@ public class SubjectService(
     IHtmlSanitizer sanitizer,
     ICurrentUser currentUser,
     IValidator<CreateSubjectRequest> createValidator,
+    IValidator<UpdateSubjectRequest> updateValidator,
     IValidator<SubjectListRequest> listValidator) : ISubjectService
 {
     private const string ThumbnailFolder = "subjects";
@@ -140,6 +141,70 @@ public class SubjectService(
         subjects.Add(subject);
         await unitOfWork.SaveChangesAsync(ct);
         return SubjectDto.From(subject, hasActivePackage: false);
+    }
+
+    public async Task<Result<SubjectDto>> UpdateAsync(int id, UpdateSubjectRequest request, CancellationToken ct = default)
+    {
+        if (CourseAccess.Check(currentUser, out var expertId) is { } denied)
+        {
+            return denied;
+        }
+
+        var subject = await subjects.GetByIdAsync(id, ct);
+        if (subject is null)
+        {
+            return Error.NotFound("Subject", id);
+        }
+
+        // E1: an Expert on a subject not assigned to that Expert.
+        if (CourseAccess.CheckSubject(subject, expertId) is { } notAssigned)
+        {
+            return notAssigned;
+        }
+
+        if (await updateValidator.CheckAsync(request, ct) is { } invalid)
+        {
+            return invalid;
+        }
+
+        var category = await CheckCategoryAsync(request.CategoryId, keptCategoryId: subject.CategoryId, ct);
+        if (category.Error is { } badCategory)
+        {
+            return badCategory;
+        }
+
+        var description = sanitizer.Sanitize(request.Description ?? string.Empty);
+        if (CheckDescription(description) is { } badDescription)
+        {
+            return badDescription;
+        }
+
+        string? replacedThumbnail = null;
+        if (request.Thumbnail is not null)
+        {
+            replacedThumbnail = subject.Thumbnail;
+            subject.Thumbnail = await files.SaveAsync(request.Thumbnail.Content, request.Thumbnail.Extension, ThumbnailFolder, ct);
+        }
+
+        // Publication and the owner stay as they are (UC-44 post-condition); the price
+        // packages are not on this tab at all.
+        subject.Name = request.Name.Trim();
+        subject.Tagline = string.IsNullOrWhiteSpace(request.Tagline) ? null : request.Tagline.Trim();
+        subject.Brief = request.Brief?.Trim() ?? string.Empty;
+        subject.Category = category.Value;
+        subject.IsFeatured = request.IsFeatured;
+        subject.PassRate = (byte)request.PassRate;
+        subject.Description = description;
+        subject.UpdatedAt = DateTime.UtcNow;
+        await unitOfWork.SaveChangesAsync(ct);
+
+        // Only after the commit: if it had failed, the row would still point at the old file.
+        if (replacedThumbnail is not null)
+        {
+            files.Delete(replacedThumbnail);
+        }
+
+        return SubjectDto.From(subject, await subjects.HasActivePackageAsync(id, ct));
     }
 
     /// <summary>An active Subject Category; on edit the stored one is kept even if switched off since (BR-16).</summary>

@@ -39,3 +39,18 @@ public class CreateSubjectRequestValidator : AbstractValidator<CreateSubjectRequ
         RuleFor(x => x.Thumbnail!).SetValidator(new ImageUploadValidator()).When(x => x.Thumbnail is not null);
     }
 }
+
+/// <summary>UC-44 step 4 and E2 (BR-17); the category and the access are checked by SubjectService.</summary>
+public class UpdateSubjectRequestValidator : AbstractValidator<UpdateSubjectRequest>
+{
+    public UpdateSubjectRequestValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().WithMessage("Enter the subject name.").MaximumLength(FieldLength.Name);
+        RuleFor(x => x.Tagline).MaximumLength(FieldLength.Brief);
+        RuleFor(x => x.Brief).MaximumLength(FieldLength.Brief);
+        RuleFor(x => x.CategoryId).GreaterThan(0).WithMessage("Choose a subject category.");
+        RuleFor(x => x.PassRate).InclusiveBetween(0, 100).WithMessage("The pass rate is a percent from 0 to 100.");
+        RuleFor(x => x.Description).MaximumLength(FieldLength.LongText);
+        RuleFor(x => x.Thumbnail!).SetValidator(new ImageUploadValidator()).When(x => x.Thumbnail is not null);
+    }
+}

@@ -51,6 +51,20 @@ public sealed record CreateSubjectRequest(
     string? Description,
     FileUpload? Thumbnail = null);
 
+/// <summary>
+/// Overview tab (UC-44): the general information the Admin and the assigned Expert may
+/// change. Leaving Thumbnail empty keeps the stored one.
+/// </summary>
+public sealed record UpdateSubjectRequest(
+    string Name,
+    string? Tagline,
+    string? Brief,
+    int CategoryId,
+    bool IsFeatured,
+    int PassRate,
+    string? Description,
+    FileUpload? Thumbnail = null);
+
 /// <summary>Everything Subject Management Details shows on the Overview tab (UC-43 to UC-45).</summary>
 public sealed record SubjectDto(
     int Id,

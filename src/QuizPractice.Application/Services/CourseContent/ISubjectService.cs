@@ -4,7 +4,7 @@ using QuizPractice.Domain.Common;
 
 namespace QuizPractice.Application.Services.CourseContent;
 
-/// <summary>UC-41 View Subject Management List, UC-42 Create Subject.</summary>
+/// <summary>UC-41 View Subject Management List, UC-42 Create Subject, UC-44 Edit Subject Details.</summary>
 public interface ISubjectService
 {
     /// <summary>Every subject for the Admin, the assigned ones for an Expert (BR-11).</summary>
@@ -20,4 +20,7 @@ public interface ISubjectService
 
     /// <summary>UC-42: the Admin creates an Unpublished subject, with or without an owner.</summary>
     Task<Result<SubjectDto>> CreateAsync(CreateSubjectRequest request, CancellationToken ct = default);
+
+    /// <summary>UC-44: the Admin or the assigned Expert stores the general information.</summary>
+    Task<Result<SubjectDto>> UpdateAsync(int id, UpdateSubjectRequest request, CancellationToken ct = default);
 }
