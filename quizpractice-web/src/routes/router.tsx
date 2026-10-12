@@ -6,6 +6,8 @@ import { QuizLayout } from '../layouts/QuizLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ResetPasswordPage } from '../pages/common/ResetPasswordPage'
 import { VerifyEmailPage } from '../pages/common/VerifyEmailPage'
+import { NewSubjectPage } from '../pages/coursecontent/NewSubjectPage'
+import { SubjectManagementDetailsPage } from '../pages/coursecontent/SubjectManagementDetailsPage'
 import { SubjectManagementListPage } from '../pages/coursecontent/SubjectManagementListPage'
 import { InvoiceQrPage } from '../pages/customer/InvoiceQrPage'
 import { MyInvoicesPage } from '../pages/customer/MyInvoicesPage'
@@ -89,6 +91,8 @@ export const router = createBrowserRouter([
           { path: 'invoices', element: <InvoicesListPage /> },
           { path: 'invoices/:id', element: <InvoiceDetailsPage /> },
           { path: 'subjects', element: <SubjectManagementListPage /> },
+          { path: 'subjects/new', element: <NewSubjectPage /> },
+          { path: 'subjects/:id', element: <SubjectManagementDetailsPage /> },
           { path: 'questions', element: <QuestionsListPage /> },
           { path: 'questions/new', element: <QuestionDetailsPage /> },
           { path: 'questions/:id', element: <QuestionDetailsPage /> },

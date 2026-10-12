@@ -33,9 +33,64 @@ export interface SubjectCriteria extends ListCriteria {
   status?: SubjectStatus
 }
 
+/** Matches SubjectDto of the API: the Overview tab of Subject Management Details. */
+export interface Subject {
+  id: number
+  name: string
+  tagline: string | null
+  brief: string
+  thumbnail: string
+  categoryId: number
+  category: string
+  isFeatured: boolean
+  passRate: number
+  status: SubjectStatus
+  ownerId: number | null
+  owner: string | null
+  /** HTML cleaned by the API. */
+  description: string
+  /** Without one the public pages show no price (UC-45 E1). */
+  hasActivePackage: boolean
+}
+
+/** Drop-downs: subject categories, and the Experts (filled for the Admin only). */
+export interface SubjectChoices {
+  categories: Lookup[]
+  experts: Lookup[]
+}
+
+/** New Subject (UC-42). */
+export interface NewSubjectInput {
+  thumbnail?: File
+  name: string
+  categoryId: number
+  expertId?: number
+  isFeatured: boolean
+  passRate: number
+  description?: string
+}
+
+function newSubjectForm(input: NewSubjectInput): FormData {
+  const data = new FormData()
+  data.append('name', input.name)
+  data.append('categoryId', String(input.categoryId))
+  if (input.expertId) data.append('expertId', String(input.expertId))
+  data.append('isFeatured', String(input.isFeatured))
+  data.append('passRate', String(input.passRate))
+  data.append('description', input.description ?? '')
+  if (input.thumbnail) data.append('thumbnail', input.thumbnail)
+  return data
+}
+
 /** /api/subjects — UC-41 to UC-45 (Course Content). */
 export const subjectsApi = {
   list: (criteria: SubjectCriteria) => http.get<Page<SubjectSummary>>('/subjects', { params: criteria }).then((r) => r.data),
 
   filters: () => http.get<SubjectFilters>('/subjects/filters').then((r) => r.data),
+
+  choices: () => http.get<SubjectChoices>('/subjects/choices').then((r) => r.data),
+
+  get: (id: number) => http.get<Subject>(`/subjects/${id}`).then((r) => r.data),
+
+  create: (input: NewSubjectInput) => http.post<Subject>('/subjects', newSubjectForm(input)).then((r) => r.data),
 }
