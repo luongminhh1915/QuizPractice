@@ -5,6 +5,7 @@ import { PublicLayout } from '../layouts/PublicLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ResetPasswordPage } from '../pages/common/ResetPasswordPage'
 import { VerifyEmailPage } from '../pages/common/VerifyEmailPage'
+import { MyRegistrationsPage } from '../pages/customer/MyRegistrationsPage'
 import { DashboardPage } from '../pages/marketing/DashboardPage'
 import { PostDetailsPage } from '../pages/marketing/PostDetailsPage'
 import { PostsListPage } from '../pages/marketing/PostsListPage'
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
           { path: '/subjects/:id', element: <SubjectDetailsPage /> },
           { path: '/blogs', element: <BlogsListPage /> },
           { path: '/blogs/:id', element: <BlogDetailsPage /> },
+          { path: '/my-registrations', element: <MyRegistrationsPage /> },
           { path: '/verify-email', element: <VerifyEmailPage /> },
           { path: '/reset-password', element: <ResetPasswordPage /> },
           { path: '*', element: <NotFoundPage /> },

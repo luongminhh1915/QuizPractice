@@ -40,7 +40,7 @@ export const MENU_SCREENS: Record<string, MenuScreen> = {
   Quizzes: { path: '/manage/quizzes', area: 'manage', icon: <FormOutlined />, ready: true },
   Users: { path: '/manage/users', area: 'manage', icon: <TeamOutlined />, ready: false },
   Settings: { path: '/manage/settings', area: 'manage', icon: <SettingOutlined />, ready: false },
-  'My Registrations': { path: '/my-registrations', area: 'learning', icon: <ShoppingCartOutlined />, ready: false },
+  'My Registrations': { path: '/my-registrations', area: 'learning', icon: <ShoppingCartOutlined />, ready: true },
   Practices: { path: '/practices', area: 'learning', icon: <AppstoreOutlined />, ready: false },
   'Simulation Exams': { path: '/simulation-exams', area: 'learning', icon: <FormOutlined />, ready: false },
   'My Invoices': { path: '/my-invoices', area: 'learning', icon: <FileDoneOutlined />, ready: false },
