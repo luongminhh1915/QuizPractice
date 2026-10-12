@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { App, Button, Card, Flex, Radio, Result, Space, Spin, Tag, Typography } from 'antd'
-import { ClockCircleOutlined } from '@ant-design/icons'
+import { ClockCircleOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router'
 import { mediaUrl, type HandleQuestion, type QuizHandle } from '../../api/attemptApi'
 import { errorMessage, problemOf } from '../../api/client'
-import { useAnswer, useQuizHandle } from '../../hooks/useAttempt'
+import { useAnswer, useMove, useQuizHandle } from '../../hooks/useAttempt'
 import { formatDuration } from '../../utils/duration'
 
 /**
@@ -46,11 +46,13 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
   const { message } = App.useApp()
   const navigate = useNavigate()
   const total = attempt.questions.length
-  const [order] = useState(Math.min(Math.max(attempt.currentOrder, 1), total))
+  // UC-30: a reload opens the question the customer was on.
+  const [order, setOrder] = useState(Math.min(Math.max(attempt.currentOrder, 1), total))
   const [answers, setAnswers] = useState<Record<number, number | null>>(() =>
     Object.fromEntries(attempt.questions.map((q) => [q.order, q.chosenOptionId])),
   )
   const answer = useAnswer(attempt.id)
+  const move = useMove(attempt.id)
   const question = attempt.questions[order - 1]
 
   // A change the server refuses: a scored attempt opens its result; anything else is E2.
@@ -79,6 +81,13 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
     )
   }
 
+  // UC-25: the answers are already stored; only the position is.
+  const goTo = (target: number) => {
+    if (target < 1 || target > total || target === order) return
+    setOrder(target)
+    move.mutate(target, { onError: failed })
+  }
+
   return (
     <Flex vertical gap={16}>
       <Flex justify="space-between" align="center" wrap gap={8}>
@@ -97,6 +106,23 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
       </Flex>
 
       <QuestionCard attemptId={attempt.id} question={question} chosen={answers[order] ?? null} onChoose={choose} />
+
+      <Flex justify="space-between" align="center" wrap gap={8}>
+        <Space wrap />
+        {/* The first question has Next only, the last one Previous (A1, A2). */}
+        <Space>
+          {order > 1 && (
+            <Button icon={<LeftOutlined />} onClick={() => goTo(order - 1)}>
+              Previous
+            </Button>
+          )}
+          {order < total && (
+            <Button type="primary" onClick={() => goTo(order + 1)}>
+              Next <RightOutlined />
+            </Button>
+          )}
+        </Space>
+      </Flex>
     </Flex>
   )
 }

@@ -20,6 +20,11 @@ export function useQuizHandle(id: number) {
   })
 }
 
+/** UC-25: stores the question on screen. */
+export function useMove(id: number) {
+  return useMutation({ mutationFn: (order: number) => attemptApi.move(id, order) })
+}
+
 /** UC-24 step 3. */
 export function useAnswer(id: number) {
   return useMutation({

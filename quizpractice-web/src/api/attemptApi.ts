@@ -51,4 +51,7 @@ export const attemptApi = {
   /** UC-24 step 3, A1. */
   answer: (id: number, order: number, optionId: number) =>
     http.put<HandleProgress>(`/attempts/${id}/questions/${order}/answer`, { optionId }).then((r) => r.data),
+
+  /** UC-25: the question on screen, read back after a reload (BR-08). */
+  move: (id: number, order: number) => http.put<HandleProgress>(`/attempts/${id}/position`, { order }).then((r) => r.data),
 }
