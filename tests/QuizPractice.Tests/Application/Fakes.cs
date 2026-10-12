@@ -39,6 +39,12 @@ public sealed class FakeUnitOfWork : IUnitOfWork
         return Task.FromResult(1);
     }
 
+    public async Task<bool> TrySaveChangesAsync(CancellationToken ct = default)
+    {
+        await SaveChangesAsync(ct);
+        return true;
+    }
+
     public Task ExecuteInTransactionAsync(Func<CancellationToken, Task> work, CancellationToken ct = default) => work(ct);
 }
 

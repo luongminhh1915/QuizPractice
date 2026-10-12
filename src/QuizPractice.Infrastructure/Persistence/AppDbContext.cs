@@ -29,6 +29,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Attempt> Attempts => Set<Attempt>();
     public DbSet<AttemptQuestion> AttemptQuestions => Set<AttemptQuestion>();
 
+    public async Task<bool> TrySaveChangesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            await SaveChangesAsync(ct);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Nothing was written; forget the stale changes so this context is not reused with them.
+            ChangeTracker.Clear();
+            return false;
+        }
+    }
+
     public async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> work, CancellationToken ct = default)
     {
         await using var transaction = await Database.BeginTransactionAsync(ct);
