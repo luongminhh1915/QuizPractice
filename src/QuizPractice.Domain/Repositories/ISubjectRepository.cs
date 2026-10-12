@@ -26,6 +26,15 @@ public interface ISubjectRepository
     /// <summary>How many lessons and quizzes (not topics) each of these subjects holds.</summary>
     Task<IReadOnlyDictionary<int, int>> CountLessonsAsync(IReadOnlyCollection<int> subjectIds, CancellationToken ct = default);
 
+    /// <summary>The subject with its category and owner, whatever its status, tracked for a change (UC-42 to UC-51).</summary>
+    Task<Subject?> GetByIdAsync(int id, CancellationToken ct = default);
+
+    /// <summary>Stages a new subject; the service commits through IUnitOfWork.</summary>
+    void Add(Subject subject);
+
+    /// <summary>Whether a customer could buy the subject: it has an Active price package (UC-45 E1).</summary>
+    Task<bool> HasActivePackageAsync(int subjectId, CancellationToken ct = default);
+
     /// <summary>Published subjects whose featured flag is on, most recently updated first, with their category and active packages.</summary>
     Task<IReadOnlyList<Subject>> ListFeaturedPublishedAsync(int take, CancellationToken ct = default);
 

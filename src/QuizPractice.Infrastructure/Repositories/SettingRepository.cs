@@ -14,4 +14,7 @@ public class SettingRepository(AppDbContext db) : ISettingRepository
             .OrderBy(s => s.DisplayOrder)
             .ThenBy(s => s.Id)
             .ToListAsync(ct);
+
+    public Task<Setting?> GetByIdAsync(int id, CancellationToken ct = default) =>
+        db.Settings.FirstOrDefaultAsync(s => s.Id == id, ct);
 }

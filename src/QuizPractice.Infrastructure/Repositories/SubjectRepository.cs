@@ -90,6 +90,17 @@ public class SubjectRepository(AppDbContext db) : ISubjectRepository
             .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
     }
 
+    public Task<Subject?> GetByIdAsync(int id, CancellationToken ct = default) =>
+        db.Subjects
+            .Include(s => s.Category)
+            .Include(s => s.Expert)
+            .FirstOrDefaultAsync(s => s.Id == id, ct);
+
+    public void Add(Subject subject) => db.Subjects.Add(subject);
+
+    public Task<bool> HasActivePackageAsync(int subjectId, CancellationToken ct = default) =>
+        db.PricePackages.AnyAsync(p => p.SubjectId == subjectId && p.Status == ActiveStatus.Active, ct);
+
     /// <summary>Lessons and quizzes of every subject; a Subject Topic only groups them and is not counted.</summary>
     private IQueryable<Lesson> Lessons() =>
         db.Lessons.Where(l => l.Type.Value != SettingValues.LessonTypes.SubjectTopic);

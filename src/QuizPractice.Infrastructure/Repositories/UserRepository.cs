@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using QuizPractice.Domain.Entities;
+using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
 using QuizPractice.Infrastructure.Persistence;
 
@@ -18,4 +19,10 @@ public class UserRepository(AppDbContext db) : IUserRepository
     }
 
     public void Add(User user) => db.Users.Add(user);
+
+    public async Task<IReadOnlyList<User>> ListActiveByRoleAsync(string role, CancellationToken ct = default) =>
+        await db.Users.AsNoTracking()
+            .Where(u => u.Role.Value == role && u.Status == UserStatus.Active)
+            .OrderBy(u => u.FullName).ThenBy(u => u.Id)
+            .ToListAsync(ct);
 }

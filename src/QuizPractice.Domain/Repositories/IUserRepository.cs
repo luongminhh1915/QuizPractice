@@ -13,4 +13,7 @@ public interface IUserRepository
 
     /// <summary>Stages a new account; the service commits through IUnitOfWork.</summary>
     void Add(User user);
+
+    /// <summary>The Active accounts holding this role, by full name (owner of a subject, UC-42, UC-43).</summary>
+    Task<IReadOnlyList<User>> ListActiveByRoleAsync(string role, CancellationToken ct = default);
 }
