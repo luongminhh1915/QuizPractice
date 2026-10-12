@@ -1,3 +1,4 @@
+using QuizPractice.Application.Common;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 
@@ -36,3 +37,41 @@ public sealed record SubjectSummaryDto(
 
 /// <summary>Choices of the list filters: the subject categories (BR-16).</summary>
 public sealed record SubjectFiltersDto(IReadOnlyList<LookupDto> Categories);
+
+/// <summary>
+/// New Subject (UC-42). The thumbnail is required; ExpertId may stay empty (A2). A new
+/// subject is always Unpublished until the Admin publishes it (UC-45).
+/// </summary>
+public sealed record CreateSubjectRequest(
+    string Name,
+    int CategoryId,
+    int? ExpertId,
+    bool IsFeatured,
+    int PassRate,
+    string? Description,
+    FileUpload? Thumbnail = null);
+
+/// <summary>Everything Subject Management Details shows on the Overview tab (UC-43 to UC-45).</summary>
+public sealed record SubjectDto(
+    int Id,
+    string Name,
+    string? Tagline,
+    string Brief,
+    string Thumbnail,
+    int CategoryId,
+    string Category,
+    bool IsFeatured,
+    byte PassRate,
+    SubjectStatus Status,
+    int? OwnerId,
+    string? Owner,
+    string Description,
+    bool HasActivePackage)
+{
+    public static SubjectDto From(Subject s, bool hasActivePackage) =>
+        new(s.Id, s.Name, s.Tagline, s.Brief, s.Thumbnail, s.CategoryId, s.Category.Value, s.IsFeatured, s.PassRate,
+            s.Status, s.ExpertId, s.Expert?.FullName, s.Description, hasActivePackage);
+}
+
+/// <summary>Drop-downs of New Subject and the Overview tab: subject categories, and for the Admin the Experts (BR-16).</summary>
+public sealed record SubjectChoicesDto(IReadOnlyList<LookupDto> Categories, IReadOnlyList<LookupDto> Experts);
