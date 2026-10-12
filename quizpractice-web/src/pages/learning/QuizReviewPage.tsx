@@ -1,10 +1,22 @@
 import { useState } from 'react'
 import { Button, Card, Flex, Result, Space, Spin, Tag, Typography } from 'antd'
-import { CheckCircleFilled, CloseCircleFilled, FlagFilled, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, CheckCircleFilled, CloseCircleFilled, FlagFilled, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router'
 import { mediaUrl, type QuizReview, type ReviewQuestion } from '../../api/attemptApi'
 import { errorMessage } from '../../api/client'
+import { QuestionNumbersModal, type NumberFilter } from '../../components/learning/QuestionNumbersModal'
 import { useQuizReview } from '../../hooks/useAttempt'
+
+/**
+ * UC-32 step 2: the filters of Review Result. After an attempt the wrong answers matter
+ * rather than the unanswered ones, so Incorrect takes the place of Unanswered.
+ */
+const RESULT_FILTERS: NumberFilter[] = [
+  { key: 'marked', label: 'Marked', match: (q) => q.marked },
+  { key: 'answered', label: 'Answered', match: (q) => q.answered },
+  { key: 'incorrect', label: 'Incorrect', match: (q) => q.incorrect === true },
+  { key: 'all', label: 'All Questions', match: () => true },
+]
 
 /**
  * Quiz Review (SRS III 4.2; F#18; UC-31 to UC-33): a scored attempt question by question,
@@ -34,8 +46,15 @@ function Review({ review }: { review: QuizReview }) {
   const navigate = useNavigate()
   const total = review.questions.length
   const [order, setOrder] = useState(1)
+  const [filterOpen, setFilterOpen] = useState(false)
   const question = review.questions[order - 1]
   const r = review.result
+  const numbers = review.questions.map((q) => ({
+    order: q.order,
+    answered: q.chosenOptionId !== null,
+    marked: q.isMarked,
+    incorrect: !q.isCorrect,
+  }))
 
   return (
     <Flex vertical gap={16}>
@@ -79,6 +98,11 @@ function Review({ review }: { review: QuizReview }) {
       <Flex justify="space-between" align="center" wrap gap={8}>
         <Space wrap>
           <Button onClick={() => navigate(`/practices/${review.id}`)}>Practice Details</Button>
+          {total > 0 && (
+            <Button icon={<AppstoreOutlined />} onClick={() => setFilterOpen(true)}>
+              Review Result
+            </Button>
+          )}
         </Space>
         <Space>
           {order > 1 && (
@@ -93,6 +117,25 @@ function Review({ review }: { review: QuizReview }) {
           )}
         </Space>
       </Flex>
+
+      <QuestionNumbersModal
+        open={filterOpen}
+        title="Review Result"
+        items={numbers}
+        filters={RESULT_FILTERS}
+        current={order}
+        summary={
+          <Typography.Text>
+            {r.correct} of {r.questionCount} answered correctly
+          </Typography.Text>
+        }
+        // UC-32 step 6; A1 closes and stays on the question.
+        onPick={(target) => {
+          setFilterOpen(false)
+          setOrder(target)
+        }}
+        onClose={() => setFilterOpen(false)}
+      />
     </Flex>
   )
 }

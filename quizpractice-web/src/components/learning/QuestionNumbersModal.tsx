@@ -7,6 +7,8 @@ export interface NumberItem {
   order: number
   answered: boolean
   marked: boolean
+  /** Quiz Review only: answered wrongly or not at all (BR-21). */
+  incorrect?: boolean
 }
 
 export interface NumberFilter {
