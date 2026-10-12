@@ -1,8 +1,33 @@
 using FluentValidation;
 using QuizPractice.Application.Dtos.Sale;
+using QuizPractice.Application.Validators.Common;
 using QuizPractice.Domain.Common;
+using QuizPractice.Domain.Constants;
 
 namespace QuizPractice.Application.Validators.Sale;
+
+/// <summary>
+/// UC-60 step 6, E1 (BR-17): the contact rules of User Register. Whether the subject and
+/// the package are still on sale needs the database: RegistrationService checks it (E2).
+/// </summary>
+public class SaveRegistrationRequestValidator : AbstractValidator<SaveRegistrationRequest>
+{
+    public SaveRegistrationRequestValidator()
+    {
+        RuleFor(x => x.SubjectId).GreaterThan(0).WithMessage("Choose a subject.");
+        RuleFor(x => x.PackageId).GreaterThan(0).WithMessage("Choose a package.");
+        RuleFor(x => x.FullName).FullName();
+        RuleFor(x => x.Gender).NotNull().WithMessage("Choose the gender.").IsInEnum();
+        RuleFor(x => x.Email).LoginEmail();
+        RuleFor(x => x.Mobile).Mobile();
+        RuleFor(x => x.Notes).MaximumLength(FieldLength.Brief);
+    }
+}
+
+public class SaveNotesRequestValidator : AbstractValidator<SaveNotesRequest>
+{
+    public SaveNotesRequestValidator() => RuleFor(x => x.Notes).MaximumLength(FieldLength.Brief);
+}
 
 public class RegistrationListRequestValidator : AbstractValidator<RegistrationListRequest>
 {
