@@ -1,4 +1,6 @@
-import { Input, Select, Space, Typography } from 'antd'
+import { Button, Input, Select, Space, Typography } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
+import { Link, useLocation } from 'react-router'
 import { SETTING_TYPE_LABELS, type SettingSummary, type SettingType } from '../../api/settingsApi'
 import type { ActiveStatus } from '../../api/types'
 import { errorMessage } from '../../api/client'
@@ -12,11 +14,15 @@ const TYPES = Object.entries(SETTING_TYPE_LABELS) as [SettingType, string][]
 
 /** Settings List (SRS III 9.3; PDF II.9, F#39; UC-64 View Settings List). Admin only. */
 export function SettingsListPage() {
+  const location = useLocation()
   const list = useListParams()
   const type = list.get('type') as SettingType | undefined
   const status = list.get('status') as ActiveStatus | undefined
 
   const query = useSettingList({ ...list.criteria, type, status })
+
+  // Setting Details returns to this list with the same criteria (SRS III 0.3).
+  const back = { state: { back: location.pathname + location.search } }
 
   const columns: DataTableColumn<SettingSummary>[] = [
     { title: 'ID', key: 'id', sortable: true, width: 80 },
@@ -24,11 +30,35 @@ export function SettingsListPage() {
     { title: 'Value', key: 'value', sortable: true },
     { title: 'Order', key: 'order', sortable: true, width: 100, render: (s) => s.displayOrder },
     { title: 'Status', key: 'status', sortable: true, width: 120, render: (s) => <StatusTag status={s.status} /> },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 140,
+      render: (s) => (
+        <Space>
+          <Link to={`/manage/settings/${s.id}?view`} {...back}>
+            <Button size="small">View</Button>
+          </Link>
+          <Link to={`/manage/settings/${s.id}`} {...back}>
+            <Button size="small">Edit</Button>
+          </Link>
+        </Space>
+      ),
+    },
   ]
 
   return (
     <>
-      <PageHeader title="Settings List" />
+      <PageHeader
+        title="Settings List"
+        action={
+          <Link to="/manage/settings/new" {...back}>
+            <Button type="primary" icon={<PlusOutlined />}>
+              Add New Setting
+            </Button>
+          </Link>
+        }
+      />
 
       <Space wrap style={{ marginBottom: 16 }}>
         {/* key resets the box when the criteria are cleared */}

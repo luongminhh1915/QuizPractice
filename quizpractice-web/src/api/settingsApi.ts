@@ -38,7 +38,42 @@ export interface SettingCriteria extends ListCriteria {
   status?: ActiveStatus
 }
 
+/** Matches SettingDto of the API: Setting Details (UC-65). */
+export interface Setting extends SettingSummary {
+  description: string | null
+  /** Fingerprint the form was loaded with (E2). */
+  version: string
+  /** The system reads this type by value: the value cannot change. */
+  valueLocked: boolean
+  canDeactivate: boolean
+  /** System Menu: the roles that see the item (A4). */
+  menuRoles: string[]
+}
+
+export interface SettingSaved {
+  setting: Setting
+  /** Quizzes that now draw by the renamed dimension type. */
+  quizzesFollowed: number
+}
+
+/** Setting Details form; type only for a new setting. */
+export interface SettingInput {
+  type?: SettingType
+  value: string
+  displayOrder?: number | null
+  description?: string
+  status: ActiveStatus
+}
+
 /** /api/settings — UC-64 to UC-66 (Admin only). */
 export const settingsApi = {
   list: (criteria: SettingCriteria) => http.get<Page<SettingSummary>>('/settings', { params: criteria }).then((r) => r.data),
+
+  get: (id: number) => http.get<Setting>(`/settings/${id}`).then((r) => r.data),
+
+  create: (input: SettingInput) => http.post<SettingSaved>('/settings', input).then((r) => r.data),
+
+  /** 409 Setting.Changed (E2), Setting.Required, or Setting.InUse until confirmInUse (UC-66 E1). */
+  update: (id: number, input: SettingInput & { version: string; confirmInUse?: boolean }) =>
+    http.put<SettingSaved>(`/settings/${id}`, input).then((r) => r.data),
 }

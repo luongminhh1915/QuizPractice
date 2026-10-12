@@ -4,6 +4,7 @@ import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { QuizLayout } from '../layouts/QuizLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { SettingDetailsPage } from '../pages/admin/SettingDetailsPage'
 import { SettingsListPage } from '../pages/admin/SettingsListPage'
 import { UserDetailsPage } from '../pages/admin/UserDetailsPage'
 import { UsersListPage } from '../pages/admin/UsersListPage'
@@ -105,6 +106,8 @@ export const router = createBrowserRouter([
           { path: 'users/new', element: <UserDetailsPage /> },
           { path: 'users/:id', element: <UserDetailsPage /> },
           { path: 'settings', element: <SettingsListPage /> },
+          { path: 'settings/new', element: <SettingDetailsPage /> },
+          { path: 'settings/:id', element: <SettingDetailsPage /> },
           { path: 'questions', element: <QuestionsListPage /> },
           { path: 'questions/new', element: <QuestionDetailsPage /> },
           { path: 'questions/:id', element: <QuestionDetailsPage /> },
