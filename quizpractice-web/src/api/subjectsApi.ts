@@ -70,6 +70,31 @@ export interface NewSubjectInput {
   description?: string
 }
 
+/** Overview tab (UC-44): leaving thumbnail empty keeps the stored image. */
+export interface SubjectOverviewInput {
+  thumbnail?: File
+  name: string
+  tagline?: string
+  brief?: string
+  categoryId: number
+  isFeatured: boolean
+  passRate: number
+  description?: string
+}
+
+function overviewForm(input: SubjectOverviewInput): FormData {
+  const data = new FormData()
+  data.append('name', input.name)
+  data.append('tagline', input.tagline ?? '')
+  data.append('brief', input.brief ?? '')
+  data.append('categoryId', String(input.categoryId))
+  data.append('isFeatured', String(input.isFeatured))
+  data.append('passRate', String(input.passRate))
+  data.append('description', input.description ?? '')
+  if (input.thumbnail) data.append('thumbnail', input.thumbnail)
+  return data
+}
+
 function newSubjectForm(input: NewSubjectInput): FormData {
   const data = new FormData()
   data.append('name', input.name)
@@ -93,4 +118,7 @@ export const subjectsApi = {
   get: (id: number) => http.get<Subject>(`/subjects/${id}`).then((r) => r.data),
 
   create: (input: NewSubjectInput) => http.post<Subject>('/subjects', newSubjectForm(input)).then((r) => r.data),
+
+  update: (id: number, input: SubjectOverviewInput) =>
+    http.put<Subject>(`/subjects/${id}`, overviewForm(input)).then((r) => r.data),
 }

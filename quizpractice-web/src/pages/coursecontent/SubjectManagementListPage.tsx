@@ -38,6 +38,16 @@ export function SubjectManagementListPage() {
       render: (s) => s.owner ?? <Typography.Text type="secondary">Not assigned</Typography.Text>,
     },
     { title: 'Status', key: 'status', sortable: true, width: 120, render: (s) => <StatusTag status={s.status} /> },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 100,
+      render: (s) => (
+        <Link to={`/manage/subjects/${s.id}`} {...back}>
+          <Button size="small">Edit</Button>
+        </Link>
+      ),
+    },
   ]
 
   const error = query.error ?? filters.error

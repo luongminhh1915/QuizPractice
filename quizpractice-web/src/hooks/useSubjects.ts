@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { subjectsApi, type NewSubjectInput, type SubjectCriteria } from '../api/subjectsApi'
+import { subjectsApi, type NewSubjectInput, type SubjectCriteria, type SubjectOverviewInput } from '../api/subjectsApi'
 
 // Query keys: ['subjects'] covers every list and detail of Course Content, so one
 // invalidate after a change reloads whatever subject screen is open.
@@ -39,6 +39,15 @@ export function useCreateSubject() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: NewSubjectInput) => subjectsApi.create(input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  })
+}
+
+/** UC-44: the Admin or the assigned Expert saves the Overview tab. */
+export function useUpdateSubject(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: SubjectOverviewInput) => subjectsApi.update(id, input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   })
 }
