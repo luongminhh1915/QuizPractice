@@ -8,7 +8,7 @@ import { StatusTag } from '../../components/StatusTag'
 import { SubjectRegisterModal } from '../../components/public/SubjectRegisterModal'
 import { CategoriesBlock, ContactsBlock, SearchBlock } from '../../components/public/SiderBlocks'
 import { PAGE_SIZE, useListParams } from '../../hooks/useListParams'
-import { useCancelRegistration, useMyRegistrations } from '../../hooks/useCustomer'
+import { useCancelRegistration, useCreateInvoice, useMyRegistrations } from '../../hooks/useCustomer'
 import { useSubjectSider } from '../../hooks/usePublic'
 import { PublicSider } from '../../layouts/PublicLayout'
 import { formatVnd } from '../../utils/money'
@@ -21,20 +21,50 @@ export function MyRegistrationsPage() {
   const { message } = App.useApp()
   const navigate = useNavigate()
   const { criteria, set } = useListParams()
-  const cancel = useCancelRegistration()
   const list = useMyRegistrations(criteria.page, PAGE_SIZE)
   const sider = useSubjectSider()
   const [editing, setEditing] = useState<number>()
+  const cancel = useCancelRegistration()
+  const pay = useCreateInvoice()
+  const [selected, setSelected] = useState<number[]>([])
+
+  // UC-18: one invoice for the ticked registrations, then its QR code.
+  const paySelected = () =>
+    pay.mutate(selected, {
+      onSuccess: (invoice) => {
+        setSelected([])
+        navigate(`/my-invoices/${invoice.id}`)
+      },
+      // E1 names the registration; the list reloads to the current state.
+      onError: (e) => {
+        setSelected([])
+        message.warning(errorMessage(e))
+      },
+    })
+  const selectedTotal = (list.data?.items ?? []).filter((r) => selected.includes(r.id)).reduce((sum, r) => sum + r.totalCost, 0)
 
   const columns: TableColumnsType<MyRegistration> = [
-    { title: 'ID', dataIndex: 'id', width: 64 },
     {
-      title: 'Subject',
-      render: (_, r) => <Link to={`/subjects/${r.subjectId}`}>{r.subjectName}</Link>,
+      title: 'Registration',
+      // Number, subject and registration time in one cell, so the actions stay in view.
+      render: (_, r) => (
+        <Flex vertical>
+          <Link to={`/subjects/${r.subjectId}`}>{r.subjectName}</Link>
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            #{r.id} · {dayjs(r.registeredAt).format('DD/MM/YYYY HH:mm')}
+          </Typography.Text>
+        </Flex>
+      ),
     },
-    { title: 'Package', dataIndex: 'packageName' },
-    { title: 'Total Cost', render: (_, r) => formatVnd(r.totalCost), align: 'right' },
-    { title: 'Registered', render: (_, r) => dayjs(r.registeredAt).format('DD/MM/YYYY HH:mm') },
+    {
+      title: 'Package',
+      render: (_, r) => (
+        <Flex vertical>
+          <span>{r.packageName}</span>
+          <Typography.Text strong>{formatVnd(r.totalCost)}</Typography.Text>
+        </Flex>
+      ),
+    },
     {
       title: 'Status',
       // The unpaid invoice it waits in, under the status; its code opens Invoice QR (BR-24).
@@ -52,7 +82,15 @@ export function MyRegistrationsPage() {
     {
       title: 'Validity',
       // Set when the registration becomes Paid (BR-14); a dash before that.
-      render: (_, r) => (r.validFrom ? `${dayjs(r.validFrom).format('DD/MM/YYYY')} – ${dayjs(r.validTo).format('DD/MM/YYYY')}` : '—'),
+      render: (_, r) =>
+        r.validFrom ? (
+          <Flex vertical>
+            <span>{dayjs(r.validFrom).format('DD/MM/YYYY')}</span>
+            <span>{dayjs(r.validTo).format('DD/MM/YYYY')}</span>
+          </Flex>
+        ) : (
+          '—'
+        ),
     },
     {
       title: 'Action',
@@ -95,7 +133,17 @@ export function MyRegistrationsPage() {
         </>
       }
     >
-      <Typography.Title level={3}>My Registrations</Typography.Title>
+      <Flex justify="space-between" align="center" wrap gap={8} style={{ marginBottom: 16 }}>
+        <Typography.Title level={3} style={{ margin: 0 }}>
+          My Registrations
+        </Typography.Title>
+        <Space>
+          {!!selected.length && <Typography.Text>Selected: {formatVnd(selectedTotal)}</Typography.Text>}
+          <Button type="primary" disabled={!selected.length} loading={pay.isPending} onClick={paySelected}>
+            Pay Selected by QR
+          </Button>
+        </Space>
+      </Flex>
       {list.isError ? (
         <Result status="warning" title={errorMessage(list.error)} />
       ) : (
@@ -105,7 +153,13 @@ export function MyRegistrationsPage() {
           loading={list.isPending}
           columns={columns}
           dataSource={list.data?.items}
-          scroll={{ x: 900 }}
+          // Only a Submitted registration in no unpaid invoice can be ticked (BR-24).
+          rowSelection={{
+            selectedRowKeys: selected,
+            onChange: (keys) => setSelected(keys as number[]),
+            getCheckboxProps: (r) => ({ disabled: !r.canChange }),
+          }}
+          scroll={{ x: 700 }}
           locale={{
             // A1: nothing yet; the catalog is where registrations start.
             emptyText: (

@@ -22,6 +22,24 @@ export interface MyRegistration {
   canChange: boolean
 }
 
+export type InvoiceStatus = 'Unpaid' | 'Paid' | 'Cancelled'
+
+/** Matches InvoiceDto (UC-18, UC-67). qrPayload is set only while Unpaid. */
+export interface Invoice {
+  id: number
+  code: string
+  status: InvoiceStatus
+  createdAt: string
+  paidAt: string | null
+  totalAmount: number
+  bankName: string
+  bankBin: string
+  accountNumber: string
+  accountName: string
+  qrPayload: string | null
+  registrations: { id: number; subjectName: string; packageName: string; totalCost: number }[]
+}
+
 /** /api/my — the signed-in customer's own records (Customer feature). */
 export const customerApi = {
   /** UC-15. */
@@ -30,6 +48,15 @@ export const customerApi = {
 
   /** UC-16: the Subject Register pop-up on the stored package. */
   changeForm: (id: number) => http.get<RegisterForm>(`/my/registrations/${id}/form`).then((r) => r.data),
+
+  /** UC-18: one invoice for the chosen registrations. 409 when one is no longer payable (E1) or no account is set (E2). */
+  createInvoice: (registrationIds: number[]) => http.post<Invoice>('/my/invoices', { registrationIds }).then((r) => r.data),
+
+  /** Invoice QR (2.7). */
+  invoice: (id: number) => http.get<Invoice>(`/my/invoices/${id}`).then((r) => r.data),
+
+  /** UC-18 A2. */
+  cancelInvoice: (id: number) => http.post<Invoice>(`/my/invoices/${id}/cancel`).then((r) => r.data),
 
   /** UC-17. 409 Registration.Settled (E1) or Registration.InUnpaidInvoice (E2). */
   cancel: (id: number) => http.post<MyRegistration>(`/my/registrations/${id}/cancel`).then((r) => r.data),

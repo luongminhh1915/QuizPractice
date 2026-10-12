@@ -6,6 +6,8 @@ import { customerApi } from '../api/customerApi'
 export const customerKeys = {
   registrations: ['account', 'my-registrations'] as const,
   changeForm: (id: number) => ['account', 'change-form', id] as const,
+  invoices: ['account', 'my-invoices'] as const,
+  invoice: (id: number) => ['account', 'my-invoices', 'detail', id] as const,
 }
 
 /** UC-15. */
@@ -14,6 +16,36 @@ export function useMyRegistrations(page: number, pageSize: number) {
     queryKey: [...customerKeys.registrations, page, pageSize],
     queryFn: () => customerApi.registrations(page, pageSize),
     placeholderData: keepPreviousData,
+  })
+}
+
+/** UC-18: makes the invoice; the registrations then show it. */
+export function useCreateInvoice() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (registrationIds: number[]) => customerApi.createInvoice(registrationIds),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: customerKeys.registrations })
+      void queryClient.invalidateQueries({ queryKey: customerKeys.invoices })
+    },
+  })
+}
+
+/** Invoice QR (2.7). Not retried: a 404 shows at once. */
+export function useMyInvoice(id: number) {
+  return useQuery({ queryKey: customerKeys.invoice(id), queryFn: () => customerApi.invoice(id), retry: false })
+}
+
+/** UC-18 A2: the invoice, its registrations and the list all change. */
+export function useCancelInvoice(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => customerApi.cancelInvoice(id),
+    onSuccess: (invoice) => queryClient.setQueryData(customerKeys.invoice(id), invoice),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: customerKeys.registrations })
+      void queryClient.invalidateQueries({ queryKey: customerKeys.invoices, predicate: (q) => q.queryKey[2] !== 'detail' })
+    },
   })
 }
 
