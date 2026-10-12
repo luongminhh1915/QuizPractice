@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
@@ -17,4 +18,47 @@ public class SettingRepository(AppDbContext db) : ISettingRepository
 
     public Task<Setting?> GetByIdAsync(int id, CancellationToken ct = default) =>
         db.Settings.FirstOrDefaultAsync(s => s.Id == id, ct);
+
+    public async Task<Page<Setting>> SearchAsync(SettingSearch search, PageRequest page, CancellationToken ct = default)
+    {
+        var query = db.Settings.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search.Text))
+        {
+            var text = search.Text.Trim();
+            query = query.Where(s => s.Value.Contains(text));
+        }
+
+        if (search.Type is { } type)
+        {
+            query = query.Where(s => s.Type == type);
+        }
+
+        if (search.Status is { } status)
+        {
+            query = query.Where(s => s.Status == status);
+        }
+
+        var total = await query.CountAsync(ct);
+        var items = await Sort(query, search.SortBy, search.Descending)
+            .Skip(page.Skip)
+            .Take(page.PageSize)
+            .ToListAsync(ct);
+        return new Page<Setting>(items, total, page.PageNumber, page.PageSize);
+    }
+
+    private static IQueryable<Setting> Sort(IQueryable<Setting> query, string? sortBy, bool descending)
+    {
+        IOrderedQueryable<Setting> ordered = sortBy?.ToLowerInvariant() switch
+        {
+            "id" => descending ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id),
+            "type" => descending ? query.OrderByDescending(s => s.Type) : query.OrderBy(s => s.Type),
+            "value" => descending ? query.OrderByDescending(s => s.Value) : query.OrderBy(s => s.Value),
+            "order" => descending ? query.OrderByDescending(s => s.DisplayOrder) : query.OrderBy(s => s.DisplayOrder),
+            "status" => descending ? query.OrderByDescending(s => s.Status) : query.OrderBy(s => s.Status),
+            // Each type together, in the order its screens offer the values (BR-16).
+            _ => query.OrderBy(s => s.Type).ThenBy(s => s.DisplayOrder),
+        };
+        return descending ? ordered.ThenByDescending(s => s.Id) : ordered.ThenBy(s => s.Id);
+    }
 }
