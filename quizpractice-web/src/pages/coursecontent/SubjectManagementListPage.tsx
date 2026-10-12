@@ -41,11 +41,16 @@ export function SubjectManagementListPage() {
     {
       title: 'Action',
       key: 'action',
-      width: 100,
+      width: 160,
       render: (s) => (
-        <Link to={`/manage/subjects/${s.id}`} {...back}>
-          <Button size="small">Edit</Button>
-        </Link>
+        <Space>
+          <Link to={`/manage/subjects/${s.id}`} {...back}>
+            <Button size="small">Edit</Button>
+          </Link>
+          <Link to={`/manage/subjects/${s.id}/lessons`} {...back}>
+            <Button size="small">Lessons</Button>
+          </Link>
+        </Space>
       ),
     },
   ]

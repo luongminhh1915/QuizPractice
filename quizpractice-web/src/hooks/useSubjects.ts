@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ActiveStatus } from '../api/types'
-import { subjectsApi, type DimensionInput, type PricePackageInput, type NewSubjectInput, type SubjectCriteria, type SubjectOverviewInput } from '../api/subjectsApi'
+import { subjectsApi, type DimensionInput, type LessonCriteria, type PricePackageInput, type NewSubjectInput, type SubjectCriteria, type SubjectOverviewInput } from '../api/subjectsApi'
 
 // Query keys: ['subjects'] covers every list and detail of Course Content, so one
 // invalidate after a change reloads whatever subject screen is open.
@@ -12,6 +12,7 @@ const keys = {
   detail: (id: number) => ['subjects', 'detail', id] as const,
   dimensions: (id: number) => ['subjects', 'dimensions', id] as const,
   packages: (id: number) => ['subjects', 'packages', id] as const,
+  lessons: (id: number) => ['subjects', 'lessons', id] as const,
 }
 
 export function useSubjectList(criteria: SubjectCriteria) {
@@ -96,5 +97,14 @@ export function useChangePackageStatus(subjectId: number) {
   return useMutation({
     mutationFn: ({ id, status }: { id: number; status: ActiveStatus }) => subjectsApi.changePackageStatus(subjectId, id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  })
+}
+
+/** UC-49: Subject Lessons, one page of rows under their topics. */
+export function useLessons(subjectId: number, criteria: LessonCriteria) {
+  return useQuery({
+    queryKey: [...keys.lessons(subjectId), criteria],
+    queryFn: () => subjectsApi.lessons(subjectId, criteria),
+    placeholderData: keepPreviousData,
   })
 }

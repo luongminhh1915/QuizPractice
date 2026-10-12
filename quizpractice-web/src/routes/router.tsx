@@ -8,6 +8,7 @@ import { ResetPasswordPage } from '../pages/common/ResetPasswordPage'
 import { VerifyEmailPage } from '../pages/common/VerifyEmailPage'
 import { NewSubjectPage } from '../pages/coursecontent/NewSubjectPage'
 import { SubjectManagementDetailsPage } from '../pages/coursecontent/SubjectManagementDetailsPage'
+import { SubjectLessonsPage } from '../pages/coursecontent/SubjectLessonsPage'
 import { SubjectManagementListPage } from '../pages/coursecontent/SubjectManagementListPage'
 import { InvoiceQrPage } from '../pages/customer/InvoiceQrPage'
 import { MyInvoicesPage } from '../pages/customer/MyInvoicesPage'
@@ -93,6 +94,7 @@ export const router = createBrowserRouter([
           { path: 'subjects', element: <SubjectManagementListPage /> },
           { path: 'subjects/new', element: <NewSubjectPage /> },
           { path: 'subjects/:id', element: <SubjectManagementDetailsPage /> },
+          { path: 'subjects/:id/lessons', element: <SubjectLessonsPage /> },
           { path: 'questions', element: <QuestionsListPage /> },
           { path: 'questions/new', element: <QuestionDetailsPage /> },
           { path: 'questions/:id', element: <QuestionDetailsPage /> },

@@ -164,7 +164,34 @@ export interface PricePackageInput {
   description?: string
 }
 
-/** /api/subjects — UC-41 to UC-48 (Course Content). */
+/** A row of Subject Lessons (UC-49): a topic, or a lesson or quiz under its topic. */
+export interface LessonRow {
+  id: number
+  name: string
+  displayOrder: number
+  /** Lesson Type setting: Subject Topic, Lesson or Quiz. */
+  type: string
+  isTopic: boolean
+  topicId: number | null
+  status: ActiveStatus
+}
+
+export interface LessonList {
+  subjectId: number
+  subject: string
+  topics: Lookup[]
+  lessons: Page<LessonRow>
+}
+
+export interface LessonCriteria {
+  page: number
+  pageSize: number
+  search?: string
+  topicId?: number
+  status?: ActiveStatus
+}
+
+/** /api/subjects — UC-41 to UC-51 (Course Content). */
 export const subjectsApi = {
   list: (criteria: SubjectCriteria) => http.get<Page<SubjectSummary>>('/subjects', { params: criteria }).then((r) => r.data),
 
@@ -201,4 +228,7 @@ export const subjectsApi = {
 
   changePackageStatus: (subjectId: number, id: number, status: ActiveStatus) =>
     http.put<PricePackage>(`/subjects/${subjectId}/packages/${id}/status`, { status }).then((r) => r.data),
+
+  lessons: (subjectId: number, criteria: LessonCriteria) =>
+    http.get<LessonList>(`/subjects/${subjectId}/lessons`, { params: criteria }).then((r) => r.data),
 }

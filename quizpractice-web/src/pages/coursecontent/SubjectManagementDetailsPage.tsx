@@ -1,4 +1,5 @@
 import { Button, Result, Spin, Tabs } from 'antd'
+import { Link } from 'react-router'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { errorMessage, problemOf } from '../../api/client'
 import { PageHeader } from '../../components/PageHeader'
@@ -37,7 +38,14 @@ export function SubjectManagementDetailsPage() {
 
   return (
     <>
-      <PageHeader title={subject.data.name} />
+      <PageHeader
+        title={subject.data.name}
+        action={
+          <Link to={`/manage/subjects/${id}/lessons`} state={location.state}>
+            <Button>Lessons</Button>
+          </Link>
+        }
+      />
       <Tabs
         activeKey={tab}
         onChange={(key) => setParams(key === 'overview' ? {} : { tab: key }, { replace: true, state: location.state })}
