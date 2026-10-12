@@ -1,4 +1,6 @@
+using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
+using QuizPractice.Domain.Enums;
 
 namespace QuizPractice.Domain.Repositories;
 
@@ -15,6 +17,9 @@ public interface IInvoiceRepository
     /// null when it is missing or belongs to someone else.
     /// </summary>
     Task<Invoice?> GetOwnAsync(int id, int userId, CancellationToken ct = default);
+
+    /// <summary>UC-67: a page of the account's invoices, the newest first, with their registrations; optionally one status.</summary>
+    Task<Page<Invoice>> ListByUserAsync(int userId, InvoiceStatus? status, PageRequest page, CancellationToken ct = default);
 
     /// <summary>Stages a new invoice; the service commits through IUnitOfWork.</summary>
     void Add(Invoice invoice);

@@ -1,11 +1,15 @@
 using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Customer;
+using QuizPractice.Domain.Common;
 
 namespace QuizPractice.Application.Services.Customer;
 
 /// <summary>UC-18 Pay by QR Code, UC-67 View My Invoices: the customer's own invoices only.</summary>
 public interface IMyInvoiceService
 {
+    /// <summary>UC-67: the customer's invoices, the newest first.</summary>
+    Task<Result<Page<InvoiceSummaryDto>>> ListAsync(MyInvoiceListRequest request, CancellationToken ct = default);
+
     /// <summary>UC-18: one Unpaid invoice for the chosen Submitted registrations, with its QR code.</summary>
     Task<Result<InvoiceDto>> CreateAsync(CreateInvoiceRequest request, CancellationToken ct = default);
 

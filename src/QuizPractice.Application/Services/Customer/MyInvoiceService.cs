@@ -3,6 +3,7 @@ using QuizPractice.Application.Abstractions;
 using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Customer;
 using QuizPractice.Application.Services.Payments;
+using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
@@ -23,6 +24,23 @@ public class MyInvoiceService(
 {
     /// <summary>One transfer for a handful of registrations; a larger list is surely a mistake.</summary>
     public const int MaxRegistrations = 20;
+
+    public async Task<Result<Page<InvoiceSummaryDto>>> ListAsync(MyInvoiceListRequest request, CancellationToken ct = default)
+    {
+        if (currentUser.Id is not { } userId)
+        {
+            return CustomerAccess.SignInRequired;
+        }
+
+        if (request.Page < 1 || request.PageSize is < 1 or > PageRequest.MaxPageSize || (request.Status is { } s && !Enum.IsDefined(s)))
+        {
+            return Error.Invalid(nameof(request.Status), "The criteria are out of range.");
+        }
+
+        // A1: none yet is an empty page; the screen offers My Registrations.
+        var page = await invoices.ListByUserAsync(userId, request.Status, new PageRequest(request.Page, request.PageSize), ct);
+        return page.Map(InvoiceSummaryDto.From);
+    }
 
     public async Task<Result<InvoiceDto>> CreateAsync(CreateInvoiceRequest request, CancellationToken ct = default)
     {
