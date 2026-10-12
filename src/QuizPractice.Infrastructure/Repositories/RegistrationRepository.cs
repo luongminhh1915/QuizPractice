@@ -38,5 +38,13 @@ public class RegistrationRepository(AppDbContext db) : IRegistrationRepository
             .Include(r => r.Invoice)
             .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId, ct);
 
+    public async Task<IReadOnlyList<Registration>> ListOwnByIdsAsync(int userId, IReadOnlyCollection<int> ids, CancellationToken ct = default) =>
+        await db.Registrations
+            .Include(r => r.Subject)
+            .Include(r => r.Package)
+            .Include(r => r.Invoice)
+            .Where(r => r.UserId == userId && ids.Contains(r.Id))
+            .ToListAsync(ct);
+
     public void Add(Registration registration) => db.Registrations.Add(registration);
 }

@@ -18,6 +18,9 @@ public interface IRegistrationRepository
     /// </summary>
     Task<Registration?> GetOwnAsync(int id, int userId, CancellationToken ct = default);
 
+    /// <summary>UC-18: the account's registrations among the ids, tracked, with subject, package and invoice.</summary>
+    Task<IReadOnlyList<Registration>> ListOwnByIdsAsync(int userId, IReadOnlyCollection<int> ids, CancellationToken ct = default);
+
     /// <summary>Stages a new registration; the service commits through IUnitOfWork.</summary>
     void Add(Registration registration);
 }
