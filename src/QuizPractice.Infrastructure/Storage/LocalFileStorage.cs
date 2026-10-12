@@ -35,9 +35,11 @@ public class LocalFileStorage(string webRootPath) : IFileStorage
     {
         var uploads = Path.GetFullPath(Path.Combine(webRootPath, UploadsFolder)) + Path.DirectorySeparatorChar;
         var fullPath = Path.GetFullPath(Path.Combine(webRootPath, relativePath.TrimStart('/')));
+        // A file outside uploads/ ships with the app (the seed images under /seed/) and
+        // is never removed; a replaced seed thumbnail simply stays on disk.
         if (!fullPath.StartsWith(uploads, StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException($"Not an uploaded file: '{relativePath}'.", nameof(relativePath));
+            return;
         }
 
         File.Delete(fullPath);
