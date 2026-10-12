@@ -48,6 +48,7 @@ export const router = createBrowserRouter([
           { path: '/my-invoices', element: <MyInvoicesPage /> },
           { path: '/my-invoices/:id', element: <InvoiceQrPage /> },
           { path: '/practices/new', element: <PracticeDetailsPage /> },
+          { path: '/practices/:id', element: <PracticeDetailsPage /> },
           { path: '/verify-email', element: <VerifyEmailPage /> },
           { path: '/reset-password', element: <ResetPasswordPage /> },
           { path: '*', element: <NotFoundPage /> },

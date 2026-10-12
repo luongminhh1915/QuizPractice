@@ -6,7 +6,13 @@ import { practiceApi, type CreatePractice, type SelectionType } from '../api/pra
 export const practiceKeys = {
   all: ['account', 'practices'] as const,
   form: ['account', 'practices', 'form'] as const,
+  detail: (id: number) => ['account', 'practices', 'detail', id] as const,
   groups: (subjectId: number, selectedBy: SelectionType) => ['account', 'practices', 'groups', subjectId, selectedBy] as const,
+}
+
+/** UC-21. */
+export function usePractice(id: number) {
+  return useQuery({ queryKey: practiceKeys.detail(id), queryFn: () => practiceApi.get(id), retry: false })
 }
 
 /** UC-20 step 2. */

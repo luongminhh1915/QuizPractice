@@ -1,8 +1,10 @@
-import { App, Button, Card, Flex, Form, InputNumber, Radio, Result, Select, Spin, Typography } from 'antd'
-import { useNavigate } from 'react-router'
+import { App, Button, Card, Descriptions, Flex, Form, InputNumber, Radio, Result, Select, Spin, Tag, Typography } from 'antd'
+import dayjs from 'dayjs'
+import { useNavigate, useParams } from 'react-router'
 import type { SelectionType } from '../../api/practiceApi'
 import { applyFieldErrors, errorMessage } from '../../api/client'
-import { useCreatePractice, usePracticeForm, usePracticeGroups } from '../../hooks/usePractices'
+import { useCreatePractice, usePractice, usePracticeForm, usePracticeGroups } from '../../hooks/usePractices'
+import { formatDuration } from '../../utils/duration'
 import { groupedOptions } from '../../utils/groupedOptions'
 
 interface PracticeFields {
@@ -18,10 +20,89 @@ const ALL = 0
  * Practice Details (SRS III 3.3; F#15). New Practice (UC-20): a subject the customer may
  * practise, the number of questions, by topic or by dimension, and one group or all of
  * them. The screen counts the matching questions as the choice changes, so the number
- * can be lowered before Practice (E2, A2).
+ * can be lowered before Practice (E2, A2). View Details (UC-21) opens the same screen read
+ * only, with the result and Practice Review in place of Practice; it also opens right after
+ * an attempt is scored (UC-29 step 7).
  */
 export function PracticeDetailsPage() {
-  return <NewPractice />
+  const { id } = useParams()
+  return id ? <ExistingPractice id={Number(id)} /> : <NewPractice />
+}
+
+function ExistingPractice({ id }: { id: number }) {
+  const navigate = useNavigate()
+  const practice = usePractice(id)
+
+  if (practice.isPending) return <Spin />
+  // E1: no longer there (or someone else's).
+  if (practice.isError) {
+    return (
+      <Result
+        status="warning"
+        title={errorMessage(practice.error)}
+        extra={<Button onClick={() => navigate('/practices')}>Practices List</Button>}
+      />
+    )
+  }
+
+  const p = practice.data
+  const outcome = p.outcome
+  return (
+    <Flex vertical gap={16} style={{ maxWidth: 720, margin: '0 auto' }}>
+      <Typography.Title level={3} style={{ margin: 0 }}>
+        Practice Details
+      </Typography.Title>
+      <Card>
+        <Descriptions column={1} bordered size="middle">
+          <Descriptions.Item label="Subject">{p.subjectName}</Descriptions.Item>
+          {p.mode === 'Exam' ? (
+            <Descriptions.Item label="Simulation Exam">{p.title}</Descriptions.Item>
+          ) : (
+            <>
+              <Descriptions.Item label="Selected By">{p.selectionType === 'Topic' ? 'By topic' : 'By dimension'}</Descriptions.Item>
+              <Descriptions.Item label="Question Group">{p.groupName}</Descriptions.Item>
+            </>
+          )}
+          <Descriptions.Item label="Number of Questions">{p.questionCount}</Descriptions.Item>
+          <Descriptions.Item label="Date Taken">{dayjs(p.startedAt).format('DD/MM/YYYY HH:mm')}</Descriptions.Item>
+          {outcome ? (
+            <Descriptions.Item label="Result">
+              <Flex vertical gap={4}>
+                <span>
+                  <Typography.Text strong>
+                    {outcome.correct} / {p.questionCount}
+                  </Typography.Text>{' '}
+                  correct ({outcome.score}%) in {formatDuration(outcome.durationSeconds * 1000)}
+                </span>
+                {/* BR-21: judged against the pass rate stored with the attempt. */}
+                <span>
+                  <Tag color={outcome.passed ? 'green' : 'red'}>{outcome.passed ? 'Passed' : 'Failed'}</Tag>
+                  <Typography.Text type="secondary">pass rate {outcome.passRate}%</Typography.Text>
+                </span>
+              </Flex>
+            </Descriptions.Item>
+          ) : (
+            <Descriptions.Item label="Result">
+              <Tag color="blue">In progress</Tag>
+            </Descriptions.Item>
+          )}
+        </Descriptions>
+        <Flex gap={8} justify="end" style={{ marginTop: 16 }}>
+          <Button onClick={() => navigate('/practices')}>Practices List</Button>
+          {/* Practice Review replaces Practice (UC-21 step 3); an unfinished attempt continues instead. */}
+          {outcome ? (
+            <Button type="primary" onClick={() => navigate(`/quiz/${p.id}/review`)}>
+              Practice Review
+            </Button>
+          ) : (
+            <Button type="primary" onClick={() => navigate(`/quiz/${p.id}`)}>
+              Continue
+            </Button>
+          )}
+        </Flex>
+      </Card>
+    </Flex>
+  )
 }
 
 function NewPractice() {

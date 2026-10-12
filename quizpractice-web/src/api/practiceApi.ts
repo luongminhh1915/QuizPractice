@@ -16,6 +16,29 @@ export interface PracticeGroups {
   groups: PracticeGroup[]
 }
 
+/** Matches AttemptOutcomeDto (BR-21). */
+export interface AttemptOutcome {
+  correct: number
+  score: number
+  passRate: number
+  passed: boolean
+  durationSeconds: number
+}
+
+/** Matches PracticeDetailsDto (UC-21). outcome is empty while the attempt still runs. */
+export interface PracticeDetails {
+  id: number
+  subjectName: string
+  mode: 'Practice' | 'Exam'
+  title: string
+  selectionType: SelectionType | null
+  groupName: string | null
+  questionCount: number
+  status: 'InProgress' | 'Submitted'
+  startedAt: string
+  outcome: AttemptOutcome | null
+}
+
 export interface CreatePractice {
   subjectId: number
   questionCount: number
@@ -26,6 +49,9 @@ export interface CreatePractice {
 
 /** /api/practices — Practices List and Practice Details (F#14, F#15). */
 export const practiceApi = {
+  /** UC-21. 404 when missing or another customer's (E1). */
+  get: (id: number) => http.get<PracticeDetails>(`/practices/${id}`).then((r) => r.data),
+
   /** UC-20 step 2: the subjects the customer may practise; empty is E1. */
   form: () => http.get<{ subjects: { id: number; name: string }[] }>('/practices/form').then((r) => r.data),
 
