@@ -39,5 +39,42 @@ public class InvoiceRepository(AppDbContext db) : IInvoiceRepository
         return new Page<Invoice>(items, total, page.PageNumber, page.PageSize);
     }
 
+    public async Task<Page<Invoice>> SearchAsync(InvoiceSearch search, PageRequest page, CancellationToken ct = default)
+    {
+        var query = db.Invoices.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search.Text))
+        {
+            var text = search.Text.Trim();
+            query = query.Where(i => i.Code.Contains(text) || i.User.Email.Contains(text));
+        }
+
+        if (search.Status is { } status)
+        {
+            query = query.Where(i => i.Status == status);
+        }
+
+        if (search.From is { } from)
+        {
+            query = query.Where(i => i.CreatedAt >= from);
+        }
+
+        if (search.Before is { } before)
+        {
+            query = query.Where(i => i.CreatedAt < before);
+        }
+
+        var total = await query.CountAsync(ct);
+        var items = await query
+            .OrderBy(i => i.Status == InvoiceStatus.Unpaid ? 0 : 1)
+            .ThenByDescending(i => i.CreatedAt).ThenByDescending(i => i.Id)
+            .Include(i => i.User)
+            .Include(i => i.ConfirmedBy)
+            .Include(i => i.Registrations)
+            .Skip(page.Skip)
+            .Take(page.PageSize)
+            .ToListAsync(ct);
+        return new Page<Invoice>(items, total, page.PageNumber, page.PageSize);
+    }
+
     public void Add(Invoice invoice) => db.Invoices.Add(invoice);
 }
