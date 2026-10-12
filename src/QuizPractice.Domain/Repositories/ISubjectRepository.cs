@@ -1,14 +1,31 @@
 using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
+using QuizPractice.Domain.Enums;
 
 namespace QuizPractice.Domain.Repositories;
 
 /// <summary>Criteria of Subjects List (UC-12): text matched against the name, and a subject category.</summary>
 public sealed record PublishedSubjectSearch(string? Text, int? CategoryId);
 
-/// <summary>Subjects as the public pages show them: published only (UC-09, UC-12 to UC-14).</summary>
+/// <summary>
+/// Criteria of Subject Management List (UC-41). ExpertId limits the result to the subjects
+/// of that Expert (BR-11); null for the Admin. SortBy: id, name, category, lessons, owner or status.
+/// </summary>
+public sealed record ManagedSubjectSearch(
+    int? ExpertId, string? Text, int? CategoryId, SubjectStatus? Status, string? SortBy, bool Descending);
+
+/// <summary>
+/// Subjects as the public pages show them: published only (UC-09, UC-12 to UC-14); and as
+/// Course Content manages them, whatever their status (UC-41 to UC-51).
+/// </summary>
 public interface ISubjectRepository
 {
+    /// <summary>UC-41: a page of subjects with their category and owner.</summary>
+    Task<Page<Subject>> SearchManagedAsync(ManagedSubjectSearch search, PageRequest page, CancellationToken ct = default);
+
+    /// <summary>How many lessons and quizzes (not topics) each of these subjects holds.</summary>
+    Task<IReadOnlyDictionary<int, int>> CountLessonsAsync(IReadOnlyCollection<int> subjectIds, CancellationToken ct = default);
+
     /// <summary>Published subjects whose featured flag is on, most recently updated first, with their category and active packages.</summary>
     Task<IReadOnlyList<Subject>> ListFeaturedPublishedAsync(int take, CancellationToken ct = default);
 
