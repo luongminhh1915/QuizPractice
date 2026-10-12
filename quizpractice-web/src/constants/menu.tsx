@@ -43,7 +43,7 @@ export const MENU_SCREENS: Record<string, MenuScreen> = {
   'My Registrations': { path: '/my-registrations', area: 'learning', icon: <ShoppingCartOutlined />, ready: true },
   Practices: { path: '/practices', area: 'learning', icon: <AppstoreOutlined />, ready: false },
   'Simulation Exams': { path: '/simulation-exams', area: 'learning', icon: <FormOutlined />, ready: false },
-  'My Invoices': { path: '/my-invoices', area: 'learning', icon: <FileDoneOutlined />, ready: false },
+  'My Invoices': { path: '/my-invoices', area: 'learning', icon: <FileDoneOutlined />, ready: true },
 }
 
 /**

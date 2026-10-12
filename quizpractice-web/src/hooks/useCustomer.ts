@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { customerApi } from '../api/customerApi'
+import { customerApi, type InvoiceStatus } from '../api/customerApi'
 
 // The customer's own records live under ['account', ...], so signing in as someone else
 // (switchUser in useAccount) drops them with the rest of the account.
@@ -15,6 +15,15 @@ export function useMyRegistrations(page: number, pageSize: number) {
   return useQuery({
     queryKey: [...customerKeys.registrations, page, pageSize],
     queryFn: () => customerApi.registrations(page, pageSize),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** UC-67. */
+export function useMyInvoices(status: InvoiceStatus | undefined, page: number, pageSize: number) {
+  return useQuery({
+    queryKey: [...customerKeys.invoices, 'list', status ?? 'All', page, pageSize],
+    queryFn: () => customerApi.invoices(status, page, pageSize),
     placeholderData: keepPreviousData,
   })
 }

@@ -40,6 +40,17 @@ export interface Invoice {
   registrations: { id: number; subjectName: string; packageName: string; totalCost: number }[]
 }
 
+/** Matches InvoiceSummaryDto (UC-67). */
+export interface InvoiceSummary {
+  id: number
+  code: string
+  createdAt: string
+  registrationCount: number
+  totalAmount: number
+  status: InvoiceStatus
+  paidAt: string | null
+}
+
 /** /api/my — the signed-in customer's own records (Customer feature). */
 export const customerApi = {
   /** UC-15. */
@@ -48,6 +59,10 @@ export const customerApi = {
 
   /** UC-16: the Subject Register pop-up on the stored package. */
   changeForm: (id: number) => http.get<RegisterForm>(`/my/registrations/${id}/form`).then((r) => r.data),
+
+  /** UC-67. */
+  invoices: (status: InvoiceStatus | undefined, page: number, pageSize: number) =>
+    http.get<Page<InvoiceSummary>>('/my/invoices', { params: { status, page, pageSize } }).then((r) => r.data),
 
   /** UC-18: one invoice for the chosen registrations. 409 when one is no longer payable (E1) or no account is set (E2). */
   createInvoice: (registrationIds: number[]) => http.post<Invoice>('/my/invoices', { registrationIds }).then((r) => r.data),
