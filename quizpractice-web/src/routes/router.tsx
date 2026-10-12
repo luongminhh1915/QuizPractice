@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { AppShell } from '../layouts/AppShell'
 import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
+import { QuizLayout } from '../layouts/QuizLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ResetPasswordPage } from '../pages/common/ResetPasswordPage'
 import { VerifyEmailPage } from '../pages/common/VerifyEmailPage'
@@ -9,6 +10,7 @@ import { InvoiceQrPage } from '../pages/customer/InvoiceQrPage'
 import { MyInvoicesPage } from '../pages/customer/MyInvoicesPage'
 import { MyRegistrationsPage } from '../pages/customer/MyRegistrationsPage'
 import { PracticeDetailsPage } from '../pages/customer/PracticeDetailsPage'
+import { QuizHandlePage } from '../pages/learning/QuizHandlePage'
 import { DashboardPage } from '../pages/marketing/DashboardPage'
 import { PostDetailsPage } from '../pages/marketing/PostDetailsPage'
 import { PostsListPage } from '../pages/marketing/PostsListPage'
@@ -50,6 +52,11 @@ export const router = createBrowserRouter([
           { path: '/reset-password', element: <ResetPasswordPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
+      },
+      {
+        // Quiz Handle and Quiz Review run without the site menu (SRS III 4.1, 4.2).
+        element: <QuizLayout />,
+        children: [{ path: '/quiz/:id', element: <QuizHandlePage /> }],
       },
       {
         path: '/manage',
