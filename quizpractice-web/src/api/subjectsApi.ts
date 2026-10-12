@@ -1,5 +1,5 @@
 import { http } from './client'
-import type { ListCriteria, Page } from './types'
+import type { ActiveStatus, ListCriteria, Page } from './types'
 
 /** Subject (BR-12, BR-23): only a Published subject reaches the public catalog. */
 export type SubjectStatus = 'Published' | 'Unpublished'
@@ -139,7 +139,32 @@ export interface DimensionInput {
   description?: string
 }
 
-/** /api/subjects — UC-41 to UC-46 (Course Content). */
+/** A price package of a subject (UC-47, UC-48). Prices are whole VND. */
+export interface PricePackage {
+  id: number
+  name: string
+  accessMonths: number
+  listPrice: number
+  salePrice: number
+  description: string | null
+  status: ActiveStatus
+}
+
+/** The Price Package tab; canEdit is false for the assigned Expert, who only views it (UC-48). */
+export interface PricePackageTab {
+  canEdit: boolean
+  packages: PricePackage[]
+}
+
+export interface PricePackageInput {
+  name: string
+  accessMonths: number
+  listPrice: number
+  salePrice: number
+  description?: string
+}
+
+/** /api/subjects — UC-41 to UC-48 (Course Content). */
 export const subjectsApi = {
   list: (criteria: SubjectCriteria) => http.get<Page<SubjectSummary>>('/subjects', { params: criteria }).then((r) => r.data),
 
@@ -165,4 +190,15 @@ export const subjectsApi = {
   /** 409 Dimension.InUse names how many questions, practices and quiz rules keep it (UC-46 E3). */
   deleteDimension: (subjectId: number, id: number) =>
     http.delete(`/subjects/${subjectId}/dimensions/${id}`).then(() => undefined),
+
+  packages: (subjectId: number) => http.get<PricePackageTab>(`/subjects/${subjectId}/packages`).then((r) => r.data),
+
+  savePackage: (subjectId: number, id: number | undefined, input: PricePackageInput) =>
+    (id === undefined
+      ? http.post<PricePackage>(`/subjects/${subjectId}/packages`, input)
+      : http.put<PricePackage>(`/subjects/${subjectId}/packages/${id}`, input)
+    ).then((r) => r.data),
+
+  changePackageStatus: (subjectId: number, id: number, status: ActiveStatus) =>
+    http.put<PricePackage>(`/subjects/${subjectId}/packages/${id}/status`, { status }).then((r) => r.data),
 }

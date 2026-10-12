@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { subjectsApi, type DimensionInput, type NewSubjectInput, type SubjectCriteria, type SubjectOverviewInput } from '../api/subjectsApi'
+import type { ActiveStatus } from '../api/types'
+import { subjectsApi, type DimensionInput, type PricePackageInput, type NewSubjectInput, type SubjectCriteria, type SubjectOverviewInput } from '../api/subjectsApi'
 
 // Query keys: ['subjects'] covers every list and detail of Course Content, so one
 // invalidate after a change reloads whatever subject screen is open.
@@ -10,6 +11,7 @@ const keys = {
   choices: ['subjects', 'choices'] as const,
   detail: (id: number) => ['subjects', 'detail', id] as const,
   dimensions: (id: number) => ['subjects', 'dimensions', id] as const,
+  packages: (id: number) => ['subjects', 'packages', id] as const,
 }
 
 export function useSubjectList(criteria: SubjectCriteria) {
@@ -71,5 +73,28 @@ export function useDeleteDimension(subjectId: number) {
   return useMutation({
     mutationFn: (id: number) => subjectsApi.deleteDimension(subjectId, id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.dimensions(subjectId) }),
+  })
+}
+
+/** UC-47, UC-48: the Price Package tab of a subject. */
+export function usePackages(subjectId: number) {
+  return useQuery({ queryKey: keys.packages(subjectId), queryFn: () => subjectsApi.packages(subjectId) })
+}
+
+// A package change also changes whether the subject can be published without a warning
+// (hasActivePackage on the Overview tab), so the whole subject reloads.
+export function useSavePackage(subjectId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, input }: { id?: number; input: PricePackageInput }) => subjectsApi.savePackage(subjectId, id, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  })
+}
+
+export function useChangePackageStatus(subjectId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: ActiveStatus }) => subjectsApi.changePackageStatus(subjectId, id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   })
 }

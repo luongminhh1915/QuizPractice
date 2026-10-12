@@ -4,11 +4,12 @@ import { errorMessage, problemOf } from '../../api/client'
 import { PageHeader } from '../../components/PageHeader'
 import { useSubject } from '../../hooks/useSubjects'
 import { SubjectDimensionTab } from './SubjectDimensionTab'
+import { SubjectPackageTab } from './SubjectPackageTab'
 import { SubjectOverviewTab } from './SubjectOverviewTab'
 
 /**
- * Subject Management Details (SRS III 6.3; PDF II.6, F#25, F#26): the Overview and
- * Dimension tabs of a subject for the Admin and its assigned Expert (UC-43 to UC-46).
+ * Subject Management Details (SRS III 6.3; PDF II.6, F#25 to F#27): the Overview,
+ * Dimension and Price Package tabs of a subject for the Admin and its assigned Expert (UC-43 to UC-48).
  */
 export function SubjectManagementDetailsPage() {
   const navigate = useNavigate()
@@ -43,6 +44,7 @@ export function SubjectManagementDetailsPage() {
         items={[
           { key: 'overview', label: 'Overview', children: <SubjectOverviewTab subject={subject.data} backTo={backTo} /> },
           { key: 'dimension', label: 'Dimension', children: <SubjectDimensionTab subjectId={id} /> },
+          { key: 'package', label: 'Price Package', children: <SubjectPackageTab subjectId={id} /> },
         ]}
       />
     </>
