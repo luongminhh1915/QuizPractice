@@ -24,6 +24,7 @@ import { BlogsListPage } from '../pages/public/BlogsListPage'
 import { HomePage } from '../pages/public/HomePage'
 import { SubjectDetailsPage } from '../pages/public/SubjectDetailsPage'
 import { SubjectsListPage } from '../pages/public/SubjectsListPage'
+import { InvoicesListPage } from '../pages/sale/InvoicesListPage'
 import { RegistrationDetailsPage } from '../pages/sale/RegistrationDetailsPage'
 import { RegistrationsListPage } from '../pages/sale/RegistrationsListPage'
 import { QuestionDetailsPage } from '../pages/testcontent/QuestionDetailsPage'
@@ -83,6 +84,7 @@ export const router = createBrowserRouter([
           { path: 'registrations', element: <RegistrationsListPage /> },
           { path: 'registrations/new', element: <RegistrationDetailsPage /> },
           { path: 'registrations/:id', element: <RegistrationDetailsPage /> },
+          { path: 'invoices', element: <InvoicesListPage /> },
           { path: 'questions', element: <QuestionsListPage /> },
           { path: 'questions/new', element: <QuestionDetailsPage /> },
           { path: 'questions/:id', element: <QuestionDetailsPage /> },

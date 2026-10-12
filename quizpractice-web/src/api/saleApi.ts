@@ -80,7 +80,26 @@ export interface RegistrationStatusResult {
   mailFailed: boolean
 }
 
-/** /api/registrations — the Sale screens (F#35, F#36). */
+/** Matches SaleInvoiceSummaryDto (UC-68). */
+export interface SaleInvoiceSummary {
+  id: number
+  code: string
+  customerEmail: string
+  createdAt: string
+  registrationCount: number
+  totalAmount: number
+  status: InvoiceStatus
+  paidAt: string | null
+  confirmedBy: string | null
+}
+
+export interface InvoiceListCriteria extends ListCriteria {
+  status?: InvoiceStatus
+  from?: string
+  to?: string
+}
+
+/** /api/registrations and /api/invoices — the Sale screens (F#35, F#36; UC-68, UC-69). */
 export const saleApi = {
   /** UC-59. 400 To when the range ends before it starts (E1). */
   registrations: (criteria: RegistrationListCriteria) =>
@@ -108,6 +127,9 @@ export const saleApi = {
   /** BR-22: the notes alone, at any status. */
   saveRegistrationNotes: (id: number, notes: string | undefined) =>
     http.put<RegistrationDetails>(`/registrations/${id}/notes`, { notes }).then((r) => r.data),
+
+  /** UC-68: the unpaid ones first, then the newest. */
+  invoices: (criteria: InvoiceListCriteria) => http.get<Page<SaleInvoiceSummary>>('/invoices', { params: criteria }).then((r) => r.data),
 
   /** UC-59: the subjects to filter by. */
   registrationFilters: () =>

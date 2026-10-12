@@ -1,9 +1,19 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { RegistrationStatus } from '../api/customerApi'
-import { saleApi, type RegistrationInput, type RegistrationListCriteria } from '../api/saleApi'
+import { saleApi, type InvoiceListCriteria, type RegistrationInput, type RegistrationListCriteria } from '../api/saleApi'
 
 export const saleKeys = {
   registrations: ['sale', 'registrations'] as const,
+  invoices: ['sale', 'invoices'] as const,
+}
+
+/** UC-68. */
+export function useInvoiceList(criteria: InvoiceListCriteria) {
+  return useQuery({
+    queryKey: [...saleKeys.invoices, 'list', criteria],
+    queryFn: () => saleApi.invoices(criteria),
+    placeholderData: keepPreviousData,
+  })
 }
 
 /** UC-59. */
