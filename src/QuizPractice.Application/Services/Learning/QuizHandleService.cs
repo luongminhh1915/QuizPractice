@@ -109,6 +109,36 @@ public class QuizHandleService(
         return new HandleProgressDto(row.DisplayOrder, row.ChosenOptionId, row.IsMarked);
     }
 
+    public async Task<Result<PeekDto>> PeekAsync(int id, int order, CancellationToken ct = default)
+    {
+        var (attempt, refusal) = await LoadRunningAsync(id, ct);
+        if (refusal is not null)
+        {
+            return refusal;
+        }
+
+        // BR-07, A1: the exam screen has no Peek button; the server refuses it as well.
+        if (attempt!.Mode == AttemptMode.Exam)
+        {
+            return new Error(ErrorType.Forbidden, "Attempt.NoPeek", "Peek at Answer is not available during a simulation exam.");
+        }
+
+        if (QuestionAt(attempt, order) is not { } row)
+        {
+            return Error.NotFound("Question", order);
+        }
+
+        // The recorded answers are unchanged: peeking stores nothing.
+        var options = row.Question.Options;
+        var correct = options.FindIndex(o => o.IsCorrect);
+        return new PeekDto(
+            options[correct].Id,
+            Letter(correct),
+            options[correct].Content,
+            row.Question.Explanation,
+            row.Question.Dimensions.Select(d => $"{d.Dimension.Type.Value}: {d.Dimension.Name}").Order().ToList());
+    }
+
     public async Task<Result<MediaFile>> GetMediaAsync(int id, int order, CancellationToken ct = default)
     {
         if (currentUser.Id is not { } userId)

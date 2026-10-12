@@ -29,6 +29,11 @@ public class AttemptsController(IQuizHandleService handle) : ApiControllerBase
     public async Task<ActionResult<HandleProgressDto>> Mark(int id, int order, MarkRequest request, CancellationToken ct) =>
         FromResult(await handle.MarkAsync(id, order, request, ct));
 
+    /// <summary>UC-28: 403 Attempt.NoPeek during a simulation exam (BR-07).</summary>
+    [HttpGet("questions/{order:int}/peek")]
+    public async Task<ActionResult<PeekDto>> Peek(int id, int order, CancellationToken ct) =>
+        FromResult(await handle.PeekAsync(id, order, ct));
+
     /// <summary>UC-25: the question on screen, read back after a reload (BR-08).</summary>
     [HttpPut("position")]
     public async Task<ActionResult<HandleProgressDto>> Move(int id, MoveRequest request, CancellationToken ct) =>

@@ -18,6 +18,9 @@ public interface IQuizHandleService
     /// <summary>UC-26: marks or unmarks one question; the answer is kept (A2).</summary>
     Task<Result<HandleProgressDto>> MarkAsync(int id, int order, MarkRequest request, CancellationToken ct = default);
 
+    /// <summary>UC-28: the correct answer of one question, during a practice only (BR-07).</summary>
+    Task<Result<PeekDto>> PeekAsync(int id, int order, CancellationToken ct = default);
+
     /// <summary>The image, audio or video of a question in an attempt of the customer (BR-05).</summary>
     Task<Result<MediaFile>> GetMediaAsync(int id, int order, CancellationToken ct = default);
 }

@@ -43,5 +43,11 @@ public sealed record MoveRequest(int Order);
 /// <summary>UC-26: mark the question for review, or unmark it (A1).</summary>
 public sealed record MarkRequest(bool Marked);
 
+/// <summary>
+/// Peek at Answer (UC-28 step 3, D6): the correct option, the explanation where the
+/// question has one, and its dimensions as "Type: Name".
+/// </summary>
+public sealed record PeekDto(int OptionId, string Letter, string Content, string? Explanation, IReadOnlyList<string> Dimensions);
+
 /// <summary>What is stored for one question after a change.</summary>
 public sealed record HandleProgressDto(int Order, int? ChosenOptionId, bool IsMarked);
