@@ -25,6 +25,12 @@ public interface IRegistrationService
     /// <summary>UC-60: the whole form, only for its recorder while Submitted (BR-22).</summary>
     Task<Result<RegistrationDetailsDto>> UpdateAsync(int id, SaveRegistrationRequest request, CancellationToken ct = default);
 
+    /// <summary>
+    /// UC-61: settles a Submitted registration. Paid sets the validity (BR-14) and, for an
+    /// email without an account, creates one and mails its login information (BR-15).
+    /// </summary>
+    Task<Result<RegistrationStatusResultDto>> ChangeStatusAsync(int id, ChangeRegistrationStatusRequest request, CancellationToken ct = default);
+
     /// <summary>BR-22, UC-61 A3/A4: the notes alone, at any status.</summary>
     Task<Result<RegistrationDetailsDto>> SaveNotesAsync(int id, SaveNotesRequest request, CancellationToken ct = default);
 }

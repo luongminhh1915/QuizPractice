@@ -97,3 +97,13 @@ public sealed record SaveRegistrationRequest(
 
 /// <summary>BR-22: the notes can be added at any status.</summary>
 public sealed record SaveNotesRequest(string? Notes);
+
+/// <summary>UC-61 step 2: Paid or Cancelled, with the notes.</summary>
+public sealed record ChangeRegistrationStatusRequest(RegistrationStatus Status, string? Notes);
+
+/// <summary>
+/// UC-61 step 7. AccountCreated: the email had no account and one was made (step 6).
+/// MailFailed: that account's login mail could not be sent (E2); the customer sets a
+/// password with Forgot Password instead (Duck 12/10).
+/// </summary>
+public sealed record RegistrationStatusResultDto(RegistrationDetailsDto Registration, bool AccountCreated, bool MailFailed);

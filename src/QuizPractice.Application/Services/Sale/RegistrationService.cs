@@ -21,11 +21,15 @@ public class RegistrationService(
     IRegistrationRepository registrations,
     IQuizRepository quizzes,
     IUserRepository users,
+    ISettingRepository settings,
+    IPasswordHasher hasher,
+    IEmailSender mail,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IValidator<RegistrationListRequest> listValidator,
     IValidator<SaveRegistrationRequest> saveValidator,
-    IValidator<SaveNotesRequest> notesValidator) : IRegistrationService
+    IValidator<SaveNotesRequest> notesValidator,
+    IValidator<ChangeRegistrationStatusRequest> statusValidator) : IRegistrationService
 {
     public async Task<Result<Page<RegistrationSummaryDto>>> ListAsync(RegistrationListRequest request, CancellationToken ct = default)
     {
@@ -150,6 +154,115 @@ public class RegistrationService(
         }
 
         return ToDto((await registrations.GetForSaleAsync(id, ct))!, me);
+    }
+
+    public async Task<Result<RegistrationStatusResultDto>> ChangeStatusAsync(int id, ChangeRegistrationStatusRequest request, CancellationToken ct = default)
+    {
+        if (currentUser.Id is not { } me)
+        {
+            return SignInRequired;
+        }
+
+        if (await statusValidator.CheckAsync(request, ct) is { } invalid)
+        {
+            return invalid;
+        }
+
+        var registration = await registrations.GetForSaleAsync(id, ct);
+        if (registration is null)
+        {
+            return Error.NotFound("Registration", id);
+        }
+
+        // A3 (BR-24): it is paid with its invoice, on Invoice Details (UC-69).
+        if (registration.Invoice is { Status: InvoiceStatus.Unpaid } invoice)
+        {
+            return Error.Conflict("Registration.InUnpaidInvoice",
+                $"This registration is waiting in invoice {invoice.Code}; it becomes Paid when that invoice is confirmed. Only the notes can change here.");
+        }
+
+        // A4 (BR-22): Paid and Cancelled are final.
+        if (registration.Status != RegistrationStatus.Submitted)
+        {
+            return Error.Conflict("Registration.Settled",
+                $"This registration is already {registration.Status}; only the notes can change (BR-22).");
+        }
+
+        registration.Notes = QuestionMapping.NullIfBlank(request.Notes);
+        registration.UpdatedById = me;
+        User? created = null;
+        string? password = null;
+        if (request.Status == RegistrationStatus.Cancelled)
+        {
+            // A2: no access.
+            registration.Status = RegistrationStatus.Cancelled;
+        }
+        else
+        {
+            if (RegistrationSettlement.CheckPayable(registration) is { } noDuration)
+            {
+                return noDuration;
+            }
+
+            // Steps 4 and 5 (BR-14).
+            RegistrationSettlement.MarkPaid(registration, me, DateTime.UtcNow);
+
+            // A1 / step 6 (BR-15): the account of the email, made now if there is none.
+            if (registration.UserId is null)
+            {
+                var account = await users.GetByEmailAsync(registration.Email, ct);
+                if (account is not null && account.Role.Value != Roles.Customer)
+                {
+                    return Error.Conflict("Registration.StaffEmail",
+                        "The email of this registration now belongs to a staff account. Correct the email before settling it.");
+                }
+
+                if (account is null)
+                {
+                    (created, password) = await NewCustomerAsync(registration, ct);
+                    users.Add(created);
+                    registration.User = created;
+                }
+                else
+                {
+                    registration.UserId = account.Id;
+                }
+            }
+        }
+
+        // E3: the status is a concurrency token; another Sale user who settled it first wins.
+        if (!await unitOfWork.TrySaveChangesAsync(ct))
+        {
+            return ChangedMeanwhile;
+        }
+
+        // E2: the account and the access stay; the customer can set a password with Forgot Password.
+        var mailFailed = created is not null
+            && !await mail.SendAccountCreatedAsync(created.Email, created.FullName, password!, registration.Notes, ct);
+        var reloaded = (await registrations.GetForSaleAsync(id, ct))!;
+        return new RegistrationStatusResultDto(ToDto(reloaded, me), created is not null, mailFailed);
+    }
+
+    /// <summary>
+    /// UC-61 step 6: a Customer account from the contact of the registration, Active at once
+    /// (the Sale user has been in touch with the customer), with a generated password.
+    /// </summary>
+    private async Task<(User User, string Password)> NewCustomerAsync(Registration r, CancellationToken ct)
+    {
+        var customerRole = (await settings.ListActiveAsync(SettingType.UserRole, ct)).FirstOrDefault(s => s.Value == Roles.Customer)
+            ?? throw new InvalidOperationException($"The User Role setting '{Roles.Customer}' is missing or inactive.");
+        var password = PasswordGenerator.Generate();
+        var user = new User
+        {
+            Email = r.Email,
+            FullName = r.FullName,
+            Gender = r.Gender,
+            Mobile = r.Mobile,
+            RoleId = customerRole.Id,
+            Status = UserStatus.Active,
+            PasswordHash = hasher.Hash(password),
+        };
+        return (user, password);
     }
 
     public async Task<Result<RegistrationDetailsDto>> SaveNotesAsync(int id, SaveNotesRequest request, CancellationToken ct = default)

@@ -41,6 +41,14 @@ public class RegistrationsController(IRegistrationService registrations) : ApiCo
     public async Task<ActionResult<RegistrationDetailsDto>> Update(int id, SaveRegistrationRequest request, CancellationToken ct) =>
         FromResult(await registrations.UpdateAsync(id, request, ct));
 
+    /// <summary>
+    /// UC-61: { "status": "Paid" | "Cancelled", "notes" }. 409 Registration.InUnpaidInvoice (A3),
+    /// Registration.Settled (A4), Registration.NoDuration (E1) or Registration.Changed (E3).
+    /// </summary>
+    [HttpPut("{id:int}/status")]
+    public async Task<ActionResult<RegistrationStatusResultDto>> ChangeStatus(int id, ChangeRegistrationStatusRequest request, CancellationToken ct) =>
+        FromResult(await registrations.ChangeStatusAsync(id, request, ct));
+
     /// <summary>BR-22: the notes alone, at any status.</summary>
     [HttpPut("{id:int}/notes")]
     public async Task<ActionResult<RegistrationDetailsDto>> SaveNotes(int id, SaveNotesRequest request, CancellationToken ct) =>

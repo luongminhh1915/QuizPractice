@@ -24,6 +24,18 @@ public class SaveRegistrationRequestValidator : AbstractValidator<SaveRegistrati
     }
 }
 
+public class ChangeRegistrationStatusRequestValidator : AbstractValidator<ChangeRegistrationStatusRequest>
+{
+    public ChangeRegistrationStatusRequestValidator()
+    {
+        // BR-22: a Submitted registration moves to Paid or to Cancelled, nowhere else.
+        RuleFor(x => x.Status)
+            .Must(s => s is Domain.Enums.RegistrationStatus.Paid or Domain.Enums.RegistrationStatus.Cancelled)
+            .WithMessage("Set the status to Paid or Cancelled.");
+        RuleFor(x => x.Notes).MaximumLength(FieldLength.Brief);
+    }
+}
+
 public class SaveNotesRequestValidator : AbstractValidator<SaveNotesRequest>
 {
     public SaveNotesRequestValidator() => RuleFor(x => x.Notes).MaximumLength(FieldLength.Brief);
