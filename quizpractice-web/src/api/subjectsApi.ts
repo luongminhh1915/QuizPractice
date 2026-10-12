@@ -191,6 +191,39 @@ export interface LessonCriteria {
   status?: ActiveStatus
 }
 
+/** Matches LessonDto of the API: Lesson Details (UC-50). */
+export interface Lesson {
+  id: number
+  name: string
+  typeId: number
+  type: string
+  topicId: number | null
+  displayOrder: number
+  videoUrl: string | null
+  /** HTML cleaned by the API. */
+  htmlContent: string | null
+  quizId: number | null
+  status: ActiveStatus
+}
+
+export interface LessonChoices {
+  subject: string
+  types: Lookup[]
+  topics: Lookup[]
+  quizzes: (Lookup & { status: ActiveStatus })[]
+}
+
+/** Lesson Details form; the API keeps only the fields of the chosen type. */
+export interface LessonInput {
+  name: string
+  typeId: number
+  topicId?: number | null
+  displayOrder?: number | null
+  videoUrl?: string
+  htmlContent?: string
+  quizId?: number | null
+}
+
 /** /api/subjects — UC-41 to UC-51 (Course Content). */
 export const subjectsApi = {
   list: (criteria: SubjectCriteria) => http.get<Page<SubjectSummary>>('/subjects', { params: criteria }).then((r) => r.data),
@@ -228,6 +261,16 @@ export const subjectsApi = {
 
   changePackageStatus: (subjectId: number, id: number, status: ActiveStatus) =>
     http.put<PricePackage>(`/subjects/${subjectId}/packages/${id}/status`, { status }).then((r) => r.data),
+
+  lessonChoices: (subjectId: number) => http.get<LessonChoices>(`/subjects/${subjectId}/lessons/choices`).then((r) => r.data),
+
+  lesson: (subjectId: number, id: number) => http.get<Lesson>(`/subjects/${subjectId}/lessons/${id}`).then((r) => r.data),
+
+  saveLesson: (subjectId: number, id: number | undefined, input: LessonInput) =>
+    (id === undefined
+      ? http.post<Lesson>(`/subjects/${subjectId}/lessons`, input)
+      : http.put<Lesson>(`/subjects/${subjectId}/lessons/${id}`, input)
+    ).then((r) => r.data),
 
   lessons: (subjectId: number, criteria: LessonCriteria) =>
     http.get<LessonList>(`/subjects/${subjectId}/lessons`, { params: criteria }).then((r) => r.data),

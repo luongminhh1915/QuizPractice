@@ -4,6 +4,7 @@ import type { LessonRow } from '../../api/subjectsApi'
 import type { ActiveStatus } from '../../api/types'
 import { errorMessage } from '../../api/client'
 import { DataTable, type DataTableColumn } from '../../components/DataTable'
+import { PlusOutlined } from '@ant-design/icons'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusTag } from '../../components/StatusTag'
 import { useListParams } from '../../hooks/useListParams'
@@ -28,6 +29,9 @@ export function SubjectLessonsPage() {
   const query = useLessons(subjectId, { page: list.criteria.page, pageSize: list.criteria.pageSize, search: list.criteria.search, topicId, status })
   const changeStatus = useChangeLessonStatus(subjectId)
   const data = query.data
+
+  // Lesson Details returns to this list with the same criteria (SRS III 0.3).
+  const back = { state: { back: location.pathname + location.search } }
 
   const toggle = (lesson: LessonRow) => {
     const next = lesson.status === 'Active' ? 'Inactive' : 'Active'
@@ -54,24 +58,38 @@ export function SubjectLessonsPage() {
     {
       title: 'Action',
       key: 'action',
-      width: 130,
+      width: 190,
       render: (l) => (
-        // UC-51: the label names the action available.
-        <Button
+        <Space>
+          <Link to={`/manage/subjects/${subjectId}/lessons/${l.id}`} {...back}>
+            <Button size="small">Edit</Button>
+          </Link>
+          {/* UC-51: the label names the action available. */}
+          <Button
           size="small"
           danger={l.status === 'Active'}
           loading={changeStatus.isPending && changeStatus.variables?.id === l.id}
           onClick={() => toggle(l)}
         >
           {l.status === 'Active' ? 'Deactivate' : 'Activate'}
-        </Button>
+          </Button>
+        </Space>
       ),
     },
   ]
 
   return (
     <>
-      <PageHeader title="Subject Lessons" />
+      <PageHeader
+        title="Subject Lessons"
+        action={
+          <Link to={`/manage/subjects/${subjectId}/lessons/new`} {...back}>
+            <Button type="primary" icon={<PlusOutlined />}>
+              Add Lesson
+            </Button>
+          </Link>
+        }
+      />
       {data && (
         <Typography.Paragraph>
           {/* The lessons belong to the subject, not to a price package (OI-02). */}

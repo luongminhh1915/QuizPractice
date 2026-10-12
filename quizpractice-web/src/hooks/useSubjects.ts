@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ActiveStatus } from '../api/types'
-import { subjectsApi, type DimensionInput, type LessonCriteria, type PricePackageInput, type NewSubjectInput, type SubjectCriteria, type SubjectOverviewInput } from '../api/subjectsApi'
+import { subjectsApi, type DimensionInput, type LessonCriteria, type LessonInput, type PricePackageInput, type NewSubjectInput, type SubjectCriteria, type SubjectOverviewInput } from '../api/subjectsApi'
 
 // Query keys: ['subjects'] covers every list and detail of Course Content, so one
 // invalidate after a change reloads whatever subject screen is open.
@@ -115,5 +115,27 @@ export function useChangeLessonStatus(subjectId: number) {
   return useMutation({
     mutationFn: ({ id, status }: { id: number; status: ActiveStatus }) => subjectsApi.changeLessonStatus(subjectId, id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.lessons(subjectId) }),
+  })
+}
+
+/** UC-50: lesson types, topics and lesson quizzes of the subject; fresh, so a quiz made meanwhile shows (E3). */
+export function useLessonChoices(subjectId: number) {
+  return useQuery({ queryKey: [...keys.lessons(subjectId), 'choices'], queryFn: () => subjectsApi.lessonChoices(subjectId) })
+}
+
+export function useLesson(subjectId: number, id: number | undefined) {
+  return useQuery({
+    queryKey: [...keys.lessons(subjectId), 'detail', id ?? 0],
+    queryFn: () => subjectsApi.lesson(subjectId, id!),
+    enabled: id !== undefined,
+  })
+}
+
+/** UC-50: a new lesson or a change; the subject list's lesson count follows. */
+export function useSaveLesson(subjectId: number, id: number | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: LessonInput) => subjectsApi.saveLesson(subjectId, id, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   })
 }
