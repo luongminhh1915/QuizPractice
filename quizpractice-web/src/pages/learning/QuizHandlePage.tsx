@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react'
 import { App, Button, Card, Flex, Radio, Result, Space, Spin, Tag, Typography } from 'antd'
-import { ClockCircleOutlined, FlagFilled, FlagOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, ClockCircleOutlined, FlagFilled, FlagOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router'
 import { mediaUrl, type HandleQuestion, type QuizHandle } from '../../api/attemptApi'
 import { errorMessage, problemOf } from '../../api/client'
+import { QuestionNumbersModal, type NumberFilter } from '../../components/learning/QuestionNumbersModal'
 import { useAnswer, useMark, useMove, useQuizHandle } from '../../hooks/useAttempt'
 import { formatDuration } from '../../utils/duration'
+
+/** UC-27 step 2: the four filters of Review Progress. */
+const PROGRESS_FILTERS: NumberFilter[] = [
+  { key: 'unanswered', label: 'Unanswered', match: (q) => !q.answered },
+  { key: 'marked', label: 'Marked', match: (q) => q.marked },
+  { key: 'answered', label: 'Answered', match: (q) => q.answered },
+  { key: 'all', label: 'All Questions', match: () => true },
+]
 
 /**
  * Quiz Handle (SRS III 4.1; F#17; UC-24 to UC-30): one question at a time of a running
@@ -54,6 +63,7 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
   const [marks, setMarks] = useState<Record<number, boolean>>(() =>
     Object.fromEntries(attempt.questions.map((q) => [q.order, q.isMarked])),
   )
+  const [progressOpen, setProgressOpen] = useState(false)
   const answer = useAnswer(attempt.id)
   const move = useMove(attempt.id)
   const mark = useMark(attempt.id)
@@ -107,6 +117,9 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
     move.mutate(target, { onError: failed })
   }
 
+  const numbers = attempt.questions.map((q) => ({ order: q.order, answered: answers[q.order] != null, marked: marks[q.order] ?? false }))
+  const answeredCount = numbers.filter((n) => n.answered).length
+
   return (
     <Flex vertical gap={16}>
       <Flex justify="space-between" align="center" wrap gap={8}>
@@ -138,6 +151,9 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
           <Button icon={marks[order] ? <FlagFilled /> : <FlagOutlined />} onClick={toggleMark}>
             {marks[order] ? 'Unmark' : 'Mark for Review'}
           </Button>
+          <Button icon={<AppstoreOutlined />} onClick={() => setProgressOpen(true)}>
+            Review Progress
+          </Button>
         </Space>
         {/* The first question has Next only, the last one Previous (A1, A2). */}
         <Space>
@@ -153,6 +169,25 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
           )}
         </Space>
       </Flex>
+
+      <QuestionNumbersModal
+        open={progressOpen}
+        title="Review Progress"
+        items={numbers}
+        filters={PROGRESS_FILTERS}
+        current={order}
+        summary={
+          <Typography.Text>
+            {answeredCount} of {total} questions answered
+          </Typography.Text>
+        }
+        // UC-27 step 6; A1 closes and stays on the question.
+        onPick={(target) => {
+          setProgressOpen(false)
+          goTo(target)
+        }}
+        onClose={() => setProgressOpen(false)}
+      />
     </Flex>
   )
 }
