@@ -32,6 +32,11 @@ export function useMark(id: number) {
   })
 }
 
+/** UC-28: read when the customer asks, never before (the answer stays on the server). */
+export function usePeek(id: number) {
+  return useMutation({ mutationFn: (order: number) => attemptApi.peek(id, order) })
+}
+
 /** UC-24 step 3. */
 export function useAnswer(id: number) {
   return useMutation({

@@ -40,6 +40,15 @@ export interface HandleProgress {
   isMarked: boolean
 }
 
+/** Matches PeekDto (UC-28, D6). */
+export interface Peek {
+  optionId: number
+  letter: string
+  content: string
+  explanation: string | null
+  dimensions: string[]
+}
+
 /** The address of the media of a question in an attempt. */
 export const mediaUrl = (id: number, order: number) => `/api/attempts/${id}/questions/${order}/media`
 
@@ -55,6 +64,9 @@ export const attemptApi = {
   /** UC-26: marks or unmarks a question; the answer stays (A2). */
   mark: (id: number, order: number, marked: boolean) =>
     http.put<HandleProgress>(`/attempts/${id}/questions/${order}/mark`, { marked }).then((r) => r.data),
+
+  /** UC-28: practice only; 403 Attempt.NoPeek during an exam (BR-07). */
+  peek: (id: number, order: number) => http.get<Peek>(`/attempts/${id}/questions/${order}/peek`).then((r) => r.data),
 
   /** UC-25: the question on screen, read back after a reload (BR-08). */
   move: (id: number, order: number) => http.put<HandleProgress>(`/attempts/${id}/position`, { order }).then((r) => r.data),

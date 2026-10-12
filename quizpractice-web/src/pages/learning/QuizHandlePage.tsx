@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { App, Button, Card, Flex, Radio, Result, Space, Spin, Tag, Typography } from 'antd'
-import { AppstoreOutlined, ClockCircleOutlined, FlagFilled, FlagOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { App, Button, Card, Descriptions, Flex, Modal, Radio, Result, Space, Spin, Tag, Typography } from 'antd'
+import { AppstoreOutlined, ClockCircleOutlined, EyeOutlined, FlagFilled, FlagOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router'
 import { mediaUrl, type HandleQuestion, type QuizHandle } from '../../api/attemptApi'
 import { errorMessage, problemOf } from '../../api/client'
 import { QuestionNumbersModal, type NumberFilter } from '../../components/learning/QuestionNumbersModal'
-import { useAnswer, useMark, useMove, useQuizHandle } from '../../hooks/useAttempt'
+import { useAnswer, useMark, useMove, usePeek, useQuizHandle } from '../../hooks/useAttempt'
 import { formatDuration } from '../../utils/duration'
 
 /** UC-27 step 2: the four filters of Review Progress. */
@@ -67,6 +67,8 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
   const answer = useAnswer(attempt.id)
   const move = useMove(attempt.id)
   const mark = useMark(attempt.id)
+  const peek = usePeek(attempt.id)
+  const [peekOpen, setPeekOpen] = useState(false)
   const question = attempt.questions[order - 1]
 
   // A change the server refuses: a scored attempt opens its result; anything else is E2.
@@ -147,6 +149,21 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
 
       <Flex justify="space-between" align="center" wrap gap={8}>
         <Space wrap>
+          {/* BR-07: a simulation exam has no Peek at Answer at all (A1). */}
+          {attempt.mode === 'Practice' && (
+            <Button
+              icon={<EyeOutlined />}
+              loading={peek.isPending}
+              onClick={() =>
+                peek.mutate(order, {
+                  onSuccess: () => setPeekOpen(true),
+                  onError: failed,
+                })
+              }
+            >
+              Peek at Answer
+            </Button>
+          )}
           {/* The label names the action available (SRS III 4.1, Mark for Review). */}
           <Button icon={marks[order] ? <FlagFilled /> : <FlagOutlined />} onClick={toggleMark}>
             {marks[order] ? 'Unmark' : 'Mark for Review'}
@@ -169,6 +186,22 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
           )}
         </Space>
       </Flex>
+
+      <Modal open={peekOpen} title={`Peek at Answer — question ${order}`} onCancel={() => setPeekOpen(false)} footer={null}>
+        {peek.data && (
+          <Descriptions column={1} bordered size="small">
+            <Descriptions.Item label="Correct Answer">
+              <Typography.Text strong>{peek.data.letter}.</Typography.Text> {peek.data.content}
+            </Descriptions.Item>
+            <Descriptions.Item label="Explanation">
+              <span style={{ whiteSpace: 'pre-wrap' }}>{peek.data.explanation || '—'}</span>
+            </Descriptions.Item>
+            <Descriptions.Item label="Dimensions">
+              {peek.data.dimensions.length > 0 ? peek.data.dimensions.map((d) => <Tag key={d}>{d}</Tag>) : '—'}
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
 
       <QuestionNumbersModal
         open={progressOpen}
