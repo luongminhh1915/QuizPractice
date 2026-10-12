@@ -2,11 +2,12 @@ import { useEffect } from 'react'
 import { App, Button, Form, Input, InputNumber, Select, Space, Switch } from 'antd'
 import { useNavigate } from 'react-router'
 import type { Subject, SubjectOverviewInput } from '../../api/subjectsApi'
-import { applyFieldErrors, errorMessage } from '../../api/client'
+import { applyFieldErrors, errorMessage, problemOf } from '../../api/client'
 import { ImageUpload } from '../../components/ImageUpload'
 import { RichTextEditor } from '../../components/RichTextEditor'
 import { StatusTag } from '../../components/StatusTag'
 import { BRIEF_MAX, NAME_MAX } from '../../constants/fieldLength'
+import { useCurrentUser } from '../../hooks/useAccount'
 import { useSubjectChoices, useUpdateSubject } from '../../hooks/useSubjects'
 
 /**
@@ -17,12 +18,15 @@ export function SubjectOverviewTab({ subject, backTo }: { subject: Subject; back
   const { message } = App.useApp()
   const navigate = useNavigate()
   const [form] = Form.useForm<SubjectOverviewInput>()
+  const isAdmin = useCurrentUser().data?.role === 'Admin'
   const choices = useSubjectChoices()
   const update = useUpdateSubject(subject.id)
 
   useEffect(() => {
-    const { name, tagline, brief, categoryId, isFeatured, passRate, description } = subject
-    form.setFieldsValue({ name, tagline: tagline ?? '', brief, categoryId, isFeatured, passRate, description, thumbnail: undefined })
+    const { name, tagline, brief, categoryId, isFeatured, passRate, description, ownerId } = subject
+    form.setFieldsValue({
+      name, tagline: tagline ?? '', brief, categoryId, isFeatured, passRate, description, expertId: ownerId, thumbnail: undefined,
+    })
   }, [subject, form])
 
   // Active categories can be chosen; one switched off since stays on the subject that has it (BR-16).
@@ -34,11 +38,20 @@ export function SubjectOverviewTab({ subject, backTo }: { subject: Subject; back
       : [{ value: subject.categoryId, label: `${subject.category} (no longer in use)` }]),
   ]
 
+  // The current owner stays in the list even if the Expert list no longer offers it (it then fails E1 on a change only).
+  const experts = choices.data?.experts ?? []
+  const ownerOptions = [
+    ...experts.map((u) => ({ value: u.id, label: u.name })),
+    ...(subject.ownerId && !experts.some((u) => u.id === subject.ownerId) ? [{ value: subject.ownerId, label: subject.owner ?? '' }] : []),
+  ]
+
   const onFinish = (values: SubjectOverviewInput) =>
     update.mutate(values, {
       onSuccess: (saved) => message.success(`Subject "${saved.name}" was saved.`),
-      // E2: keep everything entered and mark the fields to correct.
+      // UC-44 E2: keep everything entered and mark the fields to correct.
       onError: (e) => {
+        // UC-43 E1: the chosen user lost the Expert role meanwhile; reload the list to choose again.
+        if (problemOf(e)?.errors?.ExpertId) void choices.refetch()
         if (!applyFieldErrors(form, e)) message.error(errorMessage(e))
       },
     })
@@ -57,9 +70,28 @@ export function SubjectOverviewTab({ subject, backTo }: { subject: Subject; back
         <Form.Item label="Category" name="categoryId" rules={[{ required: true, message: 'Choose a subject category.' }]}>
           <Select options={categoryOptions} loading={choices.isPending} style={{ width: 240 }} />
         </Form.Item>
-        <Form.Item label="Owner" extra="Changed by the Admin only.">
-          <Input aria-label="Owner" value={subject.owner ?? 'Not assigned'} disabled style={{ width: 320 }} />
-        </Form.Item>
+        {isAdmin ? (
+          <Form.Item label="Owner" name="expertId" extra="The new Expert reaches the subject from now on; the previous one no longer does.">
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              options={ownerOptions}
+              loading={choices.isPending}
+              placeholder="Not assigned"
+              style={{ width: 320 }}
+            />
+          </Form.Item>
+        ) : (
+          <>
+            <Form.Item name="expertId" hidden>
+              <Input />
+            </Form.Item>
+            <Form.Item label="Owner" extra="Changed by the Admin only.">
+              <Input aria-label="Owner" value={subject.owner ?? 'Not assigned'} disabled style={{ width: 320 }} />
+            </Form.Item>
+          </>
+        )}
       </Space>
 
       <Form.Item label="Tag Line" name="tagline" rules={[{ max: BRIEF_MAX }]} extra="One line under the name on the public pages.">

@@ -80,6 +80,8 @@ export interface SubjectOverviewInput {
   isFeatured: boolean
   passRate: number
   description?: string
+  /** The owner as the form shows it; only the Admin may change it (UC-43). */
+  expertId?: number | null
 }
 
 function overviewForm(input: SubjectOverviewInput): FormData {
@@ -91,6 +93,8 @@ function overviewForm(input: SubjectOverviewInput): FormData {
   data.append('isFeatured', String(input.isFeatured))
   data.append('passRate', String(input.passRate))
   data.append('description', input.description ?? '')
+  // Absent: the subject has no owner (UC-42 A2), or the Admin removed it.
+  if (input.expertId) data.append('expertId', String(input.expertId))
   if (input.thumbnail) data.append('thumbnail', input.thumbnail)
   return data
 }
