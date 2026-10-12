@@ -7,6 +7,9 @@ namespace QuizPractice.Application.Services.Customer;
 /// <summary>Practices List and Practice Details (F#14, F#15): the customer's own practices only.</summary>
 public interface IPracticeService
 {
+    /// <summary>UC-21: one attempt of the customer, read only, with its result once scored.</summary>
+    Task<Result<PracticeDetailsDto>> GetAsync(int id, CancellationToken ct = default);
+
     /// <summary>UC-20 step 2: the subjects the customer may practise today (BR-05).</summary>
     Task<Result<PracticeFormDto>> GetFormAsync(CancellationToken ct = default);
 

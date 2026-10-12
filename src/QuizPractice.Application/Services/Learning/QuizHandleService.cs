@@ -28,11 +28,11 @@ public class QuizHandleService(
             return refusal;
         }
 
-        var titles = await AttemptLabels.TitlesAsync([attempt!], attempts, ct);
+        var label = (await AttemptLabels.LabelsAsync([attempt!], attempts, ct))[attempt!.Id];
         return new QuizHandleDto(
             attempt!.Id,
             attempt.Subject.Name,
-            titles[attempt.Id],
+            label.Title,
             attempt.Mode,
             Utc(attempt.StartedAt),
             AttemptScoring.EndsAt(attempt),

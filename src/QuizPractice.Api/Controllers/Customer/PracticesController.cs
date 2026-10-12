@@ -12,6 +12,10 @@ namespace QuizPractice.Api.Controllers.Customer;
 [Authorize(Policy = SettingValues.MenuItems.Practices)]
 public class PracticesController(IPracticeService practices) : ApiControllerBase
 {
+    /// <summary>UC-21: a practice or a simulation exam of the customer; 404 when missing or someone else's (E1).</summary>
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<PracticeDetailsDto>> Get(int id, CancellationToken ct) => FromResult(await practices.GetAsync(id, ct));
+
     /// <summary>UC-20: the subjects the customer may practise; empty for E1.</summary>
     [HttpGet("form")]
     public async Task<ActionResult<PracticeFormDto>> Form(CancellationToken ct) => FromResult(await practices.GetFormAsync(ct));

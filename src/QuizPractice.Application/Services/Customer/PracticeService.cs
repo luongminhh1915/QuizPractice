@@ -2,6 +2,7 @@ using FluentValidation;
 using QuizPractice.Application.Abstractions;
 using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Customer;
+using QuizPractice.Application.Services.Learning;
 using QuizPractice.Application.Validators;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
@@ -23,6 +24,47 @@ public class PracticeService(
     ICurrentUser currentUser,
     IValidator<CreatePracticeRequest> createValidator) : IPracticeService
 {
+    public async Task<Result<PracticeDetailsDto>> GetAsync(int id, CancellationToken ct = default)
+    {
+        if (currentUser.Id is not { } userId)
+        {
+            return CustomerAccess.SignInRequired;
+        }
+
+        // E1: missing, or another customer's (told nothing about it).
+        var attempt = await attempts.GetOwnAsync(id, userId, ct);
+        if (attempt is null)
+        {
+            return CustomerAccess.NotFound("Practice", id);
+        }
+
+        // UC-30 E1: an exam whose countdown ran out while no page was open is scored now.
+        if (AttemptScoring.CloseIfTimeUp(attempt, DateTime.UtcNow))
+        {
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+
+        var label = (await AttemptLabels.LabelsAsync([attempt], attempts, ct))[attempt.Id];
+        return new PracticeDetailsDto(
+            attempt.Id,
+            attempt.Subject.Name,
+            attempt.Mode,
+            label.Title,
+            attempt.SelectionType,
+            label.Group,
+            attempt.Questions.Count,
+            attempt.Status,
+            DateTime.SpecifyKind(attempt.StartedAt, DateTimeKind.Utc),
+            OutcomeOf(attempt));
+    }
+
+    /// <summary>The result of a scored attempt, or null while it runs.</summary>
+    internal static AttemptOutcomeDto? OutcomeOf(Attempt attempt) =>
+        attempt is { Status: AttemptStatus.Submitted, FinishedAt: { } finished }
+            ? new AttemptOutcomeDto(AttemptScoring.CorrectCount(attempt), attempt.Score ?? 0, attempt.PassRate ?? 0,
+                AttemptScoring.Passed(attempt), (int)(finished - attempt.StartedAt).TotalSeconds)
+            : null;
+
     public async Task<Result<PracticeFormDto>> GetFormAsync(CancellationToken ct = default)
     {
         if (currentUser.Id is not { } userId)
