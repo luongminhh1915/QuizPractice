@@ -71,7 +71,7 @@ public class MyInvoiceService(
             AccountNumber = bank.AccountNumber,
             AccountName = bank.AccountName,
             Status = InvoiceStatus.Unpaid,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = NowToTheSecond(),
         };
         foreach (var r in chosen)
         {
@@ -132,6 +132,13 @@ public class MyInvoiceService(
         }
 
         return InvoiceDto.From(invoice, null);
+    }
+
+    /// <summary>The column keeps seconds; the answer shows the time as it is stored.</summary>
+    private static DateTime NowToTheSecond()
+    {
+        var now = DateTime.UtcNow;
+        return new DateTime(now.Ticks - now.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc);
     }
 
     /// <summary>The VietQR text, only for an invoice still waiting for the transfer.</summary>
