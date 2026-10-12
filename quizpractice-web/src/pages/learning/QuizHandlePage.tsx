@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, App, Button, Card, Descriptions, Flex, Modal, Radio, Result, Space, Spin, Tag, Typography } from 'antd'
 import { AppstoreOutlined, CheckOutlined, ClockCircleOutlined, EyeOutlined, FlagFilled, FlagOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router'
@@ -29,8 +29,9 @@ export function QuizHandlePage() {
   if (attempt.isPending) return <Spin />
   if (attempt.isError) {
     const code = problemOf(attempt.error)?.code
-    // Scored already: its result is in Practice Details.
-    if (code === 'Attempt.Closed') {
+    // Scored already, or the countdown ran out while the page was closed (UC-30 E1):
+    // the result is in Practice Details.
+    if (code === 'Attempt.Closed' || code === 'Attempt.TimeUp') {
       return (
         <Result
           status="info"
@@ -73,10 +74,11 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const question = attempt.questions[order - 1]
 
-  // A change the server refuses: a scored attempt opens its result; anything else is E2.
+  // A change the server refuses: a scored attempt opens its result (also when the
+  // server closed a timed-out exam, UC-29 E1); anything else is E2.
   const failed = (e: unknown) => {
     const code = problemOf(e)?.code
-    if (code === 'Attempt.Closed') {
+    if (code === 'Attempt.Closed' || code === 'Attempt.TimeUp') {
       message.info(errorMessage(e))
       navigate(`/practices/${attempt.id}`)
       return
@@ -137,6 +139,14 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
       },
     })
 
+  // UC-29 E1: the countdown of a simulation exam reached zero; submitted as it stands.
+  const timeUp = () => {
+    setConfirmOpen(false)
+    setProgressOpen(false)
+    message.warning('Time is up: the exam is submitted with the answers recorded so far.')
+    score('details')
+  }
+
   const openConfirm = () => {
     setProgressOpen(false)
     setConfirmOpen(true)
@@ -155,7 +165,7 @@ function Handle({ attempt }: { attempt: QuizHandle }) {
           <Typography.Text strong>
             Question {order} of {total}
           </Typography.Text>
-          <Clock attempt={attempt} />
+          <Clock attempt={attempt} onTimeUp={timeUp} />
         </Space>
       </Flex>
 
@@ -381,7 +391,7 @@ function Media({ attemptId, question }: { attemptId: number; question: HandleQue
  * BR-06: time spent on a practice, counting up; time left in a simulation exam, counting
  * down. Read on the server's clock, so a wrong clock on the computer changes nothing.
  */
-function Clock({ attempt }: { attempt: QuizHandle }) {
+function Clock({ attempt, onTimeUp }: { attempt: QuizHandle; onTimeUp: () => void }) {
   const [offset] = useState(() => new Date(attempt.serverNow).getTime() - Date.now())
   const [now, setNow] = useState(() => Date.now() + offset)
   useEffect(() => {
@@ -392,6 +402,16 @@ function Clock({ attempt }: { attempt: QuizHandle }) {
   const ms = attempt.endsAt
     ? Math.max(0, new Date(attempt.endsAt).getTime() - now)
     : Math.max(0, now - new Date(attempt.startedAt).getTime())
+
+  // Once only, even though the clock keeps ticking until the page leaves.
+  const fired = useRef(false)
+  const expired = attempt.endsAt !== null && ms === 0
+  useEffect(() => {
+    if (expired && !fired.current) {
+      fired.current = true
+      onTimeUp()
+    }
+  }, [expired, onTimeUp])
   const low = attempt.endsAt !== null && ms < 60_000
   return (
     <Tag icon={<ClockCircleOutlined />} color={low ? 'red' : attempt.endsAt ? 'blue' : 'default'} style={{ fontSize: 16, padding: '4px 10px' }}>
