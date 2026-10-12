@@ -73,6 +73,13 @@ export interface RegistrationInput {
   notes?: string
 }
 
+/** Matches RegistrationStatusResultDto (UC-61). mailFailed: E2, the customer uses Forgot Password. */
+export interface RegistrationStatusResult {
+  registration: RegistrationDetails
+  accountCreated: boolean
+  mailFailed: boolean
+}
+
 /** /api/registrations — the Sale screens (F#35, F#36). */
 export const saleApi = {
   /** UC-59. 400 To when the range ends before it starts (E1). */
@@ -93,6 +100,10 @@ export const saleApi = {
   /** UC-60: the whole form. 409 Registration.NotEditable (BR-22) or Registration.Changed (E3). */
   updateRegistration: (id: number, input: RegistrationInput) =>
     http.put<RegistrationDetails>(`/registrations/${id}`, input).then((r) => r.data),
+
+  /** UC-61: Paid or Cancelled. 409 InUnpaidInvoice (A3), Settled (A4), NoDuration (E1), Changed (E3). */
+  changeRegistrationStatus: (id: number, status: RegistrationStatus, notes: string | undefined) =>
+    http.put<RegistrationStatusResult>(`/registrations/${id}/status`, { status, notes }).then((r) => r.data),
 
   /** BR-22: the notes alone, at any status. */
   saveRegistrationNotes: (id: number, notes: string | undefined) =>

@@ -2,13 +2,16 @@ import { useEffect } from 'react'
 import { Alert, App, Button, Card, Col, Descriptions, Flex, Form, Input, Radio, Result, Row, Select, Space, Spin, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import type { RegistrationStatus } from '../../api/customerApi'
 import type { RegistrationDetails, RegistrationInput, SalePackage } from '../../api/saleApi'
 import { applyFieldErrors, errorMessage, problemOf } from '../../api/client'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusTag } from '../../components/StatusTag'
 import { BRIEF_MAX } from '../../constants/fieldLength'
-import { useRegistration, useRegistrationChoices, useSaveRegistration } from '../../hooks/useSale'
+import { useChangeRegistrationStatus, useRegistration, useRegistrationChoices, useSaveRegistration } from '../../hooks/useSale'
 import { formatVnd } from '../../utils/money'
+
+type FormValues = RegistrationInput & { status?: RegistrationStatus }
 
 const day = (value: string | null) => (value ? dayjs(value).format('DD/MM/YYYY') : '—')
 
@@ -19,17 +22,18 @@ const day = (value: string | null) => (value ? dayjs(value).format('DD/MM/YYYY')
  * Submitted, the notes for any other.
  */
 export function RegistrationDetailsPage() {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const params = useParams()
   const id = params.id ? Number(params.id) : undefined
   const isNew = id === undefined
 
-  const [form] = Form.useForm<RegistrationInput>()
+  const [form] = Form.useForm<FormValues>()
   const stored = useRegistration(id)
   const choices = useRegistrationChoices()
   const save = useSaveRegistration(id)
+  const settle = useChangeRegistrationStatus(id)
   const backTo = (location.state as { back?: string } | null)?.back ?? '/manage/registrations'
   const r = stored.data
   // The stored values stand in until the form reports its own: after /new turns into /:id
@@ -48,6 +52,7 @@ export function RegistrationDetailsPage() {
         email: r.email,
         mobile: r.mobile,
         notes: r.notes ?? undefined,
+        status: r.status,
       })
     }
   }, [r, form])
@@ -73,7 +78,47 @@ export function RegistrationDetailsPage() {
   const packages: SalePackage[] = subjects.find((s) => s.id === subjectId)?.packages ?? (r && r.subjectId === subjectId ? [r.package] : [])
   const chosen = packages.find((p) => p.id === packageId) ?? (r?.package.id === packageId ? r?.package : undefined)
 
-  const onFinish = (values: RegistrationInput) =>
+  const failed = (e: unknown) => {
+    if (!applyFieldErrors(form, e)) message.error(errorMessage(e), 6)
+  }
+
+  // UC-61: the form first when this Sale user may change it, then the status with the notes.
+  const runSettlement = async (values: FormValues, status: RegistrationStatus) => {
+    try {
+      if (editAll) await save.mutateAsync({ input: values, notesOnly: false })
+      const result = await settle.mutateAsync({ status, notes: values.notes })
+      if (result.mailFailed) {
+        // E2 (Duck 12/10): the account and the access stay; the customer sets a password.
+        modal.warning({
+          title: 'Paid, but the login mail could not be sent',
+          content: `An account was created for ${result.registration.email} and the subject is open. Ask the customer to use Forgot Password on the Login pop-up to set a password.`,
+        })
+      } else if (result.accountCreated) {
+        message.success(`Registration #${id} is Paid. An account was created and its login information emailed to ${result.registration.email}.`, 6)
+      } else {
+        message.success(`Registration #${id} is ${status}.`)
+      }
+    } catch (e) {
+      failed(e)
+    }
+  }
+
+  const onFinish = (values: FormValues) => {
+    const status = values.status
+    if (r && status && status !== r.status) {
+      // BR-22: Paid and Cancelled are final.
+      modal.confirm({
+        title: `Set registration #${id} to ${status}?`,
+        content:
+          status === 'Paid'
+            ? `This is final. The customer gets access to ${r.subjectName} from today for ${r.package.accessMonths} months${r.hasAccount ? '' : ', and an account is created for ' + values.email}.`
+            : 'This is final. The customer gets no access.',
+        okText: `Set ${status}`,
+        okButtonProps: { danger: status === 'Cancelled' },
+        onOk: () => runSettlement(values, status),
+      })
+      return
+    }
     save.mutate(
       { input: values, notesOnly: !editAll },
       {
@@ -82,17 +127,16 @@ export function RegistrationDetailsPage() {
           if (isNew) navigate(`/manage/registrations/${saved.id}`, { replace: true, state: location.state })
         },
         // E1 under the fields; BR-22, E2 and E3 in the message area, then the page reloads.
-        onError: (e) => {
-          if (!applyFieldErrors(form, e)) message.error(errorMessage(e), 6)
-        },
+        onError: failed,
       },
     )
+  }
 
   return (
     <>
       <PageHeader title={isNew ? 'New Registration' : `Registration #${id}`} />
       {r && <RecordInfo r={r} />}
-      <Form<RegistrationInput>
+      <Form<FormValues>
         form={form}
         layout="vertical"
         onFinish={onFinish}
@@ -151,8 +195,8 @@ export function RegistrationDetailsPage() {
               <Form.Item name="mobile" label="Mobile" rules={[{ required: true, message: 'Enter the mobile number.' }]}>
                 <Input disabled={!editAll} maxLength={10} />
               </Form.Item>
-              {/* UC-60 A4, UC-61 A1. */}
-              {r?.hasAccount && (
+              {/* UC-60 A4, UC-61 A1: said before the settlement, which may itself create the account. */}
+              {r?.hasAccount && r.status === 'Submitted' && (
                 <Alert
                   type="info"
                   showIcon
@@ -163,6 +207,27 @@ export function RegistrationDetailsPage() {
           </Col>
         </Row>
 
+        {r && (
+          <Card title="Status" style={{ marginBottom: 16 }}>
+            {/* BR-22: only a Submitted registration, in no unpaid invoice, moves to Paid or Cancelled. */}
+            <Form.Item
+              name="status"
+              label="Status"
+              extra={r.canSettle ? 'Paid opens the subject from today for the months of the package (BR-14).' : undefined}
+              style={{ maxWidth: 320, margin: 0 }}
+            >
+              <Select
+                disabled={!r.canSettle}
+                options={[
+                  { value: 'Submitted', label: 'Submitted', disabled: true },
+                  { value: 'Paid', label: 'Paid' },
+                  { value: 'Cancelled', label: 'Cancelled' },
+                ]}
+              />
+            </Form.Item>
+          </Card>
+        )}
+
         <Card title="Notes" style={{ marginBottom: 16 }}>
           <Form.Item name="notes" style={{ margin: 0 }}>
             <Input.TextArea aria-label="Notes" rows={3} maxLength={BRIEF_MAX} showCount placeholder="Remarks of the Sale user (BR-22: can be added at any status)" />
@@ -171,7 +236,7 @@ export function RegistrationDetailsPage() {
 
         <Flex gap={8} justify="end">
           <Button onClick={() => navigate(backTo)}>Cancel</Button>
-          <Button type="primary" htmlType="submit" loading={save.isPending}>
+          <Button type="primary" htmlType="submit" loading={save.isPending || settle.isPending}>
             Save
           </Button>
         </Flex>

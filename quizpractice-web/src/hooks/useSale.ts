@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { RegistrationStatus } from '../api/customerApi'
 import { saleApi, type RegistrationInput, type RegistrationListCriteria } from '../api/saleApi'
 
 export const saleKeys = {
@@ -42,6 +43,16 @@ export function useSaveRegistration(id: number | undefined) {
         : notesOnly
           ? saleApi.saveRegistrationNotes(id, input.notes)
           : saleApi.updateRegistration(id, input),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: saleKeys.registrations }),
+  })
+}
+
+/** UC-61: the settlement. Whatever the answer, the list and the details reload. */
+export function useChangeRegistrationStatus(id: number | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ status, notes }: { status: RegistrationStatus; notes: string | undefined }) =>
+      saleApi.changeRegistrationStatus(id!, status, notes),
     onSettled: () => queryClient.invalidateQueries({ queryKey: saleKeys.registrations }),
   })
 }
