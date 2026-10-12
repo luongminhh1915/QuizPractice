@@ -1,6 +1,14 @@
+using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
+using QuizPractice.Domain.Enums;
 
 namespace QuizPractice.Domain.Repositories;
+
+/// <summary>
+/// Criteria of Users List (UC-62): text matched against the full name, the email and the
+/// mobile. SortBy: id, fullName, gender, email, mobile, role or status.
+/// </summary>
+public sealed record UserSearch(string? Text, Gender? Gender, int? RoleId, UserStatus? Status, string? SortBy, bool Descending);
 
 /// <summary>Accounts as the Common feature needs them: sign-in, register, links, profile (UC-01 to UC-08).</summary>
 public interface IUserRepository
@@ -16,4 +24,7 @@ public interface IUserRepository
 
     /// <summary>The Active accounts holding this role, by full name (owner of a subject, UC-42, UC-43).</summary>
     Task<IReadOnlyList<User>> ListActiveByRoleAsync(string role, CancellationToken ct = default);
+
+    /// <summary>UC-62: a page of accounts with their role.</summary>
+    Task<Page<User>> SearchAsync(UserSearch search, PageRequest page, CancellationToken ct = default);
 }
