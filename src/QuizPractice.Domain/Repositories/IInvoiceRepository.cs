@@ -33,6 +33,12 @@ public interface IInvoiceRepository
     /// </summary>
     Task<Page<Invoice>> SearchAsync(InvoiceSearch search, PageRequest page, CancellationToken ct = default);
 
+    /// <summary>
+    /// UC-69: one invoice, tracked, with its customer, the Sale user who confirmed it and its
+    /// registrations (subject, package); null when it does not exist.
+    /// </summary>
+    Task<Invoice?> GetForSaleAsync(int id, CancellationToken ct = default);
+
     /// <summary>Stages a new invoice; the service commits through IUnitOfWork.</summary>
     void Add(Invoice invoice);
 }

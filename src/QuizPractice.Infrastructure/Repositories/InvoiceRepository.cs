@@ -76,5 +76,14 @@ public class InvoiceRepository(AppDbContext db) : IInvoiceRepository
         return new Page<Invoice>(items, total, page.PageNumber, page.PageSize);
     }
 
+    public Task<Invoice?> GetForSaleAsync(int id, CancellationToken ct = default) =>
+        db.Invoices
+            .Include(i => i.User)
+            .Include(i => i.ConfirmedBy)
+            .Include(i => i.Registrations).ThenInclude(r => r.Subject)
+            .Include(i => i.Registrations).ThenInclude(r => r.Package)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(i => i.Id == id, ct);
+
     public void Add(Invoice invoice) => db.Invoices.Add(invoice);
 }

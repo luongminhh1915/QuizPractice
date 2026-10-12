@@ -16,4 +16,17 @@ public class InvoicesController(IInvoiceService invoices) : ApiControllerBase
     [HttpGet]
     public async Task<ActionResult<Page<SaleInvoiceSummaryDto>>> List([FromQuery] InvoiceListRequest request, CancellationToken ct) =>
         FromResult(await invoices.ListAsync(request, ct));
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<SaleInvoiceDetailsDto>> Get(int id, CancellationToken ct) => FromResult(await invoices.GetAsync(id, ct));
+
+    /// <summary>UC-69: 409 Invoice.Cancelled (E1), Invoice.Paid (E3), Registration.NoDuration (E2) or Invoice.Changed.</summary>
+    [HttpPost("{id:int}/confirm")]
+    public async Task<ActionResult<SaleInvoiceDetailsDto>> Confirm(int id, InvoiceNotesRequest request, CancellationToken ct) =>
+        FromResult(await invoices.ConfirmAsync(id, request, ct));
+
+    /// <summary>UC-69 A1–A3: the notes alone.</summary>
+    [HttpPut("{id:int}/notes")]
+    public async Task<ActionResult<SaleInvoiceDetailsDto>> SaveNotes(int id, InvoiceNotesRequest request, CancellationToken ct) =>
+        FromResult(await invoices.SaveNotesAsync(id, request, ct));
 }

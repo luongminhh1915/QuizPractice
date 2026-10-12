@@ -1,8 +1,14 @@
 using FluentValidation;
 using QuizPractice.Application.Dtos.Sale;
 using QuizPractice.Domain.Common;
+using QuizPractice.Domain.Constants;
 
 namespace QuizPractice.Application.Validators.Sale;
+
+public class InvoiceNotesRequestValidator : AbstractValidator<InvoiceNotesRequest>
+{
+    public InvoiceNotesRequestValidator() => RuleFor(x => x.Notes).MaximumLength(FieldLength.Brief);
+}
 
 public class InvoiceListRequestValidator : AbstractValidator<InvoiceListRequest>
 {
