@@ -11,6 +11,10 @@ internal static class CustomerAccess
 {
     public static Error SignInRequired => new(ErrorType.Unauthorized, "Auth.Required", "Log in as a customer to see your account.");
 
+    /// <summary>BR-05: no Paid registration of the subject covers today (UC-20 E1, UC-23 E1).</summary>
+    public static Error NoAccess => new(ErrorType.Forbidden, "Subject.NoAccess",
+        "You have no valid access to this subject. Register it, or renew the registration, to practise it.");
+
     /// <summary>A record of another customer answers like a missing one: nothing is told about it.</summary>
     public static Error NotFound(string what, int id) => Error.NotFound(what, id);
 }
