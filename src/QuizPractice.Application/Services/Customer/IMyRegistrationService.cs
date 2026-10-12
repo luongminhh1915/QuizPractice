@@ -15,4 +15,7 @@ public interface IMyRegistrationService
 
     /// <summary>UC-16: another package, and the contact copied again from the profile; the status stays Submitted.</summary>
     Task<Result<MyRegistrationDto>> ChangeAsync(int id, ChangeRegistrationRequest request, CancellationToken ct = default);
+
+    /// <summary>UC-17: the registration no longer waits for the Sale role; no access is granted.</summary>
+    Task<Result<MyRegistrationDto>> CancelAsync(int id, CancellationToken ct = default);
 }

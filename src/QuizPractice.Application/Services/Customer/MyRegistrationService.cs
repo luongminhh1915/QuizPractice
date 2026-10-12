@@ -99,6 +99,27 @@ public class MyRegistrationService(
         return MyRegistrationDto.From(registration);
     }
 
+    public async Task<Result<MyRegistrationDto>> CancelAsync(int id, CancellationToken ct = default)
+    {
+        // E1 (settled) and E2 (in an unpaid invoice) are the checks of UC-16.
+        var (registration, customer, refusal) = await LoadChangeableAsync(id, ct);
+        if (refusal is not null)
+        {
+            return refusal;
+        }
+
+        registration!.Status = RegistrationStatus.Cancelled;
+        registration.UpdatedById = customer!.Id;
+
+        // A Sale user who settled it after it was read wins; the customer is told (E1).
+        if (!await unitOfWork.TrySaveChangesAsync(ct))
+        {
+            return Settled;
+        }
+
+        return MyRegistrationDto.From(registration);
+    }
+
     /// <summary>
     /// The customer's own registration, still Submitted (E1) and in no unpaid invoice (E3,
     /// BR-24), with the customer; or the error that stops UC-16 and UC-17.
