@@ -40,7 +40,8 @@ public class AttemptRepository(AppDbContext db) : IAttemptRepository
 
     public async Task<IReadOnlyDictionary<int, string>> GetDimensionNamesAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default) =>
         await db.SubjectDimensions.AsNoTracking().Where(d => ids.Contains(d.Id))
-            .ToDictionaryAsync(d => d.Id, d => d.Type.Value + ": " + d.Name, ct);
+            .Select(d => new { d.Id, Name = d.Type.Value + ": " + d.Name })
+            .ToDictionaryAsync(d => d.Id, d => d.Name, ct);
 
     public void Add(Attempt attempt) => db.Attempts.Add(attempt);
 }
