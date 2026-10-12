@@ -8,6 +8,7 @@ import { VerifyEmailPage } from '../pages/common/VerifyEmailPage'
 import { InvoiceQrPage } from '../pages/customer/InvoiceQrPage'
 import { MyInvoicesPage } from '../pages/customer/MyInvoicesPage'
 import { MyRegistrationsPage } from '../pages/customer/MyRegistrationsPage'
+import { PracticeDetailsPage } from '../pages/customer/PracticeDetailsPage'
 import { DashboardPage } from '../pages/marketing/DashboardPage'
 import { PostDetailsPage } from '../pages/marketing/PostDetailsPage'
 import { PostsListPage } from '../pages/marketing/PostsListPage'
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
           { path: '/my-registrations', element: <MyRegistrationsPage /> },
           { path: '/my-invoices', element: <MyInvoicesPage /> },
           { path: '/my-invoices/:id', element: <InvoiceQrPage /> },
+          { path: '/practices/new', element: <PracticeDetailsPage /> },
           { path: '/verify-email', element: <VerifyEmailPage /> },
           { path: '/reset-password', element: <ResetPasswordPage /> },
           { path: '*', element: <NotFoundPage /> },
