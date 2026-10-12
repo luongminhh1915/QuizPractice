@@ -12,6 +12,7 @@ import { MyRegistrationsPage } from '../pages/customer/MyRegistrationsPage'
 import { PracticeDetailsPage } from '../pages/customer/PracticeDetailsPage'
 import { PracticesListPage } from '../pages/customer/PracticesListPage'
 import { QuizHandlePage } from '../pages/learning/QuizHandlePage'
+import { QuizReviewPage } from '../pages/learning/QuizReviewPage'
 import { DashboardPage } from '../pages/marketing/DashboardPage'
 import { PostDetailsPage } from '../pages/marketing/PostDetailsPage'
 import { PostsListPage } from '../pages/marketing/PostsListPage'
@@ -59,7 +60,10 @@ export const router = createBrowserRouter([
       {
         // Quiz Handle and Quiz Review run without the site menu (SRS III 4.1, 4.2).
         element: <QuizLayout />,
-        children: [{ path: '/quiz/:id', element: <QuizHandlePage /> }],
+        children: [
+          { path: '/quiz/:id', element: <QuizHandlePage /> },
+          { path: '/quiz/:id/review', element: <QuizReviewPage /> },
+        ],
       },
       {
         path: '/manage',

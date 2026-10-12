@@ -3,6 +3,7 @@ import { attemptApi } from '../api/attemptApi'
 
 export const attemptKeys = {
   handle: (id: number) => ['account', 'attempts', id, 'handle'] as const,
+  review: (id: number) => ['account', 'attempts', id, 'review'] as const,
 }
 
 /**
@@ -18,6 +19,11 @@ export function useQuizHandle(id: number) {
     refetchOnWindowFocus: false,
     gcTime: 0,
   })
+}
+
+/** UC-31: a scored attempt never changes, so it is read once. */
+export function useQuizReview(id: number) {
+  return useQuery({ queryKey: attemptKeys.review(id), queryFn: () => attemptApi.review(id), retry: false, staleTime: Infinity })
 }
 
 /** UC-25: stores the question on screen. */

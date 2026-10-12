@@ -59,11 +59,38 @@ export interface AttemptResult {
   passed: boolean
 }
 
+/** Matches ReviewQuestionDto (UC-31): the answer given next to the correct one. */
+export interface ReviewQuestion {
+  order: number
+  questionId: number
+  content: string
+  mediaKind: 'image' | 'audio' | 'video' | null
+  options: (HandleOption & { isCorrect: boolean })[]
+  chosenOptionId: number | null
+  isMarked: boolean
+  isCorrect: boolean
+  /** Empty when the question has none; Explanation is then not offered (BR-10). */
+  explanation: string | null
+}
+
+/** Matches QuizReviewDto (SRS III 4.2). */
+export interface QuizReview {
+  id: number
+  subjectName: string
+  title: string
+  mode: AttemptMode
+  result: AttemptResult
+  questions: ReviewQuestion[]
+}
+
 /** The address of the media of a question in an attempt. */
 export const mediaUrl = (id: number, order: number) => `/api/attempts/${id}/questions/${order}/media`
 
 /** /api/attempts — Quiz Handle (F#17). Every change is stored at once (BR-08). */
 export const attemptApi = {
+  /** UC-31. 409 Attempt.NotScored while the attempt runs. */
+  review: (id: number) => http.get<QuizReview>(`/attempts/${id}/review`).then((r) => r.data),
+
   /** UC-24. 409 Attempt.Closed / Attempt.TimeUp, 403 Attempt.AccessEnded. */
   get: (id: number) => http.get<QuizHandle>(`/attempts/${id}`).then((r) => r.data),
 
