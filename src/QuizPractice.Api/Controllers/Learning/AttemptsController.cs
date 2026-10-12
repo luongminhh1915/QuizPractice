@@ -13,8 +13,12 @@ namespace QuizPractice.Api.Controllers.Learning;
 /// </summary>
 [Route("api/attempts/{id:int}")]
 [Authorize(Roles = Roles.Customer)]
-public class AttemptsController(IQuizHandleService handle) : ApiControllerBase
+public class AttemptsController(IQuizHandleService handle, IQuizReviewService review) : ApiControllerBase
 {
+    /// <summary>UC-31: the scored attempt with the correct answers; 409 Attempt.NotScored while it runs.</summary>
+    [HttpGet("review")]
+    public async Task<ActionResult<QuizReviewDto>> Review(int id, CancellationToken ct) => FromResult(await review.GetAsync(id, ct));
+
     /// <summary>UC-24: 409 Attempt.Closed once scored; 403 Attempt.AccessEnded when the access has ended (E1).</summary>
     [HttpGet]
     public async Task<ActionResult<QuizHandleDto>> Get(int id, CancellationToken ct) => FromResult(await handle.GetAsync(id, ct));
