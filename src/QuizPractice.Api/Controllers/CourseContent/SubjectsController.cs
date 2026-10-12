@@ -47,7 +47,7 @@ public class SubjectsController(ISubjectService subjects) : ApiControllerBase
             : Problem(result.Error!);
     }
 
-    /// <summary>UC-44: the Admin or the assigned Expert (403 for another Expert, E1).</summary>
+    /// <summary>UC-44: the Admin or the assigned Expert (403 for another Expert, E1); UC-43: an owner change is the Admin's.</summary>
     [HttpPut("{id:int}")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormLimit)]
@@ -65,10 +65,11 @@ public sealed class SubjectOverviewForm
     public bool IsFeatured { get; set; }
     public int PassRate { get; set; }
     public string? Description { get; set; }
+    public int? ExpertId { get; set; }
     public IFormFile? Thumbnail { get; set; }
 
     public async Task<UpdateSubjectRequest> ToRequestAsync(CancellationToken ct) =>
-        new(Name, Tagline, Brief, CategoryId, IsFeatured, PassRate, Description,
+        new(Name, Tagline, Brief, CategoryId, IsFeatured, PassRate, Description, ExpertId,
             Thumbnail is null ? null : await FormFiles.BufferAsync(Thumbnail, ct));
 }
 

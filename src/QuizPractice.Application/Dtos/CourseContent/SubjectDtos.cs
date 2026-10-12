@@ -53,7 +53,8 @@ public sealed record CreateSubjectRequest(
 
 /// <summary>
 /// Overview tab (UC-44): the general information the Admin and the assigned Expert may
-/// change. Leaving Thumbnail empty keeps the stored one.
+/// change. Leaving Thumbnail empty keeps the stored one. ExpertId is the owner as the form
+/// shows it: only the Admin may send another one (UC-43); null leaves the subject without owner.
 /// </summary>
 public sealed record UpdateSubjectRequest(
     string Name,
@@ -63,6 +64,7 @@ public sealed record UpdateSubjectRequest(
     bool IsFeatured,
     int PassRate,
     string? Description,
+    int? ExpertId,
     FileUpload? Thumbnail = null);
 
 /// <summary>Everything Subject Management Details shows on the Overview tab (UC-43 to UC-45).</summary>

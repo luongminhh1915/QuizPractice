@@ -173,6 +173,19 @@ public class SubjectService(
             return badCategory;
         }
 
+        // UC-43: only the Admin changes the owner; the Expert sees it read-only (UC-44 step 2).
+        var ownerChanged = request.ExpertId != subject.ExpertId;
+        if (ownerChanged && expertId is not null)
+        {
+            return CourseAccess.AdminOnly;
+        }
+
+        var owner = ownerChanged ? await CheckOwnerAsync(request.ExpertId, ct) : Result<User?>.Success(subject.Expert);
+        if (owner.Error is { } badOwner)
+        {
+            return badOwner;
+        }
+
         var description = sanitizer.Sanitize(request.Description ?? string.Empty);
         if (CheckDescription(description) is { } badDescription)
         {
@@ -186,8 +199,13 @@ public class SubjectService(
             subject.Thumbnail = await files.SaveAsync(request.Thumbnail.Content, request.Thumbnail.Extension, ThumbnailFolder, ct);
         }
 
-        // Publication and the owner stay as they are (UC-44 post-condition); the price
-        // packages are not on this tab at all.
+        // The new owner reaches the subject from now on and the previous one no longer does
+        // (UC-43 post-condition): every Expert query filters on this column (BR-11).
+        subject.Expert = owner.Value;
+        subject.ExpertId = owner.Value?.Id;
+
+        // Publication stays as it is (UC-44 post-condition); the price packages are not on
+        // this tab at all.
         subject.Name = request.Name.Trim();
         subject.Tagline = string.IsNullOrWhiteSpace(request.Tagline) ? null : request.Tagline.Trim();
         subject.Brief = request.Brief?.Trim() ?? string.Empty;

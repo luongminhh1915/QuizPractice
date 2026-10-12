@@ -51,6 +51,7 @@ public class UpdateSubjectRequestValidator : AbstractValidator<UpdateSubjectRequ
         RuleFor(x => x.CategoryId).GreaterThan(0).WithMessage("Choose a subject category.");
         RuleFor(x => x.PassRate).InclusiveBetween(0, 100).WithMessage("The pass rate is a percent from 0 to 100.");
         RuleFor(x => x.Description).MaximumLength(FieldLength.LongText);
+        RuleFor(x => x.ExpertId).GreaterThan(0).When(x => x.ExpertId is not null);
         RuleFor(x => x.Thumbnail!).SetValidator(new ImageUploadValidator()).When(x => x.Thumbnail is not null);
     }
 }
