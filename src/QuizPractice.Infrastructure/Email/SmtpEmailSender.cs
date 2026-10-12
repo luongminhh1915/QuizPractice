@@ -74,6 +74,20 @@ public sealed class SmtpEmailSender(
             You can replace this password with Change Password in the account menu.
             """, ct);
 
+    public Task<bool> SendAccountCreatedAsync(string email, string fullName, string password, string? notes, CancellationToken ct = default) =>
+        SendAsync(email, "Your QuizPractice account is ready", $"""
+            Hello {fullName},
+
+            Your registration has been confirmed and an account has been created for you.
+            Sign in at {Options.LinkBaseUrl} with:
+
+            Email:    {email}
+            Password: {password}
+
+            You can replace this password with Change Password in the account menu.
+            {(string.IsNullOrWhiteSpace(notes) ? "" : $"{Environment.NewLine}Notes from our Sale team: {notes}{Environment.NewLine}")}
+            """, ct);
+
     public Task<bool> SendPasswordResetLinkAsync(string email, string fullName, string token, CancellationToken ct = default) =>
         SendAsync(email, "Reset your QuizPractice password", $"""
             Hello {fullName},

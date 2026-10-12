@@ -15,4 +15,10 @@ public interface IEmailSender
 
     /// <summary>UC-04: the link that sets a new password (BR-02).</summary>
     Task<bool> SendPasswordResetLinkAsync(string email, string fullName, string token, CancellationToken ct = default);
+
+    /// <summary>
+    /// UC-61 step 6 (BR-15): the account a Sale user's Paid registration created — the login
+    /// link, the email, the generated password, and the notes of the Sale user.
+    /// </summary>
+    Task<bool> SendAccountCreatedAsync(string email, string fullName, string password, string? notes, CancellationToken ct = default);
 }
