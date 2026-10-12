@@ -4,6 +4,7 @@ import { ManagementLayout } from '../layouts/ManagementLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { QuizLayout } from '../layouts/QuizLayout'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { BankAccountPage } from '../pages/admin/BankAccountPage'
 import { SettingDetailsPage } from '../pages/admin/SettingDetailsPage'
 import { SettingsListPage } from '../pages/admin/SettingsListPage'
 import { UserDetailsPage } from '../pages/admin/UserDetailsPage'
@@ -107,6 +108,7 @@ export const router = createBrowserRouter([
           { path: 'users/:id', element: <UserDetailsPage /> },
           { path: 'settings', element: <SettingsListPage /> },
           { path: 'settings/new', element: <SettingDetailsPage /> },
+          { path: 'settings/bank-account', element: <BankAccountPage /> },
           { path: 'settings/:id', element: <SettingDetailsPage /> },
           { path: 'questions', element: <QuestionsListPage /> },
           { path: 'questions/new', element: <QuestionDetailsPage /> },

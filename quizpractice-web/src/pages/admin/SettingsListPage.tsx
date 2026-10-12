@@ -1,5 +1,5 @@
 import { App, Button, Input, Select, Space, Typography } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { BankOutlined, PlusOutlined } from '@ant-design/icons'
 import { Link, useLocation } from 'react-router'
 import { SETTING_TYPE_LABELS, type SettingSummary, type SettingType } from '../../api/settingsApi'
 import type { ActiveStatus } from '../../api/types'
@@ -93,11 +93,17 @@ export function SettingsListPage() {
       <PageHeader
         title="Settings List"
         action={
-          <Link to="/manage/settings/new" {...back}>
-            <Button type="primary" icon={<PlusOutlined />}>
-              Add New Setting
-            </Button>
-          </Link>
+          <Space>
+            {/* UC-70: the receiving account is not a setting type, so it has its own screen (9.5). */}
+            <Link to="/manage/settings/bank-account">
+              <Button icon={<BankOutlined />}>Bank Account</Button>
+            </Link>
+            <Link to="/manage/settings/new" {...back}>
+              <Button type="primary" icon={<PlusOutlined />}>
+                Add New Setting
+              </Button>
+            </Link>
+          </Space>
         }
       />
 
