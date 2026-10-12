@@ -31,6 +31,9 @@ export const customerApi = {
   /** UC-16: the Subject Register pop-up on the stored package. */
   changeForm: (id: number) => http.get<RegisterForm>(`/my/registrations/${id}/form`).then((r) => r.data),
 
+  /** UC-17. 409 Registration.Settled (E1) or Registration.InUnpaidInvoice (E2). */
+  cancel: (id: number) => http.post<MyRegistration>(`/my/registrations/${id}/cancel`).then((r) => r.data),
+
   /** UC-16. 409 Registration.Settled (E1) or Registration.InUnpaidInvoice (E3). */
   change: (id: number, packageId: number) =>
     http.put<MyRegistration>(`/my/registrations/${id}`, { packageId }).then((r) => r.data),

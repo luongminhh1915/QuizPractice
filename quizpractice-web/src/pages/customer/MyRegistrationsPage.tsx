@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Empty, Flex, Result, Table, Typography, type TableColumnsType } from 'antd'
+import { App, Button, Empty, Flex, Popconfirm, Result, Space, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { Link, useNavigate } from 'react-router'
 import type { MyRegistration } from '../../api/customerApi'
@@ -8,7 +8,7 @@ import { StatusTag } from '../../components/StatusTag'
 import { SubjectRegisterModal } from '../../components/public/SubjectRegisterModal'
 import { CategoriesBlock, ContactsBlock, SearchBlock } from '../../components/public/SiderBlocks'
 import { PAGE_SIZE, useListParams } from '../../hooks/useListParams'
-import { useMyRegistrations } from '../../hooks/useCustomer'
+import { useCancelRegistration, useMyRegistrations } from '../../hooks/useCustomer'
 import { useSubjectSider } from '../../hooks/usePublic'
 import { PublicSider } from '../../layouts/PublicLayout'
 import { formatVnd } from '../../utils/money'
@@ -18,8 +18,10 @@ import { formatVnd } from '../../utils/money'
  * newest first. The sider searches the catalog (it opens Subjects List).
  */
 export function MyRegistrationsPage() {
+  const { message } = App.useApp()
   const navigate = useNavigate()
   const { criteria, set } = useListParams()
+  const cancel = useCancelRegistration()
   const list = useMyRegistrations(criteria.page, PAGE_SIZE)
   const sider = useSubjectSider()
   const [editing, setEditing] = useState<number>()
@@ -57,9 +59,28 @@ export function MyRegistrationsPage() {
       // Submitted and in no unpaid invoice only (BR-18, BR-24).
       render: (_, r) =>
         r.canChange && (
-          <Button size="small" onClick={() => setEditing(r.id)}>
-            Edit
-          </Button>
+          <Space size={4}>
+            <Button size="small" onClick={() => setEditing(r.id)}>
+              Edit
+            </Button>
+            {/* UC-17: confirm first; without confirmation nothing changes (A1). */}
+            <Popconfirm
+              title="Cancel this registration?"
+              description="It will no longer wait for the Sale team."
+              okText="Cancel registration"
+              cancelText="Keep it"
+              onConfirm={() =>
+                cancel.mutateAsync(r.id).then(
+                  () => message.success(`Registration ${r.id} was cancelled.`),
+                  (e) => message.warning(errorMessage(e)),
+                )
+              }
+            >
+              <Button size="small" danger>
+                Cancel
+              </Button>
+            </Popconfirm>
+          </Space>
         ),
     },
   ]

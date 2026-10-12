@@ -17,6 +17,15 @@ export function useMyRegistrations(page: number, pageSize: number) {
   })
 }
 
+/** UC-17. Whatever the answer, the list reloads to the current state (E1, E2). */
+export function useCancelRegistration() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => customerApi.cancel(id),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: customerKeys.registrations }),
+  })
+}
+
 /** UC-16: loads while the pop-up is open. */
 export function useChangeForm(id: number, open: boolean) {
   return useQuery({ queryKey: customerKeys.changeForm(id), queryFn: () => customerApi.changeForm(id), enabled: open })
