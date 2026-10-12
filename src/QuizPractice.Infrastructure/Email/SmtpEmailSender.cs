@@ -88,6 +88,18 @@ public sealed class SmtpEmailSender(
             {(string.IsNullOrWhiteSpace(notes) ? "" : $"{Environment.NewLine}Notes from our Sale team: {notes}{Environment.NewLine}")}
             """, ct);
 
+    public Task<bool> SendAccountByAdminAsync(string email, string fullName, string password, CancellationToken ct = default) =>
+        SendAsync(email, "Your QuizPractice account", $"""
+            Hello {fullName},
+
+            The administrator has opened a QuizPractice account for you. Sign in at {Options.LinkBaseUrl} with:
+
+            Email:    {email}
+            Password: {password}
+
+            You can replace this password with Change Password in the account menu.
+            """, ct);
+
     public Task<bool> SendPasswordResetLinkAsync(string email, string fullName, string token, CancellationToken ct = default) =>
         SendAsync(email, "Reset your QuizPractice password", $"""
             Hello {fullName},

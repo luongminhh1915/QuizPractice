@@ -21,4 +21,10 @@ public interface IEmailSender
     /// link, the email, the generated password, and the notes of the Sale user.
     /// </summary>
     Task<bool> SendAccountCreatedAsync(string email, string fullName, string password, string? notes, CancellationToken ct = default);
+
+    /// <summary>
+    /// UC-63 step 6 (F#38): the account the Admin created, or an Unverified one the Admin set
+    /// Active (A4) — the login link, the email and the generated password.
+    /// </summary>
+    Task<bool> SendAccountByAdminAsync(string email, string fullName, string password, CancellationToken ct = default);
 }

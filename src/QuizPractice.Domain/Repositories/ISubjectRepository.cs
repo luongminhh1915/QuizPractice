@@ -29,6 +29,9 @@ public interface ISubjectRepository
     /// <summary>The subject with its category and owner, whatever its status, tracked for a change (UC-42 to UC-51).</summary>
     Task<Subject?> GetByIdAsync(int id, CancellationToken ct = default);
 
+    /// <summary>The subjects this user owns, tracked so their owner can be removed (UC-63 A3).</summary>
+    Task<IReadOnlyList<Subject>> ListOwnedByAsync(int userId, CancellationToken ct = default);
+
     /// <summary>Stages a new subject; the service commits through IUnitOfWork.</summary>
     void Add(Subject subject);
 

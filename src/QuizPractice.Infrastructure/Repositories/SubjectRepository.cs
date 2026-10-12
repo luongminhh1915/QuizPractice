@@ -98,6 +98,9 @@ public class SubjectRepository(AppDbContext db) : ISubjectRepository
 
     public void Add(Subject subject) => db.Subjects.Add(subject);
 
+    public async Task<IReadOnlyList<Subject>> ListOwnedByAsync(int userId, CancellationToken ct = default) =>
+        await db.Subjects.Where(s => s.ExpertId == userId).OrderBy(s => s.Name).ToListAsync(ct);
+
     public Task<bool> HasActivePackageAsync(int subjectId, CancellationToken ct = default) =>
         db.PricePackages.AnyAsync(p => p.SubjectId == subjectId && p.Status == ActiveStatus.Active, ct);
 
