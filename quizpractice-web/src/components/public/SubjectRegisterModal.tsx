@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Alert, App, Button, Descriptions, Flex, Modal, Radio, Result, Space, Spin, Typography } from 'antd'
 import dayjs from 'dayjs'
+import { useNavigate } from 'react-router'
 import { errorMessage, problemOf } from '../../api/client'
 import { useOpenAccountModal } from '../account/accountModalContext'
-import { useChangeForm, useChangeRegistration } from '../../hooks/useCustomer'
+import { useChangeForm, useChangeRegistration, useCreateInvoice } from '../../hooks/useCustomer'
 import { useRegisterForm, useSubmitRegistration } from '../../hooks/usePublic'
 import { formatVnd } from '../../utils/money'
 
@@ -14,11 +15,15 @@ export type RegisterTarget = { subjectId: number; registrationId?: undefined } |
  * Subject Register (SRS III 2.6; F#12; UC-14, UC-16), for a signed-in customer. The
  * contact is read from the profile and never typed here (OI-15); Edit Profile opens
  * User Profile on top, and the pop-up shows the new values once it is saved (UC-14 E1,
- * UC-16 E2). Opened on a stored registration, only the package can change.
+ * UC-16 E2). Opened on a stored registration, only the package can change. Submit and
+ * Pay by QR stores the registration and opens the QR code of an invoice for it
+ * (UC-14 A2, UC-18 A1).
  */
 export function SubjectRegisterModal({ target, open, onClose }: { target: RegisterTarget; open: boolean; onClose: () => void }) {
   const { message } = App.useApp()
+  const navigate = useNavigate()
   const openModal = useOpenAccountModal()
+  const pay = useCreateInvoice()
   const editing = target.registrationId !== undefined
   const newForm = useRegisterForm(target.subjectId ?? 0, open && !editing)
   const changeForm = useChangeForm(target.registrationId ?? 0, open && editing)
@@ -57,6 +62,26 @@ export function SubjectRegisterModal({ target, open, onClose }: { target: Regist
     } else {
       message.error(errorMessage(e))
     }
+  }
+
+  // UC-14 A2: store, then one invoice for this registration and its QR code. If the
+  // invoice fails (e.g. no receiving account, UC-18 E2), the registration stays stored.
+  const onSubmitAndPay = () => {
+    if (!packageId) return
+    submit.mutate(packageId, {
+      onError,
+      onSuccess: (r) =>
+        pay.mutate([r.id], {
+          onSuccess: (invoice) => {
+            close()
+            navigate(`/my-invoices/${invoice.id}`)
+          },
+          onError: (e) => {
+            setDone({ packageName: r.packageName, totalCost: r.totalCost })
+            message.warning(`Your registration was submitted, but the QR code could not be made: ${errorMessage(e)}`)
+          },
+        }),
+    })
   }
 
   const onSave = () => {
@@ -147,9 +172,14 @@ export function SubjectRegisterModal({ target, open, onClose }: { target: Regist
           </Typography.Text>
           <Space>
             <Button onClick={close}>Cancel</Button>
-            <Button type="primary" disabled={!chosen || !!problems.length} loading={saving.isPending} onClick={onSave}>
+            <Button type={editing ? 'primary' : 'default'} disabled={!chosen || !!problems.length} loading={saving.isPending && !pay.isPending} onClick={onSave}>
               {editing ? 'Save' : 'Submit'}
             </Button>
+            {!editing && (
+              <Button type="primary" disabled={!chosen || !!problems.length} loading={pay.isPending} onClick={onSubmitAndPay}>
+                Submit and Pay by QR
+              </Button>
+            )}
           </Space>
         </Flex>
       </Flex>
