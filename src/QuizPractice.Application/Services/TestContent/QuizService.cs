@@ -95,7 +95,7 @@ public class QuizService(
 
         var ways = await DrawnByAsync(subjectId, ct);
         var way = drawnBy ?? QuizSelection.Topic;
-        var groups = ways.Contains(way) ? await LoadGroupsAsync(subjectId, way, ct) : null;
+        var groups = ways.Contains(way) ? await QuestionDraw.LoadGroupsAsync(quizzes, subjectId, way, ct) : null;
         if (groups is null)
         {
             return Error.Invalid("DrawnBy", $"Draw the questions by one of: {string.Join(", ", ways)}.");
@@ -122,7 +122,7 @@ public class QuizService(
             return badOverview;
         }
 
-        var groups = await LoadGroupsAsync(request.SubjectId, request.SelectionType, ct);
+        var groups = await QuestionDraw.LoadGroupsAsync(quizzes, request.SubjectId, request.SelectionType, ct);
         if (CheckRules(request, groups) is { } badRules)
         {
             return badRules;
@@ -149,7 +149,7 @@ public class QuizService(
         // UC-57 step 7 (D13, OI-07): a lesson quiz draws its set once, now.
         if (IsLessonQuiz(type!))
         {
-            var (drawn, shortOf) = Draw(request.Rules, groups!);
+            var (drawn, shortOf) = QuestionDraw.Draw(RulesOf(request), groups!);
             if (drawn is null)
             {
                 return Error.Invalid(nameof(request.Rules), shortOf!);
@@ -201,7 +201,7 @@ public class QuizService(
             return badOverview;
         }
 
-        var groups = await LoadGroupsAsync(request.SubjectId, request.SelectionType, ct);
+        var groups = await QuestionDraw.LoadGroupsAsync(quizzes, request.SubjectId, request.SelectionType, ct);
         if (CheckRules(request, groups) is { } badRules)
         {
             return badRules;
@@ -226,7 +226,7 @@ public class QuizService(
         List<int>? drawn = null;
         if (lessonQuiz && (settingChanged || quiz.Questions.Count == 0))
         {
-            (drawn, var shortOf) = Draw(request.Rules, groups!);
+            (drawn, var shortOf) = QuestionDraw.Draw(RulesOf(request), groups!);
             if (drawn is null)
             {
                 return Error.Invalid(nameof(request.Rules), shortOf!);
@@ -356,7 +356,7 @@ public class QuizService(
 
     private async Task<QuizDto> ToDtoAsync(Quiz quiz, CancellationToken ct)
     {
-        var groups = await LoadGroupsAsync(quiz.SubjectId, quiz.SelectionType, ct);
+        var groups = await QuestionDraw.LoadGroupsAsync(quizzes, quiz.SubjectId, quiz.SelectionType, ct);
         var rules = quiz.Rules
             .Select(r => new QuizRuleDto(r.GroupId, groups?.NameOf(r.GroupId) ?? $"#{r.GroupId}", r.QuestionCount,
                 groups?.Available(r.GroupId) ?? 0))
@@ -403,7 +403,7 @@ public class QuizService(
     }
 
     /// <summary>UC-57 E2 and A4: the groups must belong to the subject and the way of drawing, and hold enough shown questions.</summary>
-    private static Error? CheckRules(SaveQuizRequest request, Groups? groups)
+    private static Error? CheckRules(SaveQuizRequest request, DrawGroups? groups)
     {
         if (groups is null)
         {
@@ -425,34 +425,8 @@ public class QuizService(
             : Error.Invalid(new Dictionary<string, string[]> { [nameof(request.Rules)] = shortGroups });
     }
 
-    /// <summary>
-    /// The fixed set of a lesson quiz: at random within each group, a question never twice
-    /// (one may sit in two dimension groups). Null with the reason when a group runs out.
-    /// </summary>
-    private static (List<int>? Drawn, string? ShortOf) Draw(IReadOnlyList<QuizRuleInput> rules, Groups groups)
-    {
-        var drawn = new List<int>();
-        var used = new HashSet<int>();
-        foreach (var rule in rules)
-        {
-            var pool = groups.Members.Where(m => m.GroupId == rule.GroupId && !used.Contains(m.QuestionId))
-                .Select(m => m.QuestionId).Distinct().ToArray();
-            if (pool.Length < rule.QuestionCount)
-            {
-                return (null, $"{groups.NameOf(rule.GroupId)} has only {pool.Length} questions not already drawn for another group; "
-                              + $"lower its count to {pool.Length} or choose other groups.");
-            }
-
-            Random.Shared.Shuffle(pool);
-            foreach (var questionId in pool.Take(rule.QuestionCount))
-            {
-                drawn.Add(questionId);
-                used.Add(questionId);
-            }
-        }
-
-        return (drawn, null);
-    }
+    private static List<(int GroupId, int Count)> RulesOf(SaveQuizRequest request) =>
+        request.Rules.Select(r => (r.GroupId, r.QuestionCount)).ToList();
 
     /// <summary>Keeps the rows of questions drawn again (key quiz + question), removes the others, adds the new.</summary>
     private void ReplaceFixedSet(Quiz quiz, IReadOnlyList<int> drawn)
@@ -479,30 +453,6 @@ public class QuizService(
     /// <summary>"Topic" and the dimension types the subject has, in settings order.</summary>
     private async Task<IReadOnlyList<string>> DrawnByAsync(int subjectId, CancellationToken ct) =>
         [QuizSelection.Topic, .. (await quizzes.GetDimensionsAsync(subjectId, ct)).Select(d => d.Type.Value).Distinct()];
-
-    /// <summary>The groups of one way of drawing and their shown questions; null when the subject has no such way.</summary>
-    private async Task<Groups?> LoadGroupsAsync(int subjectId, string selectionType, CancellationToken ct)
-    {
-        if (selectionType == QuizSelection.Topic)
-        {
-            var topics = await quizzes.GetTopicsAsync(subjectId, ct);
-            return new Groups(topics.Select(t => (t.Id, t.Name)).ToList(), await quizzes.GetTopicMembersAsync(subjectId, ct));
-        }
-
-        var dimensions = (await quizzes.GetDimensionsAsync(subjectId, ct)).Where(d => d.Type.Value == selectionType).ToList();
-        return dimensions.Count == 0
-            ? null
-            : new Groups(dimensions.Select(d => (d.Id, d.Name)).ToList(), await quizzes.GetDimensionMembersAsync(subjectId, ct));
-    }
-
-    private sealed record Groups(IReadOnlyList<(int Id, string Name)> All, IReadOnlyList<GroupMember> Members)
-    {
-        public int Available(int groupId) => Members.Where(m => m.GroupId == groupId).Select(m => m.QuestionId).Distinct().Count();
-
-        public string NameOf(int groupId) => All.FirstOrDefault(g => g.Id == groupId).Name ?? $"#{groupId}";
-
-        public int Order(int groupId) => All.ToList().FindIndex(g => g.Id == groupId);
-    }
 
     public async Task<Result<QuizFiltersDto>> GetFiltersAsync(CancellationToken ct = default)
     {
