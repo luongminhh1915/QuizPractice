@@ -1,5 +1,6 @@
 using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Customer;
+using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Enums;
 
 namespace QuizPractice.Application.Services.Customer;
@@ -7,6 +8,12 @@ namespace QuizPractice.Application.Services.Customer;
 /// <summary>Practices List and Practice Details (F#14, F#15): the customer's own practices only.</summary>
 public interface IPracticeService
 {
+    /// <summary>UC-19: the customer's practices and simulation exams, the newest first.</summary>
+    Task<Result<Page<PracticeSummaryDto>>> ListAsync(PracticeListRequest request, CancellationToken ct = default);
+
+    /// <summary>UC-19: the subjects to filter by.</summary>
+    Task<Result<PracticeFiltersDto>> GetFiltersAsync(CancellationToken ct = default);
+
     /// <summary>UC-21: one attempt of the customer, read only, with its result once scored.</summary>
     Task<Result<PracticeDetailsDto>> GetAsync(int id, CancellationToken ct = default);
 

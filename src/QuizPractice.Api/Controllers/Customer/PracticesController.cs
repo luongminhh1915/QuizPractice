@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuizPractice.Application.Dtos.Customer;
 using QuizPractice.Application.Services.Customer;
+using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Constants;
 using QuizPractice.Domain.Enums;
 
@@ -12,6 +13,15 @@ namespace QuizPractice.Api.Controllers.Customer;
 [Authorize(Policy = SettingValues.MenuItems.Practices)]
 public class PracticesController(IPracticeService practices) : ApiControllerBase
 {
+    /// <summary>UC-19: ?subjectId=&amp;mode=Practice|Exam&amp;oldestFirst=true&amp;page=1.</summary>
+    [HttpGet]
+    public async Task<ActionResult<Page<PracticeSummaryDto>>> List([FromQuery] PracticeListRequest request, CancellationToken ct) =>
+        FromResult(await practices.ListAsync(request, ct));
+
+    /// <summary>UC-19: the subjects the customer has taken something in.</summary>
+    [HttpGet("filters")]
+    public async Task<ActionResult<PracticeFiltersDto>> Filters(CancellationToken ct) => FromResult(await practices.GetFiltersAsync(ct));
+
     /// <summary>UC-21: a practice or a simulation exam of the customer; 404 when missing or someone else's (E1).</summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<PracticeDetailsDto>> Get(int id, CancellationToken ct) => FromResult(await practices.GetAsync(id, ct));

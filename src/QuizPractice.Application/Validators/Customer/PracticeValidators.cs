@@ -1,8 +1,19 @@
 using FluentValidation;
 using QuizPractice.Application.Dtos.Customer;
 using QuizPractice.Application.Validators.TestContent;
+using QuizPractice.Domain.Common;
 
 namespace QuizPractice.Application.Validators.Customer;
+
+public class PracticeListRequestValidator : AbstractValidator<PracticeListRequest>
+{
+    public PracticeListRequestValidator()
+    {
+        RuleFor(x => x.Page).GreaterThanOrEqualTo(1);
+        RuleFor(x => x.PageSize).InclusiveBetween(1, PageRequest.MaxPageSize);
+        RuleFor(x => x.Mode).IsInEnum();
+    }
+}
 
 /// <summary>
 /// UC-20 step 3 (the CHECK on Attempts.question_count, SDS I.3). Whether the subject is

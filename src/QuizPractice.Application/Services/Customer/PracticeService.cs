@@ -4,6 +4,7 @@ using QuizPractice.Application.Common;
 using QuizPractice.Application.Dtos.Customer;
 using QuizPractice.Application.Services.Learning;
 using QuizPractice.Application.Validators;
+using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
@@ -22,8 +23,59 @@ public class PracticeService(
     IAttemptRepository attempts,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
-    IValidator<CreatePracticeRequest> createValidator) : IPracticeService
+    IValidator<CreatePracticeRequest> createValidator,
+    IValidator<PracticeListRequest> listValidator) : IPracticeService
 {
+    public async Task<Result<Page<PracticeSummaryDto>>> ListAsync(PracticeListRequest request, CancellationToken ct = default)
+    {
+        if (currentUser.Id is not { } userId)
+        {
+            return CustomerAccess.SignInRequired;
+        }
+
+        if (await listValidator.CheckAsync(request, ct) is { } invalid)
+        {
+            return invalid;
+        }
+
+        // UC-30 E1: an exam whose countdown ran out with no page open shows its result.
+        var now = DateTime.UtcNow;
+        var closed = (await attempts.ListOpenExamsAsync(userId, ct)).Count(a => AttemptScoring.CloseIfTimeUp(a, now));
+        if (closed > 0)
+        {
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+
+        // A1: nothing taken yet is an empty page; New Practice stays available.
+        var page = await attempts.ListByUserAsync(userId, new AttemptSearch(request.SubjectId, request.Mode, request.OldestFirst),
+            new PageRequest(request.Page, request.PageSize), ct);
+        var labels = await AttemptLabels.LabelsAsync(page.Items, attempts, ct);
+        var correct = await attempts.GetCorrectCountsAsync(page.Items.Select(a => a.Id).ToList(), ct);
+        return page.Map(a => new PracticeSummaryDto(
+            a.Id,
+            a.Subject.Name,
+            a.Mode,
+            labels[a.Id].Title,
+            DateTime.SpecifyKind(a.StartedAt, DateTimeKind.Utc),
+            a.Status,
+            a.QuestionCount,
+            a is { Status: AttemptStatus.Submitted, FinishedAt: { } finished }
+                ? new AttemptOutcomeDto(correct.GetValueOrDefault(a.Id), a.Score ?? 0, a.PassRate ?? 0, AttemptScoring.Passed(a),
+                    (int)(finished - a.StartedAt).TotalSeconds)
+                : null));
+    }
+
+    public async Task<Result<PracticeFiltersDto>> GetFiltersAsync(CancellationToken ct = default)
+    {
+        if (currentUser.Id is not { } userId)
+        {
+            return CustomerAccess.SignInRequired;
+        }
+
+        var subjects = await attempts.ListTakenSubjectsAsync(userId, ct);
+        return new PracticeFiltersDto(subjects.Select(s => new PracticeSubjectDto(s.Id, s.Name)).ToList());
+    }
+
     public async Task<Result<PracticeDetailsDto>> GetAsync(int id, CancellationToken ct = default)
     {
         if (currentUser.Id is not { } userId)
