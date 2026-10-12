@@ -254,8 +254,8 @@ public class QuestionService(
 
     public async Task<Result<MediaFile>> GetMediaAsync(int id, CancellationToken ct = default)
     {
-        // TODO(learning): a customer taking a practice or an exam must also reach the media
-        // of the questions in that attempt (Hiếu, UC-24); only the question bank users can now.
+        // The question bank users only; a customer reaches the media of the questions in an
+        // attempt through api/attempts/{id}/questions/{order}/media (QuizHandleService).
         if (CheckRole(out var expertId) is { } denied)
         {
             return denied;
