@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuizPractice.Application.Dtos.Customer;
 using QuizPractice.Application.Services.Customer;
+using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Constants;
 
 namespace QuizPractice.Api.Controllers.Customer;
@@ -11,6 +12,11 @@ namespace QuizPractice.Api.Controllers.Customer;
 [Authorize(Policy = SettingValues.MenuItems.MyInvoices)]
 public class MyInvoicesController(IMyInvoiceService invoices) : ApiControllerBase
 {
+    /// <summary>UC-67: ?status=Unpaid|Paid|Cancelled&amp;page=1.</summary>
+    [HttpGet]
+    public async Task<ActionResult<Page<InvoiceSummaryDto>>> List([FromQuery] MyInvoiceListRequest request, CancellationToken ct) =>
+        FromResult(await invoices.ListAsync(request, ct));
+
     /// <summary>UC-18: 201 with the QR code; 409 Invoice.RegistrationNotPayable (E1) or Invoice.NoBankAccount (E2).</summary>
     [HttpPost]
     public async Task<ActionResult<InvoiceDto>> Create(CreateInvoiceRequest request, CancellationToken ct)
