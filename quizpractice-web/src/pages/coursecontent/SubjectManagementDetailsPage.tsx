@@ -1,19 +1,23 @@
 import { Button, Result, Spin, Tabs } from 'antd'
-import { useLocation, useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { errorMessage, problemOf } from '../../api/client'
 import { PageHeader } from '../../components/PageHeader'
 import { useSubject } from '../../hooks/useSubjects'
+import { SubjectDimensionTab } from './SubjectDimensionTab'
 import { SubjectOverviewTab } from './SubjectOverviewTab'
 
 /**
- * Subject Management Details (SRS III 6.3; PDF II.6, F#25): the Overview tab of a subject
- * for the Admin and its assigned Expert (UC-43 to UC-45).
+ * Subject Management Details (SRS III 6.3; PDF II.6, F#25, F#26): the Overview and
+ * Dimension tabs of a subject for the Admin and its assigned Expert (UC-43 to UC-46).
  */
 export function SubjectManagementDetailsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const id = Number(useParams().id)
   const subject = useSubject(id)
+  // The open tab stays in the address, so a reload or Back keeps it.
+  const [params, setParams] = useSearchParams()
+  const tab = params.get('tab') ?? 'overview'
 
   const backTo = (location.state as { back?: string } | null)?.back ?? '/manage/subjects'
 
@@ -34,7 +38,12 @@ export function SubjectManagementDetailsPage() {
     <>
       <PageHeader title={subject.data.name} />
       <Tabs
-        items={[{ key: 'overview', label: 'Overview', children: <SubjectOverviewTab subject={subject.data} backTo={backTo} /> }]}
+        activeKey={tab}
+        onChange={(key) => setParams(key === 'overview' ? {} : { tab: key }, { replace: true, state: location.state })}
+        items={[
+          { key: 'overview', label: 'Overview', children: <SubjectOverviewTab subject={subject.data} backTo={backTo} /> },
+          { key: 'dimension', label: 'Dimension', children: <SubjectDimensionTab subjectId={id} /> },
+        ]}
       />
     </>
   )

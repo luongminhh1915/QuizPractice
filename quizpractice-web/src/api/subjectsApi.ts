@@ -117,7 +117,29 @@ function newSubjectForm(input: NewSubjectInput): FormData {
   return data
 }
 
-/** /api/subjects — UC-41 to UC-45 (Course Content). */
+/** A dimension of a subject (UC-46). */
+export interface Dimension {
+  id: number
+  typeId: number
+  /** Dimension Type setting, such as Domain or Group. */
+  type: string
+  name: string
+  description: string | null
+}
+
+/** The Dimension tab: the types the form offers and the stored dimensions. */
+export interface DimensionTab {
+  types: Lookup[]
+  dimensions: Dimension[]
+}
+
+export interface DimensionInput {
+  typeId: number
+  name: string
+  description?: string
+}
+
+/** /api/subjects — UC-41 to UC-46 (Course Content). */
 export const subjectsApi = {
   list: (criteria: SubjectCriteria) => http.get<Page<SubjectSummary>>('/subjects', { params: criteria }).then((r) => r.data),
 
@@ -131,4 +153,16 @@ export const subjectsApi = {
 
   update: (id: number, input: SubjectOverviewInput) =>
     http.put<Subject>(`/subjects/${id}`, overviewForm(input)).then((r) => r.data),
+
+  dimensions: (subjectId: number) => http.get<DimensionTab>(`/subjects/${subjectId}/dimensions`).then((r) => r.data),
+
+  saveDimension: (subjectId: number, id: number | undefined, input: DimensionInput) =>
+    (id === undefined
+      ? http.post<Dimension>(`/subjects/${subjectId}/dimensions`, input)
+      : http.put<Dimension>(`/subjects/${subjectId}/dimensions/${id}`, input)
+    ).then((r) => r.data),
+
+  /** 409 Dimension.InUse names how many questions, practices and quiz rules keep it (UC-46 E3). */
+  deleteDimension: (subjectId: number, id: number) =>
+    http.delete(`/subjects/${subjectId}/dimensions/${id}`).then(() => undefined),
 }

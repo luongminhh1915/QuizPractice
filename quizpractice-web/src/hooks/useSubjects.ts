@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { subjectsApi, type NewSubjectInput, type SubjectCriteria, type SubjectOverviewInput } from '../api/subjectsApi'
+import { subjectsApi, type DimensionInput, type NewSubjectInput, type SubjectCriteria, type SubjectOverviewInput } from '../api/subjectsApi'
 
 // Query keys: ['subjects'] covers every list and detail of Course Content, so one
 // invalidate after a change reloads whatever subject screen is open.
@@ -9,6 +9,7 @@ const keys = {
   filters: ['subjects', 'filters'] as const,
   choices: ['subjects', 'choices'] as const,
   detail: (id: number) => ['subjects', 'detail', id] as const,
+  dimensions: (id: number) => ['subjects', 'dimensions', id] as const,
 }
 
 export function useSubjectList(criteria: SubjectCriteria) {
@@ -49,5 +50,26 @@ export function useUpdateSubject(id: number) {
   return useMutation({
     mutationFn: (input: SubjectOverviewInput) => subjectsApi.update(id, input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  })
+}
+
+/** UC-46: the Dimension tab of a subject. */
+export function useDimensions(subjectId: number) {
+  return useQuery({ queryKey: keys.dimensions(subjectId), queryFn: () => subjectsApi.dimensions(subjectId) })
+}
+
+export function useSaveDimension(subjectId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, input }: { id?: number; input: DimensionInput }) => subjectsApi.saveDimension(subjectId, id, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.dimensions(subjectId) }),
+  })
+}
+
+export function useDeleteDimension(subjectId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => subjectsApi.deleteDimension(subjectId, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.dimensions(subjectId) }),
   })
 }

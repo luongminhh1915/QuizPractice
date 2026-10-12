@@ -68,7 +68,7 @@ export function SubjectOverviewTab({ subject, backTo }: { subject: Subject; back
     })
 
   return (
-    <Form<SubjectOverviewInput> form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 880 }}>
+    <Form<SubjectOverviewInput> form={form} name="overview" layout="vertical" onFinish={onFinish} style={{ maxWidth: 880 }}>
       <Form.Item label="Thumbnail" name="thumbnail" extra="JPG or PNG, up to 2 MB. Leave it to keep the current image.">
         <ImageUpload currentUrl={subject.thumbnail} width={280} />
       </Form.Item>
