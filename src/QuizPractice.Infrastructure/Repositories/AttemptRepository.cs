@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
@@ -42,6 +43,54 @@ public class AttemptRepository(AppDbContext db) : IAttemptRepository
         await db.SubjectDimensions.AsNoTracking().Where(d => ids.Contains(d.Id))
             .Select(d => new { d.Id, Name = d.Type.Value + ": " + d.Name })
             .ToDictionaryAsync(d => d.Id, d => d.Name, ct);
+
+    public async Task<Page<Attempt>> ListByUserAsync(int userId, AttemptSearch search, PageRequest page, CancellationToken ct = default)
+    {
+        var query = db.Attempts.AsNoTracking().Where(a => a.UserId == userId);
+        if (search.SubjectId is { } subjectId)
+        {
+            query = query.Where(a => a.SubjectId == subjectId);
+        }
+
+        if (search.Mode is { } mode)
+        {
+            query = query.Where(a => a.Mode == mode);
+        }
+
+        var total = await query.CountAsync(ct);
+        var ordered = search.OldestFirst
+            ? query.OrderBy(a => a.StartedAt).ThenBy(a => a.Id)
+            : query.OrderByDescending(a => a.StartedAt).ThenByDescending(a => a.Id);
+        var items = await ordered
+            .Include(a => a.Subject)
+            .Include(a => a.Quiz)
+            .Skip(page.Skip)
+            .Take(page.PageSize)
+            .ToListAsync(ct);
+        return new Page<Attempt>(items, total, page.PageNumber, page.PageSize);
+    }
+
+    public async Task<IReadOnlyDictionary<int, int>> GetCorrectCountsAsync(IReadOnlyCollection<int> attemptIds, CancellationToken ct = default) =>
+        await db.AttemptQuestions.AsNoTracking()
+            .Where(aq => attemptIds.Contains(aq.AttemptId) && aq.ChosenOption != null && aq.ChosenOption.IsCorrect)
+            .GroupBy(aq => aq.AttemptId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
+
+    public async Task<IReadOnlyList<Subject>> ListTakenSubjectsAsync(int userId, CancellationToken ct = default) =>
+        await db.Subjects.AsNoTracking()
+            .Where(s => db.Attempts.Any(a => a.UserId == userId && a.SubjectId == s.Id))
+            .OrderBy(s => s.Name).ThenBy(s => s.Id)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Attempt>> ListOpenExamsAsync(int userId, CancellationToken ct = default) =>
+        await db.Attempts
+            .Include(a => a.Subject)
+            .Include(a => a.Quiz)
+            .Include(a => a.Questions).ThenInclude(aq => aq.Question).ThenInclude(q => q.Options)
+            .AsSplitQuery()
+            .Where(a => a.UserId == userId && a.Mode == AttemptMode.Exam && a.Status == AttemptStatus.InProgress)
+            .ToListAsync(ct);
 
     public void Add(Attempt attempt) => db.Attempts.Add(attempt);
 }

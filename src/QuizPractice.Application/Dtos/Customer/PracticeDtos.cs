@@ -43,5 +43,25 @@ public sealed record PracticeDetailsDto(
     DateTime StartedAt,
     AttemptOutcomeDto? Outcome);
 
+/// <summary>Criteria of Practices List (UC-19). Mode: Practice or Exam, empty for both; the date taken sorts the list.</summary>
+public sealed record PracticeListRequest(int? SubjectId = null, AttemptMode? Mode = null, bool OldestFirst = false, int Page = 1, int PageSize = 10);
+
+/// <summary>
+/// One row of Practices List (SRS III 3.2): subject, the exam name or the practice
+/// criteria, date taken and, once scored, the result and duration.
+/// </summary>
+public sealed record PracticeSummaryDto(
+    int Id,
+    string SubjectName,
+    AttemptMode Mode,
+    string Title,
+    DateTime StartedAt,
+    AttemptStatus Status,
+    int QuestionCount,
+    AttemptOutcomeDto? Outcome);
+
+/// <summary>The Subject filter of Practices List: the subjects the customer has taken something in.</summary>
+public sealed record PracticeFiltersDto(IReadOnlyList<PracticeSubjectDto> Subjects);
+
 /// <summary>The attempt just made; Quiz Handle opens it.</summary>
 public sealed record AttemptCreatedDto(int Id);
