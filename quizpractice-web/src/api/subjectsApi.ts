@@ -82,6 +82,10 @@ export interface SubjectOverviewInput {
   description?: string
   /** The owner as the form shows it; only the Admin may change it (UC-43). */
   expertId?: number | null
+  /** Only the Admin may change it (UC-45). */
+  status: SubjectStatus
+  /** The Admin confirmed publishing without an active package (UC-45 E1). */
+  confirmNoPackage?: boolean
 }
 
 function overviewForm(input: SubjectOverviewInput): FormData {
@@ -95,6 +99,8 @@ function overviewForm(input: SubjectOverviewInput): FormData {
   data.append('description', input.description ?? '')
   // Absent: the subject has no owner (UC-42 A2), or the Admin removed it.
   if (input.expertId) data.append('expertId', String(input.expertId))
+  data.append('status', input.status)
+  if (input.confirmNoPackage) data.append('confirmNoPackage', 'true')
   if (input.thumbnail) data.append('thumbnail', input.thumbnail)
   return data
 }
