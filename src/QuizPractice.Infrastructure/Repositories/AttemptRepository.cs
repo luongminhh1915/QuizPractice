@@ -14,5 +14,33 @@ public class AttemptRepository(AppDbContext db) : IAttemptRepository
             .Select(q => q.Id)
             .ToListAsync(ct);
 
+    public async Task<Attempt?> GetOwnAsync(int id, int userId, CancellationToken ct = default)
+    {
+        var attempt = await db.Attempts
+            .Include(a => a.Subject)
+            .Include(a => a.Quiz)
+            .Include(a => a.Questions).ThenInclude(aq => aq.Question).ThenInclude(q => q.Options)
+            .Include(a => a.Questions).ThenInclude(aq => aq.Question).ThenInclude(q => q.Dimensions).ThenInclude(d => d.Dimension).ThenInclude(d => d.Type)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId, ct);
+        if (attempt is not null)
+        {
+            attempt.Questions.Sort((x, y) => x.DisplayOrder.CompareTo(y.DisplayOrder));
+            foreach (var row in attempt.Questions)
+            {
+                row.Question.Options.Sort((x, y) => x.DisplayOrder.CompareTo(y.DisplayOrder));
+            }
+        }
+
+        return attempt;
+    }
+
+    public async Task<IReadOnlyDictionary<int, string>> GetLessonNamesAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default) =>
+        await db.Lessons.AsNoTracking().Where(l => ids.Contains(l.Id)).ToDictionaryAsync(l => l.Id, l => l.Name, ct);
+
+    public async Task<IReadOnlyDictionary<int, string>> GetDimensionNamesAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default) =>
+        await db.SubjectDimensions.AsNoTracking().Where(d => ids.Contains(d.Id))
+            .ToDictionaryAsync(d => d.Id, d => d.Type.Value + ": " + d.Name, ct);
+
     public void Add(Attempt attempt) => db.Attempts.Add(attempt);
 }
