@@ -34,6 +34,11 @@ public class AttemptsController(IQuizHandleService handle) : ApiControllerBase
     public async Task<ActionResult<PeekDto>> Peek(int id, int order, CancellationToken ct) =>
         FromResult(await handle.PeekAsync(id, order, ct));
 
+    /// <summary>UC-29: 409 Attempt.Closed when it was scored already, e.g. from another tab.</summary>
+    [HttpPost("submit")]
+    public async Task<ActionResult<AttemptResultDto>> Submit(int id, CancellationToken ct) =>
+        FromResult(await handle.SubmitAsync(id, ct));
+
     /// <summary>UC-25: the question on screen, read back after a reload (BR-08).</summary>
     [HttpPut("position")]
     public async Task<ActionResult<HandleProgressDto>> Move(int id, MoveRequest request, CancellationToken ct) =>

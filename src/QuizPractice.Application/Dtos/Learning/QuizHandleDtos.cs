@@ -49,5 +49,8 @@ public sealed record MarkRequest(bool Marked);
 /// </summary>
 public sealed record PeekDto(int OptionId, string Letter, string Content, string? Explanation, IReadOnlyList<string> Dimensions);
 
+/// <summary>UC-29 step 6: the result of the scored attempt (BR-21); Practice Details shows it next.</summary>
+public sealed record AttemptResultDto(int Id, int Correct, int QuestionCount, decimal Score, byte PassRate, bool Passed);
+
 /// <summary>What is stored for one question after a change.</summary>
 public sealed record HandleProgressDto(int Order, int? ChosenOptionId, bool IsMarked);

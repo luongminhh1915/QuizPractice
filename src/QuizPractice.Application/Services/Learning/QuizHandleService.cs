@@ -139,6 +139,20 @@ public class QuizHandleService(
             row.Question.Dimensions.Select(d => $"{d.Dimension.Type.Value}: {d.Dimension.Name}").Order().ToList());
     }
 
+    public async Task<Result<AttemptResultDto>> SubmitAsync(int id, CancellationToken ct = default)
+    {
+        var (attempt, refusal) = await LoadRunningAsync(id, ct);
+        if (refusal is not null)
+        {
+            return refusal;
+        }
+
+        // Steps 5 and 6. The three confirmations of BR-09 are the page's; every case ends here.
+        AttemptScoring.Score(attempt!, DateTime.UtcNow);
+        await unitOfWork.SaveChangesAsync(ct);
+        return ResultOf(attempt!);
+    }
+
     public async Task<Result<MediaFile>> GetMediaAsync(int id, int order, CancellationToken ct = default)
     {
         if (currentUser.Id is not { } userId)
@@ -193,6 +207,10 @@ public class QuizHandleService(
 
         return (attempt, null);
     }
+
+    internal static AttemptResultDto ResultOf(Attempt attempt) =>
+        new(attempt.Id, AttemptScoring.CorrectCount(attempt), attempt.Questions.Count, attempt.Score ?? 0, attempt.PassRate ?? 0,
+            AttemptScoring.Passed(attempt));
 
     private static AttemptQuestion? QuestionAt(Attempt attempt, int order) =>
         attempt.Questions.FirstOrDefault(q => q.DisplayOrder == order);

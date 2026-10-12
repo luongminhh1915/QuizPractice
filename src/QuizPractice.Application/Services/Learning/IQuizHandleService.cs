@@ -21,6 +21,9 @@ public interface IQuizHandleService
     /// <summary>UC-28: the correct answer of one question, during a practice only (BR-07).</summary>
     Task<Result<PeekDto>> PeekAsync(int id, int order, CancellationToken ct = default);
 
+    /// <summary>UC-29: scores the attempt as it stands; with no answer it closes with no correct answer (A1).</summary>
+    Task<Result<AttemptResultDto>> SubmitAsync(int id, CancellationToken ct = default);
+
     /// <summary>The image, audio or video of a question in an attempt of the customer (BR-05).</summary>
     Task<Result<MediaFile>> GetMediaAsync(int id, int order, CancellationToken ct = default);
 }
