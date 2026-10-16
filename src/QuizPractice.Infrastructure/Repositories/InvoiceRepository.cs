@@ -82,8 +82,9 @@ public class InvoiceRepository(AppDbContext db) : IInvoiceRepository
         db.Invoices
             .Include(i => i.User)
             .Include(i => i.ConfirmedBy)
-            .Include(i => i.Registrations).ThenInclude(r => r.Subject)
-            .Include(i => i.Registrations).ThenInclude(r => r.Package)
+            .Include(i => i.Registrations)
+            .Include(i => i.Items).ThenInclude(x => x.Registration).ThenInclude(r => r.Subject)
+            .Include(i => i.Items).ThenInclude(x => x.Registration).ThenInclude(r => r.Package)
             .AsSplitQuery()
             .FirstOrDefaultAsync(i => i.Id == id, ct);
 

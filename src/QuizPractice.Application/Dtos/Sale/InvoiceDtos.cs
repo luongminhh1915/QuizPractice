@@ -12,7 +12,7 @@ public sealed record InvoiceListRequest(
     int Page = 1,
     int PageSize = 10);
 
-/// <summary>One registration an invoice pays for, with its status (SRS III 8.4, Registrations).</summary>
+/// <summary>One registration an invoice was made for, its amount then and its status now (SRS III 8.4, Registrations).</summary>
 public sealed record SaleInvoiceLineDto(int Id, string SubjectName, string PackageName, decimal TotalCost, RegistrationStatus Status);
 
 /// <summary>
@@ -39,8 +39,9 @@ public sealed record SaleInvoiceDetailsDto(
         new(i.Id, i.Code, i.Status, DateTime.SpecifyKind(i.CreatedAt, DateTimeKind.Utc),
             i.PaidAt is { } paid ? DateTime.SpecifyKind(paid, DateTimeKind.Utc) : null, i.ConfirmedBy?.Email,
             i.User.FullName, i.User.Email, i.BankName, i.AccountNumber, i.AccountName, i.TotalAmount, i.Notes,
-            i.Registrations.OrderBy(r => r.Id)
-                .Select(r => new SaleInvoiceLineDto(r.Id, r.Subject.Name, r.Package.Name, r.TotalCost, r.Status)).ToList());
+            i.Items.OrderBy(x => x.RegistrationId)
+                .Select(x => new SaleInvoiceLineDto(x.RegistrationId, x.Registration.Subject.Name, x.Registration.Package.Name,
+                    x.Amount, x.Registration.Status)).ToList());
 }
 
 /// <summary>UC-69 step 4, A1–A3: the notes of the Sale user, such as where the transfer was found.</summary>
