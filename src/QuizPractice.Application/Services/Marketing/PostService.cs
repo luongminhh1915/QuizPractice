@@ -89,7 +89,7 @@ public class PostService(
             Thumbnail = await files.SaveAsync(request.Thumbnail.Content, request.Thumbnail.Extension, ThumbnailFolder, ct),
         };
         posts.Add(post);
-        await unitOfWork.SaveChangesAsync(ct);
+        await StoredFile.CommitAsync(() => unitOfWork.SaveChangesAsync(ct), post.Thumbnail, files.Delete);
 
         // Read back for the author name the form shows.
         return PostDto.From(await posts.GetByIdAsync(post.Id, ct) ?? post);
@@ -151,7 +151,8 @@ public class PostService(
         post.IsFeatured = request.IsFeatured;
         post.Status = request.Status;
         post.UpdatedAt = PostVersion.Now();
-        await unitOfWork.SaveChangesAsync(ct);
+        await StoredFile.CommitAsync(() => unitOfWork.SaveChangesAsync(ct),
+            request.Thumbnail is null ? null : post.Thumbnail, files.Delete);
 
         // Only after the commit: if it had failed, the row would still point at the old file.
         if (replacedThumbnail is not null)

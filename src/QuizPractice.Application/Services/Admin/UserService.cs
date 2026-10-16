@@ -104,7 +104,7 @@ public class UserService(
             Avatar = request.Avatar is null ? null : await files.SaveAsync(request.Avatar.Content, request.Avatar.Extension, AvatarFolder, ct),
         };
         users.Add(user);
-        await unitOfWork.SaveChangesAsync(ct);
+        await StoredFile.CommitAsync(() => unitOfWork.SaveChangesAsync(ct), user.Avatar, files.Delete);
 
         // E2: a failed delivery keeps the account; the screen says so (Forgot Password sends a link).
         var sent = await mail.SendAccountByAdminAsync(user.Email, user.FullName, password, ct);

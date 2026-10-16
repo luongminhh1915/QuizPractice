@@ -112,7 +112,7 @@ public class QuestionService(
 
         var question = QuestionMapping.NewQuestion(request, request.Media is null ? null : await SaveMediaAsync(request.Media, ct));
         questions.Add(question);
-        await unitOfWork.SaveChangesAsync(ct);
+        await StoredFile.CommitAsync(() => unitOfWork.SaveChangesAsync(ct), question.Media, mediaFiles.Delete);
 
         // Reloaded so the subject name and the option ids are filled in.
         return QuestionDto.From((await questions.GetWithOptionsAsync(question.Id, ct))!, isUsed: false);
@@ -192,7 +192,7 @@ public class QuestionService(
             question.Media = null;
         }
 
-        await unitOfWork.ExecuteInTransactionAsync(async c =>
+        await StoredFile.CommitAsync(() => unitOfWork.ExecuteInTransactionAsync(async c =>
         {
             // Step 1: no option is correct and the removed ones are gone, so the
             // one-correct-option index never sees two correct rows while step 2 runs.
@@ -240,7 +240,7 @@ public class QuestionService(
             question.Content = request.Content.Trim();
             question.Explanation = NullIfBlank(request.Explanation);
             await unitOfWork.SaveChangesAsync(c);
-        }, ct);
+        }, ct), request.Media is null ? null : question.Media, mediaFiles.Delete);
 
         // Only after the commit: if it had failed, the row would still point at the old file.
         if (replacedMedia is not null)

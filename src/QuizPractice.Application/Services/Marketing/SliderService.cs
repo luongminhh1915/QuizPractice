@@ -70,7 +70,7 @@ public class SliderService(
             Image = await files.SaveAsync(request.Image.Content, request.Image.Extension, ImageFolder, ct),
         };
         sliders.Add(slider);
-        await unitOfWork.SaveChangesAsync(ct);
+        await StoredFile.CommitAsync(() => unitOfWork.SaveChangesAsync(ct), slider.Image, files.Delete);
         return SliderDto.From(slider);
     }
 
@@ -98,7 +98,8 @@ public class SliderService(
         slider.Backlink = NullIfBlank(request.Backlink);
         slider.Notes = NullIfBlank(request.Notes);
         slider.Status = request.Status;
-        await unitOfWork.SaveChangesAsync(ct);
+        await StoredFile.CommitAsync(() => unitOfWork.SaveChangesAsync(ct),
+            request.Image is null ? null : slider.Image, files.Delete);
 
         // Only after the commit: if it had failed, the row would still point at the old file.
         if (replacedImage is not null)

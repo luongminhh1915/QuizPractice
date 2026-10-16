@@ -139,7 +139,7 @@ public class SubjectService(
             Thumbnail = await files.SaveAsync(request.Thumbnail!.Content, request.Thumbnail.Extension, ThumbnailFolder, ct),
         };
         subjects.Add(subject);
-        await unitOfWork.SaveChangesAsync(ct);
+        await StoredFile.CommitAsync(() => unitOfWork.SaveChangesAsync(ct), subject.Thumbnail, files.Delete);
         return SubjectDto.From(subject, hasActivePackage: false);
     }
 
@@ -231,7 +231,8 @@ public class SubjectService(
         subject.PassRate = (byte)request.PassRate;
         subject.Description = description;
         subject.UpdatedAt = DateTime.UtcNow;
-        await unitOfWork.SaveChangesAsync(ct);
+        await StoredFile.CommitAsync(() => unitOfWork.SaveChangesAsync(ct),
+            request.Thumbnail is null ? null : subject.Thumbnail, files.Delete);
 
         // Only after the commit: if it had failed, the row would still point at the old file.
         if (replacedThumbnail is not null)

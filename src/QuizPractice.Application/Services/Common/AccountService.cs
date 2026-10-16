@@ -247,7 +247,8 @@ public class AccountService(
         user.FullName = request.FullName.Trim();
         user.Gender = request.Gender!.Value;
         user.Mobile = request.Mobile.Trim();
-        await unitOfWork.SaveChangesAsync(ct);
+        await StoredFile.CommitAsync(() => unitOfWork.SaveChangesAsync(ct),
+            request.Avatar is null ? null : user.Avatar, files.Delete);
 
         // Only after the commit: if it had failed, the row would still point at the old file.
         if (oldAvatar is not null)
