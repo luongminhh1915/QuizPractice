@@ -354,6 +354,31 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("QuizPractice.Domain.Entities.InvoiceItem", b =>
+                {
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int")
+                        .HasColumnName("invoice_id");
+
+                    b.Property<int>("RegistrationId")
+                        .HasColumnType("int")
+                        .HasColumnName("registration_id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12)
+                        .HasColumnType("decimal(12,0)")
+                        .HasColumnName("amount");
+
+                    b.HasKey("InvoiceId", "RegistrationId");
+
+                    b.HasIndex("RegistrationId");
+
+                    b.ToTable("InvoiceItems", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_InvoiceItems_amount", "[amount] >= 0");
+                        });
+                });
+
             modelBuilder.Entity("QuizPractice.Domain.Entities.Lesson", b =>
                 {
                     b.Property<int>("Id")
@@ -1274,6 +1299,23 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("QuizPractice.Domain.Entities.InvoiceItem", b =>
+                {
+                    b.HasOne("QuizPractice.Domain.Entities.Invoice", "Invoice")
+                        .WithMany("Items")
+                        .HasForeignKey("InvoiceId")
+                        .IsRequired();
+
+                    b.HasOne("QuizPractice.Domain.Entities.Registration", "Registration")
+                        .WithMany()
+                        .HasForeignKey("RegistrationId")
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+
+                    b.Navigation("Registration");
+                });
+
             modelBuilder.Entity("QuizPractice.Domain.Entities.Lesson", b =>
                 {
                     b.HasOne("QuizPractice.Domain.Entities.Quiz", "Quiz")
@@ -1515,6 +1557,8 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("QuizPractice.Domain.Entities.Invoice", b =>
                 {
+                    b.Navigation("Items");
+
                     b.Navigation("Registrations");
                 });
 

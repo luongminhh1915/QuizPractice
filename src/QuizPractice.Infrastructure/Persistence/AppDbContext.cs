@@ -17,6 +17,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PricePackage> PricePackages => Set<PricePackage>();
     public DbSet<Registration> Registrations => Set<Registration>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<SubjectDimension> SubjectDimensions => Set<SubjectDimension>();
     public DbSet<Lesson> Lessons => Set<Lesson>();

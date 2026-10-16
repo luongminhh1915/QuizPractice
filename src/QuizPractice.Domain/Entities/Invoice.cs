@@ -32,5 +32,9 @@ public class Invoice
     public DateTime? PaidAt { get; set; }
     public string? Notes { get; set; }
 
+    /// <summary>The registrations paid in this invoice now (Registration.InvoiceId).</summary>
     public List<Registration> Registrations { get; set; } = [];
+
+    /// <summary>The registrations the invoice was made for; never changes afterwards.</summary>
+    public List<InvoiceItem> Items { get; set; } = [];
 }
