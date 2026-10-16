@@ -76,8 +76,8 @@ public class DashboardService(
 
     /// <summary>
     /// SRS III 5.1 and OI-10: a card is a link only for a role that may open the screen behind
-    /// it. Sale reaches the registrations, the Admin the subjects and the users; Marketing none.
-    /// TODO(sale, course-content, admin): these screens come with UC-59, UC-41 and UC-62.
+    /// it. Sale reaches the registrations (UC-59), the Admin the subjects (UC-41) and the users
+    /// (UC-62); Marketing none.
     /// </summary>
     private DashboardLinks LinksFor() => currentUser.Role switch
     {
