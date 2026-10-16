@@ -866,7 +866,7 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Registrations", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Registrations_gender", "[gender] IN ('Male', 'Female', 'Other')");
+                            t.HasCheckConstraint("CK_Registrations_gender", "[gender] IN ('Male', 'Female')");
 
                             t.HasCheckConstraint("CK_Registrations_status", "[status] IN ('Submitted', 'Paid', 'Cancelled')");
 
@@ -1194,7 +1194,7 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_Users_full_name", "LEN([full_name]) >= 2");
 
-                            t.HasCheckConstraint("CK_Users_gender", "[gender] IN ('Male', 'Female', 'Other')");
+                            t.HasCheckConstraint("CK_Users_gender", "[gender] IN ('Male', 'Female')");
 
                             t.HasCheckConstraint("CK_Users_mobile", "[mobile] LIKE '0[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'");
 

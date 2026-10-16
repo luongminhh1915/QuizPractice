@@ -107,7 +107,7 @@ export function ProfileModal({ open, onClose }: { open: boolean; onClose: () => 
             <Input autoComplete="name" />
           </Form.Item>
           <Form.Item label="Gender" name="gender" rules={[{ required: true, message: 'Choose the gender.' }]}>
-            <Radio.Group options={['Male', 'Female', 'Other']} />
+            <Radio.Group options={['Male', 'Female']} />
           </Form.Item>
           <Form.Item label="Email" name="email" extra="The email is your sign-in name and cannot be changed.">
             <Input disabled />

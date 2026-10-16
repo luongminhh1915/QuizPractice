@@ -33,7 +33,7 @@ export interface SalePackage {
   salePrice: number
 }
 
-export type Gender = 'Male' | 'Female' | 'Other'
+export type Gender = 'Male' | 'Female'
 
 /** Matches RegistrationDetailsDto (UC-60, UC-61). */
 export interface RegistrationDetails {

@@ -13,7 +13,8 @@ public enum SettingType
     DimensionType,
 }
 
-public enum Gender { Male, Female, Other }
+/// <summary>Male or Female, as every form of SRS section III shows it (Duck 16/10).</summary>
+public enum Gender { Male, Female }
 
 /// <summary>Practice counts the clock up, Exam counts it down (BR-06).</summary>
 public enum AttemptMode { Practice, Exam }

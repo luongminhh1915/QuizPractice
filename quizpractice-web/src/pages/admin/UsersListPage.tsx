@@ -11,7 +11,7 @@ import { useUserChoices, useUserList } from '../../hooks/useUsers'
 
 const toNumber = (value: string | undefined) => (value ? Number(value) : undefined)
 
-const GENDERS: Gender[] = ['Male', 'Female', 'Other']
+const GENDERS: Gender[] = ['Male', 'Female']
 const STATUSES: UserStatus[] = ['Unverified', 'Active', 'Inactive']
 
 /** Users List (SRS III 9.1; PDF II.9, F#37; UC-62 View Users List). Admin only. */

@@ -16,7 +16,7 @@ export interface LoginInput {
   password: string
 }
 
-export type Gender = 'Male' | 'Female' | 'Other'
+export type Gender = 'Male' | 'Female'
 
 /** User Register form (UC-02). */
 export interface RegisterInput {

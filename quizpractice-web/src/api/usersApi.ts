@@ -1,7 +1,7 @@
 import { http } from './client'
 import type { ListCriteria, Page } from './types'
 
-export type Gender = 'Male' | 'Female' | 'Other'
+export type Gender = 'Male' | 'Female'
 
 /** User (BR-01, BR-23): Unverified until the verification link is opened, or until the Admin sets it Active. */
 export type UserStatus = 'Unverified' | 'Active' | 'Inactive'

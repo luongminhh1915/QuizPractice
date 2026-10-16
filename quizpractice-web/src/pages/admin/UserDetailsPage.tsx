@@ -145,7 +145,7 @@ export function UserDetailsPage() {
               <Input />
             </Form.Item>
             <Form.Item label="Gender" name="gender" rules={[{ required: true }]}>
-              <Radio.Group options={['Male', 'Female', 'Other']} />
+              <Radio.Group options={['Male', 'Female']} />
             </Form.Item>
             <Space size="large" align="start" wrap>
               <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Enter the email.' }, { type: 'email', message: 'Enter a valid email.' }]}>
