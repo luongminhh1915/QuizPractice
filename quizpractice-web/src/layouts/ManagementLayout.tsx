@@ -27,6 +27,7 @@ const CRUMBS: Record<string, string> = {
  * not have is refused here too, so typing its address shows a refusal instead of an
  * empty screen (BR-03). This only hides screens: the API checks every request again.
  * A guest never sees this frame: it goes back to the Home Page with the login pop-up.
+ * Neither does a role without any management screen (the customer): back home.
  */
 export function ManagementLayout() {
   const me = useCurrentUser()
@@ -34,6 +35,7 @@ export function ManagementLayout() {
   const user = me.data
 
   if (!me.isPending && !user) return <SignInFirst />
+  if (user && !firstScreen(user.menu)) return <StaffOnly />
 
   // The menu item this address belongs to, e.g. /manage/posts/7 → Posts.
   const currentItem = menuItemOf(pathname)
@@ -107,6 +109,22 @@ function SignInFirst() {
     message.info('Sign in to open that screen.')
     openModal('login', { signInTo: pathname + search })
   }, [navigate, pathname, search, openModal, message])
+
+  return null
+}
+
+/** BR-03: a customer typed a management address; it has no management screen at all. */
+function StaffOnly() {
+  const navigate = useNavigate()
+  const { message } = App.useApp()
+  const sent = useRef(false)
+
+  useEffect(() => {
+    if (sent.current) return
+    sent.current = true
+    navigate('/', { replace: true })
+    message.info('That screen is for staff.')
+  }, [navigate, message])
 
   return null
 }
