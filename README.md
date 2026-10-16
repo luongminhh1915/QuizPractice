@@ -47,6 +47,7 @@ Lần đầu API chạy ở môi trường Development trên database đã migra
 | Quiz (`DevQuizSeeder`) | 4 quiz: *Java OOP Practice Exam* (đã có 1 bài làm của `customer@gmail.com`), *Chapter 1 Quiz* (lesson quiz), *Java OOP Mini Exam (retired)* (Inactive, để thử xoá), *SQL Practice Exam*. Ghi khi bảng Quizzes còn trống |
 | Đơn đăng ký (`DevRegistrationSeeder`) | 5 khách mẫu (`an.tran@gmail.com`…) và 20 đơn rải 14 ngày (Paid, Submitted, Cancelled) cho Dashboard. Ghi khi bảng Registrations còn trống |
 | Bài viết (`DevPostSeeder`) | 6 bài của `marketing@gmail.com`, có ảnh, 4 danh mục, 3 bài featured (Hot Posts ở Home), 1 bài Hidden. Ghi khi chưa có bài mẫu nào (tìm theo tiêu đề) |
+| Slider (`DevSliderSeeder`) | 3 slider có ảnh (`wwwroot/seed/sliders/`): 2 Shown hiện ở carousel trang Home, 1 Hidden. Ghi khi chưa có slider mẫu nào (tìm theo tiêu đề) |
 
 | Email | Role |
 |---|---|

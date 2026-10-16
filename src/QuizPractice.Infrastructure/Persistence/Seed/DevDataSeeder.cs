@@ -44,6 +44,7 @@ public static class DevDataSeeder
 
         await DevQuizSeeder.SeedAsync(db, logger, DateTime.UtcNow, ct);
         await DevPostSeeder.SeedAsync(db, logger, DateTime.UtcNow, ct);
+        await DevSliderSeeder.SeedAsync(db, logger, ct);
         await DevRegistrationSeeder.SeedAsync(db, hasher, logger, DateTime.UtcNow, ct);
         return true;
     }
