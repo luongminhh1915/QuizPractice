@@ -95,7 +95,7 @@ public sealed record QuizSubjectDto(int Id, string Name, byte PassRate);
 /// <summary>The choices of the Overview tab: subjects, question levels and quiz types (BR-16).</summary>
 public sealed record QuizChoicesDto(
     IReadOnlyList<QuizSubjectDto> Subjects,
-    IReadOnlyList<QuestionLookupDto> Levels,
+    IReadOnlyList<LevelDto> Levels,
     IReadOnlyList<QuestionLookupDto> Types);
 
 /// <summary>

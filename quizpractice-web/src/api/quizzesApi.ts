@@ -1,6 +1,6 @@
 import { http } from './client'
 import type { ActiveStatus, ListCriteria, Page } from './types'
-import type { QuestionLookup } from './questionsApi'
+import type { QuestionLevel, QuestionLookup } from './questionsApi'
 
 /** Matches QuizSummaryDto of the API: a row of Quizzes List. */
 export interface QuizSummary {
@@ -80,7 +80,7 @@ export interface QuizSubject extends QuestionLookup {
 
 export interface QuizChoices {
   subjects: QuizSubject[]
-  levels: QuestionLookup[]
+  levels: QuestionLevel[]
   types: QuestionLookup[]
 }
 

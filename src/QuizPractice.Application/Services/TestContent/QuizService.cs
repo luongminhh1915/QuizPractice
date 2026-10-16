@@ -77,7 +77,7 @@ public class QuizService(
         var types = await quizzes.GetTypesAsync(ct);
         return new QuizChoicesDto(
             subjects.Select(s => new QuizSubjectDto(s.Id, s.Name, s.PassRate)).ToList(),
-            levels.Where(l => l.Status == ActiveStatus.Active).Select(l => new QuestionLookupDto(l.Id, l.Value)).ToList(),
+            levels.Select(LevelDto.From).ToList(),
             types.Where(t => t.Status == ActiveStatus.Active).Select(t => new QuestionLookupDto(t.Id, t.Value)).ToList());
     }
 

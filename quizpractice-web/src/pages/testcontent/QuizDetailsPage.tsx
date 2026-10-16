@@ -7,6 +7,7 @@ import { applyFieldErrors, errorMessage, problemOf } from '../../api/client'
 import { PageHeader } from '../../components/PageHeader'
 import { LONG_TEXT_MAX, NAME_MAX } from '../../constants/fieldLength'
 import { useChangeQuizStatus, useQuiz, useQuizChoices, useQuizGroups, useSaveQuiz } from '../../hooks/useQuizzes'
+import { levelOptions } from '../../utils/levelOptions'
 
 type RuleRow = { groupId?: number; questionCount?: number }
 type FormValues = Omit<QuizInput, 'rules'> & { rules: RuleRow[] }
@@ -167,7 +168,7 @@ export function QuizDetailsPage() {
           />
         </Form.Item>
         <Form.Item label="Level" name="levelId" rules={[{ required: true, message: 'Choose a level.' }]} style={{ width: 160 }}>
-          <Select placeholder="Level" options={(choices.data?.levels ?? []).map((l) => ({ value: l.id, label: l.name }))} />
+          <Select placeholder="Level" options={levelOptions(choices.data?.levels ?? [], stored.data?.levelId)} />
         </Form.Item>
         <Form.Item label="Duration (min)" name="durationMin" rules={[{ required: true, message: 'Enter the duration.' }]}>
           <InputNumber min={1} max={180} precision={0} style={{ width: 130 }} />
