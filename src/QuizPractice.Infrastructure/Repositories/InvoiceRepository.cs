@@ -71,7 +71,7 @@ public class InvoiceRepository(AppDbContext db) : IInvoiceRepository
             .ThenByDescending(i => i.CreatedAt).ThenByDescending(i => i.Id)
             .Include(i => i.User)
             .Include(i => i.ConfirmedBy)
-            .Include(i => i.Registrations)
+            .Include(i => i.Items)
             .Skip(page.Skip)
             .Take(page.PageSize)
             .ToListAsync(ct);

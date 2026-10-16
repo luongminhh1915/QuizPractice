@@ -60,6 +60,6 @@ public sealed record SaleInvoiceSummaryDto(
     string? ConfirmedBy)
 {
     public static SaleInvoiceSummaryDto From(Invoice i) =>
-        new(i.Id, i.Code, i.User.Email, DateTime.SpecifyKind(i.CreatedAt, DateTimeKind.Utc), i.Registrations.Count, i.TotalAmount,
+        new(i.Id, i.Code, i.User.Email, DateTime.SpecifyKind(i.CreatedAt, DateTimeKind.Utc), i.Items.Count, i.TotalAmount,
             i.Status, i.PaidAt is { } paid ? DateTime.SpecifyKind(paid, DateTimeKind.Utc) : null, i.ConfirmedBy?.Email);
 }
