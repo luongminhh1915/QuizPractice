@@ -96,6 +96,9 @@ public class MyInvoiceService(
             r.Invoice = invoice;
             r.UpdatedById = userId;
             invoice.Registrations.Add(r);
+            // The lines the invoice keeps for good, even if it is cancelled and the
+            // registration goes into a new invoice (InvoiceItem).
+            invoice.Items.Add(new InvoiceItem { Registration = r, Amount = r.TotalCost });
         }
 
         invoices.Add(invoice);
