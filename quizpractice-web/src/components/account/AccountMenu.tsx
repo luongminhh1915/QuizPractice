@@ -45,10 +45,11 @@ export function AccountMenu({ area }: { area: 'public' | 'manage' }) {
   const onMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key === 'profile') openModal('profile')
     if (key === 'password') openModal('password')
-    // UC-08: back to the public home page with the guest menu. Leave the page first: a
-    // management screen that saw the user disappear would flash "Sign in" meanwhile.
+    // UC-08: back to the public home page with the guest menu. Leave the page first, at
+    // once (flushSync, not the router's default transition): a management screen that saw
+    // the user disappear would send the guest home with the login pop-up.
     if (key === 'logout') {
-      navigate('/')
+      navigate('/', { flushSync: true })
       logout.mutate(undefined, { onSettled: () => message.success('You have signed out.') })
     }
   }
