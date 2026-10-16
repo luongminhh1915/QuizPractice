@@ -13,11 +13,11 @@ public sealed record MyInvoiceListRequest(InvoiceStatus? Status = null, int Page
 public sealed record InvoiceSummaryDto(int Id, string Code, DateTime CreatedAt, int RegistrationCount, decimal TotalAmount, InvoiceStatus Status, DateTime? PaidAt)
 {
     public static InvoiceSummaryDto From(Invoice i) =>
-        new(i.Id, i.Code, DateTime.SpecifyKind(i.CreatedAt, DateTimeKind.Utc), i.Registrations.Count, i.TotalAmount, i.Status,
+        new(i.Id, i.Code, DateTime.SpecifyKind(i.CreatedAt, DateTimeKind.Utc), i.Items.Count, i.TotalAmount, i.Status,
             i.PaidAt is { } paid ? DateTime.SpecifyKind(paid, DateTimeKind.Utc) : null);
 }
 
-/// <summary>One registration an invoice pays for (SRS III 2.7, Registrations).</summary>
+/// <summary>One registration an invoice was made for, with the amount it counted then (SRS III 2.7, Registrations).</summary>
 public sealed record InvoiceLineDto(int Id, string SubjectName, string PackageName, decimal TotalCost);
 
 /// <summary>
@@ -44,5 +44,6 @@ public sealed record InvoiceDto(
             DateTime.SpecifyKind(i.CreatedAt, DateTimeKind.Utc),
             i.PaidAt is { } paid ? DateTime.SpecifyKind(paid, DateTimeKind.Utc) : null,
             i.TotalAmount, i.BankName, i.BankBin, i.AccountNumber, i.AccountName, qrPayload,
-            i.Registrations.OrderBy(r => r.Id).Select(r => new InvoiceLineDto(r.Id, r.Subject.Name, r.Package.Name, r.TotalCost)).ToList());
+            i.Items.OrderBy(x => x.RegistrationId)
+                .Select(x => new InvoiceLineDto(x.RegistrationId, x.Registration.Subject.Name, x.Registration.Package.Name, x.Amount)).ToList());
 }

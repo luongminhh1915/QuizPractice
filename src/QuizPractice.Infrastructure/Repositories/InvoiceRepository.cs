@@ -17,8 +17,10 @@ public class InvoiceRepository(AppDbContext db) : IInvoiceRepository
 
     public Task<Invoice?> GetOwnAsync(int id, int userId, CancellationToken ct = default) =>
         db.Invoices
-            .Include(i => i.Registrations).ThenInclude(r => r.Subject)
-            .Include(i => i.Registrations).ThenInclude(r => r.Package)
+            .Include(i => i.Registrations)
+            .Include(i => i.Items).ThenInclude(x => x.Registration).ThenInclude(r => r.Subject)
+            .Include(i => i.Items).ThenInclude(x => x.Registration).ThenInclude(r => r.Package)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId, ct);
 
     public async Task<Page<Invoice>> ListByUserAsync(int userId, InvoiceStatus? status, PageRequest page, CancellationToken ct = default)
@@ -31,7 +33,7 @@ public class InvoiceRepository(AppDbContext db) : IInvoiceRepository
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .Include(i => i.Registrations)
+            .Include(i => i.Items)
             .OrderByDescending(i => i.CreatedAt).ThenByDescending(i => i.Id)
             .Skip(page.Skip)
             .Take(page.PageSize)
