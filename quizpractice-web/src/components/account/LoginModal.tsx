@@ -3,15 +3,17 @@ import { Alert, App, Button, Flex, Form, Input, Modal, Typography } from 'antd'
 import { Link, useNavigate } from 'react-router'
 import type { LoginInput } from '../../api/accountApi'
 import { applyFieldErrors, errorMessage, problemOf } from '../../api/client'
-import { firstScreen } from '../../constants/menu'
+import { landingScreen } from '../../constants/menu'
 import { useLogin, useSendVerificationLink } from '../../hooks/useAccount'
 import { useOpenAccountModal } from './accountModalContext'
 
 /**
- * User Login (SRS III 1.1; F#1; UC-01). A management role lands on the first screen
- * of its menu; a customer stays on the page it signed in from.
+ * User Login (SRS III 1.1; F#1; UC-01). A management role lands on signInTo, the
+ * management address a guest typed (ManagementLayout), when the role has that screen,
+ * otherwise on the first screen of its menu; a customer stays on the page it signed
+ * in from.
  */
-export function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function LoginModal({ open, signInTo, onClose }: { open: boolean; signInTo?: string; onClose: () => void }) {
   const { message } = App.useApp()
   const navigate = useNavigate()
   const openModal = useOpenAccountModal()
@@ -32,7 +34,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
       onSuccess: (user) => {
         message.success(`Welcome, ${user.fullName}.`)
         close()
-        const home = firstScreen(user.menu)
+        const home = landingScreen(user.menu, signInTo)
         if (home) navigate(home)
       },
       onError: (e) => {

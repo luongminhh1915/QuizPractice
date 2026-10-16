@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react'
-import { Breadcrumb, Button, Flex, Layout, Menu, Result, Spin, Typography } from 'antd'
-import { Link, Outlet, useLocation } from 'react-router'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { App, Breadcrumb, Button, Flex, Layout, Menu, Result, Spin, Typography } from 'antd'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import { AccountMenu } from '../components/account/AccountMenu'
 import { useOpenAccountModal } from '../components/account/accountModalContext'
-import { firstScreen, MENU_SCREENS } from '../constants/menu'
+import { firstScreen, MENU_SCREENS, menuItemOf } from '../constants/menu'
 import { useCurrentUser } from '../hooks/useAccount'
 
 const { Header, Sider, Content } = Layout
@@ -19,8 +19,6 @@ const CRUMBS: Record<string, string> = {
   new: 'New',
 }
 
-const MANAGE_SCREENS = Object.entries(MENU_SCREENS).filter(([, s]) => s.area === 'manage')
-
 /**
  * Frame of every Marketing, Sale, Expert and Admin screen (SRS III 0.1): system name,
  * role menu, account menu, breadcrumb; the screen fills the content area.
@@ -28,14 +26,17 @@ const MANAGE_SCREENS = Object.entries(MENU_SCREENS).filter(([, s]) => s.area ===
  * The role menu is the one the API sends (D23). A screen whose menu item the role does
  * not have is refused here too, so typing its address shows a refusal instead of an
  * empty screen (BR-03). This only hides screens: the API checks every request again.
+ * A guest never sees this frame: it goes back to the Home Page with the login pop-up.
  */
 export function ManagementLayout() {
   const me = useCurrentUser()
   const { pathname } = useLocation()
   const user = me.data
 
+  if (!me.isPending && !user) return <SignInFirst />
+
   // The menu item this address belongs to, e.g. /manage/posts/7 → Posts.
-  const [currentItem] = MANAGE_SCREENS.find(([, s]) => pathname === s.path || pathname.startsWith(s.path + '/')) ?? []
+  const currentItem = menuItemOf(pathname)
   const menu = (user?.menu ?? []).filter((item) => MENU_SCREENS[item]?.area === 'manage')
 
   const segments = pathname.split('/').filter(Boolean)
@@ -46,8 +47,7 @@ export function ManagementLayout() {
   })
 
   let body: ReactNode = <Outlet />
-  if (me.isPending) body = <Spin style={{ display: 'block', padding: 48 }} />
-  else if (!user) body = <SignInFirst />
+  if (!user) body = <Spin style={{ display: 'block', padding: 48 }} />
   else if (currentItem && !menu.includes(currentItem)) body = <NotForRole home={firstScreen(user.menu)} />
 
   return (
@@ -88,20 +88,27 @@ export function ManagementLayout() {
   )
 }
 
-/** A Guest who opened a management address, or whose session ended. */
+/**
+ * A Guest who typed a management address, or whose session ended: back to the Home
+ * Page (replacing the address, so Back does not return here) with the login pop-up,
+ * which opens the address after signing in if the role has it.
+ */
 function SignInFirst() {
+  const navigate = useNavigate()
+  const { pathname, search } = useLocation()
   const openModal = useOpenAccountModal()
-  return (
-    <Result
-      status="403"
-      title="Sign in to open this screen"
-      extra={
-        <Button type="primary" onClick={() => openModal('login')}>
-          Login
-        </Button>
-      }
-    />
-  )
+  const { message } = App.useApp()
+  const sent = useRef(false)
+
+  useEffect(() => {
+    if (sent.current) return
+    sent.current = true
+    navigate('/', { replace: true })
+    message.info('Sign in to open that screen.')
+    openModal('login', { signInTo: pathname + search })
+  }, [navigate, pathname, search, openModal, message])
+
+  return null
 }
 
 /** BR-03: signed in, but the role does not have this screen. */

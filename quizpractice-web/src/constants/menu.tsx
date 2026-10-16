@@ -53,3 +53,21 @@ export const MENU_SCREENS: Record<string, MenuScreen> = {
 export function firstScreen(menu: string[]): string | undefined {
   return menu.map((item) => MENU_SCREENS[item]).find((s) => s?.area === 'manage' && s.ready)?.path
 }
+
+/** The management menu item an address belongs to, e.g. /manage/posts/7?view → Posts. */
+export function menuItemOf(address: string): string | undefined {
+  const path = address.split('?')[0]
+  return Object.entries(MENU_SCREENS).find(
+    ([, s]) => s.area === 'manage' && (path === s.path || path.startsWith(s.path + '/')),
+  )?.[0]
+}
+
+/**
+ * Where a role lands after signing in: the management address the guest typed when
+ * the role has that screen, otherwise the first screen of its menu (UC-01).
+ */
+export function landingScreen(menu: string[], wanted?: string): string | undefined {
+  const item = wanted ? menuItemOf(wanted) : undefined
+  if (wanted && item && menu.includes(item) && MENU_SCREENS[item].ready) return wanted
+  return firstScreen(menu)
+}
