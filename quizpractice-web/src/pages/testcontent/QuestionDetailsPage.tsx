@@ -9,6 +9,7 @@ import { QuestionMediaInput } from '../../components/QuestionMediaInput'
 import { ANSWER_OPTION_MAX, LONG_TEXT_MAX, MAX_OPTIONS, MIN_OPTIONS } from '../../constants/fieldLength'
 import { useQuestion, useQuestionFilters, useSaveQuestion } from '../../hooks/useQuestions'
 import { groupedOptions } from '../../utils/groupedOptions'
+import { levelOptions } from '../../utils/levelOptions'
 
 type FormValues = Omit<QuestionInput, 'removeMedia'>
 
@@ -146,7 +147,7 @@ export function QuestionDetailsPage() {
             />
           </Form.Item>
           <Form.Item label="Level" name="levelId" rules={[{ required: true, message: 'Choose a level.' }]} style={{ width: 140 }}>
-            <Select placeholder="Level" options={(choices?.levels ?? []).map((l) => ({ value: l.id, label: l.name }))} />
+            <Select placeholder="Level" options={levelOptions(choices?.levels ?? [], stored.data?.levelId)} />
           </Form.Item>
           <Form.Item label="Status" name="status" extra="Only a shown question is drawn into new practices and quizzes.">
             <Radio.Group optionType="button" options={['Shown', 'Hidden']} />

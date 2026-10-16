@@ -66,7 +66,7 @@ public class QuestionService(
 
         return new QuestionFiltersDto(
             subjects.Select(s => new QuestionLookupDto(s.Id, s.Name)).ToList(),
-            levels.Select(l => new QuestionLookupDto(l.Id, l.Value)).ToList(),
+            levels.Select(LevelDto.From).ToList(),
             lessons,
             dimensions);
     }

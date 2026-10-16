@@ -133,6 +133,15 @@ public static class QuestionVersion
 /// <summary>An entry of a filter list: a subject or a level.</summary>
 public sealed record QuestionLookupDto(int Id, string Name);
 
+/// <summary>
+/// A Question Level setting. An inactive one stays in the list filters, to find older
+/// questions, but a details form offers it only to the record that already has it.
+/// </summary>
+public sealed record LevelDto(int Id, string Name, bool Active)
+{
+    public static LevelDto From(Setting s) => new(s.Id, s.Value, s.Status == ActiveStatus.Active);
+}
+
 /// <summary>A lesson of the chosen subject; Topic groups the Lesson list.</summary>
 public sealed record QuestionLessonDto(int Id, string Name, string Topic)
 {
@@ -152,6 +161,6 @@ public sealed record QuestionDimensionDto(int Id, string Name, string Type)
 /// </summary>
 public sealed record QuestionFiltersDto(
     IReadOnlyList<QuestionLookupDto> Subjects,
-    IReadOnlyList<QuestionLookupDto> Levels,
+    IReadOnlyList<LevelDto> Levels,
     IReadOnlyList<QuestionLessonDto> Lessons,
     IReadOnlyList<QuestionDimensionDto> Dimensions);

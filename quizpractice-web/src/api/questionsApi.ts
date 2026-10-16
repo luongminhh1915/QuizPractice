@@ -20,6 +20,11 @@ export interface QuestionLookup {
   name: string
 }
 
+/** A Question Level; an inactive one is offered only to the record that already has it. */
+export interface QuestionLevel extends QuestionLookup {
+  active: boolean
+}
+
 export interface QuestionLesson extends QuestionLookup {
   topic: string
 }
@@ -111,7 +116,7 @@ export interface ImportResult {
 /** Choices of the filters: subjects the user may reach (BR-11); lessons and dimensions of the chosen subject. */
 export interface QuestionFilters {
   subjects: QuestionLookup[]
-  levels: QuestionLookup[]
+  levels: QuestionLevel[]
   lessons: QuestionLesson[]
   dimensions: QuestionDimension[]
 }
