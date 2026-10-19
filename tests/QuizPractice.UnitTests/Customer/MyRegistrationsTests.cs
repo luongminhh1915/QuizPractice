@@ -177,4 +177,56 @@ public class MyRegistrationsTests
 
         ResultAssert.Failed(result, ErrorType.Conflict, "Registration.Settled");
     }
+
+    // ------------------------------------------------------------------ UC-17
+
+    [Fact]
+    public async Task CancelAsync_OwnSubmittedRegistration_BecomesCancelled()
+    {
+        var dto = ResultAssert.Succeeded(await Service().CancelAsync(7));
+
+        Assert.Equal(RegistrationStatus.Cancelled, dto.Status);
+        Assert.Equal(_customer.Id, _registration.UpdatedById);
+        Assert.Null(_registration.ValidFrom);
+    }
+
+    [Fact]
+    public async Task CancelAsync_PaidRegistration_ReturnsSettled()
+    {
+        _registration.Status = RegistrationStatus.Paid;
+
+        var result = await Service().CancelAsync(7);
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.Settled");
+        _unitOfWork.Verify(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CancelAsync_InUnpaidInvoice_ReturnsInUnpaidInvoice()
+    {
+        TestData.InvoiceWith(InvoiceStatus.Unpaid, _registration);
+
+        var result = await Service().CancelAsync(7);
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.InUnpaidInvoice");
+        Assert.Equal(RegistrationStatus.Submitted, _registration.Status);
+    }
+
+    [Fact]
+    public async Task CancelAsync_InCancelledInvoice_IsAllowed()
+    {
+        TestData.InvoiceWith(InvoiceStatus.Cancelled, _registration);
+
+        var result = await Service().CancelAsync(7);
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task CancelAsync_AnotherCustomersRegistration_ReturnsNotFound()
+    {
+        var result = await Service(MockUser.Customer(TestData.OtherCustomerId)).CancelAsync(7);
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Registration.NotFound");
+    }
 }
