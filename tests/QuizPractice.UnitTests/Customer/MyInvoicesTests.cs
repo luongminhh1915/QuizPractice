@@ -152,4 +152,68 @@ public class MyInvoicesTests
 
         ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
     }
+
+    // ------------------------------------------------------------------ UC-18 view and cancel
+
+    [Fact]
+    public async Task GetAsync_UnpaidInvoice_HasQrCode()
+    {
+        Own(TestData.InvoiceWith(InvoiceStatus.Unpaid, _java));
+
+        var dto = ResultAssert.Succeeded(await Service().GetAsync(50));
+
+        Assert.NotNull(dto.QrPayload);
+    }
+
+    [Fact]
+    public async Task GetAsync_PaidInvoice_HasNoQrCode()
+    {
+        Own(TestData.InvoiceWith(InvoiceStatus.Paid, _java));
+
+        var dto = ResultAssert.Succeeded(await Service().GetAsync(50));
+
+        Assert.Null(dto.QrPayload);
+    }
+
+    [Fact]
+    public async Task CancelAsync_UnpaidInvoice_BecomesCancelledAndFreesItsRegistrations()
+    {
+        var invoice = Own(TestData.InvoiceWith(InvoiceStatus.Unpaid, _java));
+
+        var dto = ResultAssert.Succeeded(await Service().CancelAsync(50));
+
+        Assert.Equal(InvoiceStatus.Cancelled, dto.Status);
+        Assert.Null(dto.QrPayload);
+        Assert.True(MyRegistrationDto.From(_java).CanChange);
+        Assert.Equal(RegistrationStatus.Submitted, invoice.Registrations[0].Status);
+    }
+
+    [Fact]
+    public async Task CancelAsync_PaidInvoice_ReturnsClosed()
+    {
+        Own(TestData.InvoiceWith(InvoiceStatus.Paid, _java));
+
+        var result = await Service().CancelAsync(50);
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Invoice.Closed");
+    }
+
+    [Fact]
+    public async Task CancelAsync_ConfirmedBySaleMeanwhile_ReturnsClosed()
+    {
+        Own(TestData.InvoiceWith(InvoiceStatus.Unpaid, _java));
+        _unitOfWork.Setup(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var result = await Service().CancelAsync(50);
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Invoice.Closed");
+    }
+
+    [Fact]
+    public async Task CancelAsync_AnotherCustomersInvoice_ReturnsNotFound()
+    {
+        var result = await Service().CancelAsync(77);
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Invoice.NotFound");
+    }
 }
