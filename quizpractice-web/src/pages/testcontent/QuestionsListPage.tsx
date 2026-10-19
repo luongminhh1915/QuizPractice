@@ -4,7 +4,7 @@ import { ImportOutlined, PlusOutlined } from '@ant-design/icons'
 import { Link, useLocation } from 'react-router'
 import type { QuestionSummary } from '../../api/questionsApi'
 import type { VisibilityStatus } from '../../api/types'
-import { errorMessage } from '../../api/client'
+import { errorMessage, problemOf } from '../../api/client'
 import { DataTable, type DataTableColumn } from '../../components/DataTable'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusTag } from '../../components/StatusTag'
@@ -105,6 +105,14 @@ export function QuestionsListPage() {
   ]
 
   const error = query.error ?? filters.error
+  // A list has no form to put field errors under, so a refused criterion (e.g. a lesson
+  // typed in the address without its subject) shows its own reason, not only the title.
+  const fieldErrors = problemOf(error)?.errors
+  const errorText = fieldErrors ? Object.values(fieldErrors).flat().join(' ') : error && errorMessage(error)
+  // A lesson or dimension the subject's choices do not have (or no subject yet) is not
+  // shown as a bare id in the box.
+  const lessonShown = choices?.lessons.some((l) => l.id === lessonId) ? lessonId : undefined
+  const dimensionsShown = dimensionIds?.filter((id) => choices?.dimensions.some((d) => d.id === id))
 
   return (
     <>
@@ -151,7 +159,7 @@ export function QuestionsListPage() {
         />
         <Select
           aria-label="Lesson"
-          value={lessonId ?? 'All'}
+          value={lessonShown ?? 'All'}
           disabled={subjectId === undefined}
           onChange={(value) => list.set({ lessonId: value === 'All' ? undefined : value })}
           options={[{ value: 'All', label: 'All lessons' }, ...groupedOptions(choices?.lessons ?? [], (l) => l.topic)]}
@@ -161,7 +169,7 @@ export function QuestionsListPage() {
         <Select
           aria-label="Dimension"
           mode="multiple"
-          value={dimensionIds ?? []}
+          value={dimensionsShown ?? []}
           disabled={subjectId === undefined}
           placeholder="All dimensions"
           allowClear
@@ -190,7 +198,7 @@ export function QuestionsListPage() {
         />
       </Space>
 
-      {error && <Typography.Paragraph type="danger">{errorMessage(error)}</Typography.Paragraph>}
+      {error && <Typography.Paragraph type="danger">{errorText}</Typography.Paragraph>}
 
       {importOpen && (
         <QuestionImportModal
