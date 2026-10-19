@@ -216,4 +216,39 @@ public class MyInvoicesTests
 
         ResultAssert.Failed(result, ErrorType.NotFound, "Invoice.NotFound");
     }
+
+    // ------------------------------------------------------------------ UC-67
+
+    [Fact]
+    public async Task ListAsync_WithStatusFilter_ReturnsOwnInvoices()
+    {
+        var unpaid = TestData.InvoiceWith(InvoiceStatus.Unpaid, _java, _sql);
+        _invoices.Setup(i => i.ListByUserAsync(_customer.Id, InvoiceStatus.Unpaid, It.IsAny<PageRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Page<Invoice>([unpaid], 1, 1, 10));
+
+        var page = ResultAssert.Succeeded(await Service().ListAsync(new MyInvoiceListRequest(InvoiceStatus.Unpaid)));
+
+        var row = Assert.Single(page.Items);
+        Assert.Equal(2, row.RegistrationCount);
+        Assert.Equal(550_000m, row.TotalAmount);
+    }
+
+    [Fact]
+    public async Task ListAsync_NoInvoiceYet_ReturnsEmptyPage()
+    {
+        _invoices.Setup(i => i.ListByUserAsync(_customer.Id, null, It.IsAny<PageRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Page<Invoice>([], 0, 1, 10));
+
+        var page = ResultAssert.Succeeded(await Service().ListAsync(new MyInvoiceListRequest()));
+
+        Assert.Empty(page.Items);
+    }
+
+    [Fact]
+    public async Task ListAsync_UndefinedStatus_ReturnsValidationError()
+    {
+        var result = await Service().ListAsync(new MyInvoiceListRequest((InvoiceStatus)9));
+
+        ResultAssert.Invalid(result, "Status");
+    }
 }
