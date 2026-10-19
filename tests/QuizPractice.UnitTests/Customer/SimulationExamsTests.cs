@@ -78,4 +78,102 @@ public class SimulationExamsTests
 
         Assert.Empty(filters.Subjects);
     }
+
+    // ------------------------------------------------------------------ UC-23
+
+    [Fact]
+    public async Task GetAsync_WithUnfinishedAttempt_OffersToResumeIt()
+    {
+        OpenAttempt(LearningData.Attempt(950, AttemptMode.Exam, _exam, questions: LearningData.Question(1)));
+
+        var dto = ResultAssert.Succeeded(await Service().GetAsync(300));
+
+        Assert.Equal(950, dto.OpenAttemptId);
+    }
+
+    [Fact]
+    public async Task StartAsync_DrawsQuestionsByTheRulesOfTheExam()
+    {
+        var created = ResultAssert.Succeeded(await Service().StartAsync(300));
+
+        Assert.Equal(901, created.Id);
+        Assert.Equal(AttemptMode.Exam, _added!.Mode);
+        Assert.Equal(300, _added.QuizId);
+        Assert.Equal(3, _added.QuestionCount);
+        var ids = _added.Questions.Select(q => q.QuestionId).ToList();
+        Assert.Equal(2, ids.Count(id => id is 1 or 2 or 3));
+        Assert.Contains(4, ids);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task StartAsync_WithUnfinishedAttempt_ReturnsUnfinished()
+    {
+        OpenAttempt(LearningData.Attempt(950, AttemptMode.Exam, _exam, questions: LearningData.Question(1)));
+
+        var result = await Service().StartAsync(300);
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Exam.Unfinished");
+        _attempts.Verify(a => a.Add(It.IsAny<Attempt>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task StartAsync_UnfinishedAttemptPastItsTime_IsScoredAndANewOneStarts()
+    {
+        var expired = LearningData.Attempt(950, AttemptMode.Exam, _exam, DateTime.UtcNow.AddMinutes(-31), questions: LearningData.Question(1));
+        OpenAttempt(expired);
+
+        var result = await Service().StartAsync(300);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AttemptStatus.Submitted, expired.Status);
+    }
+
+    [Fact]
+    public async Task StartAsync_GroupShortOfQuestions_ReturnsNotAvailable()
+    {
+        _exam.Rules[1].QuestionCount = 2; // topic 12 holds only one shown question
+
+        var result = await Service().StartAsync(300);
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Exam.NotAvailable");
+    }
+
+    [Fact]
+    public async Task StartAsync_NoValidAccess_ReturnsNoAccess()
+    {
+        LearningData.SetupAccess(_registrations);
+
+        var result = await Service().StartAsync(300);
+
+        ResultAssert.Failed(result, ErrorType.Forbidden, "Subject.NoAccess");
+    }
+
+    [Fact]
+    public async Task StartAsync_InactiveExam_ReturnsNotFound()
+    {
+        _exam.Status = ActiveStatus.Inactive;
+
+        var result = await Service().StartAsync(300);
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Exam.NotFound");
+    }
+
+    [Fact]
+    public async Task StartAsync_LessonQuiz_ReturnsNotFound()
+    {
+        _exam.Type = LearningData.LessonQuizType;
+
+        var result = await Service().StartAsync(300);
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Exam.NotFound");
+    }
+
+    [Fact]
+    public async Task StartAsync_Guest_ReturnsAuthRequired()
+    {
+        var result = await Service(MockUser.Guest()).StartAsync(300);
+
+        ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
+    }
 }
