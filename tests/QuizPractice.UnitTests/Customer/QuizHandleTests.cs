@@ -195,6 +195,77 @@ public class QuizHandleTests
         ResultAssert.Failed(result, ErrorType.Forbidden, "Attempt.NoPeek");
     }
 
+    // ------------------------------------------------------------------ UC-29
+
+    [Fact]
+    public async Task SubmitAsync_TwoOfThreeCorrect_ScoresAndClosesTheAttempt()
+    {
+        var attempt = Practice();
+        attempt.Questions[0].ChosenOptionId = LearningData.CorrectOptionOf(_q1);
+        attempt.Questions[1].ChosenOptionId = LearningData.CorrectOptionOf(_q2);
+        attempt.Questions[2].ChosenOptionId = LearningData.WrongOptionOf(_q3);
+
+        var dto = ResultAssert.Succeeded(await Service().SubmitAsync(900));
+
+        Assert.Equal(2, dto.Correct);
+        Assert.Equal(66.67m, dto.Score);
+        Assert.Equal(50, dto.PassRate); // the subject's pass rate for a practice (BR-21)
+        Assert.True(dto.Passed);
+        Assert.Equal(AttemptStatus.Submitted, attempt.Status);
+        Assert.NotNull(attempt.FinishedAt);
+    }
+
+    [Fact]
+    public async Task SubmitAsync_NoAnswer_ScoresZero()
+    {
+        Practice();
+
+        var dto = ResultAssert.Succeeded(await Service().SubmitAsync(900));
+
+        Assert.Equal(0, dto.Correct);
+        Assert.Equal(0m, dto.Score);
+        Assert.False(dto.Passed);
+    }
+
+    [Fact]
+    public async Task SubmitAsync_ExamAtExactlyItsPassRate_Passes()
+    {
+        var q = Enumerable.Range(1, 10).Select(i => LearningData.Question(i)).ToArray();
+        var attempt = Own(LearningData.Attempt(900, AttemptMode.Exam,
+            LearningData.Exam(300, passRate: 70, subject: _java, rules: (11, 10)), questions: q));
+        foreach (var row in attempt.Questions.Take(7))
+        {
+            row.ChosenOptionId = LearningData.CorrectOptionOf(row.Question);
+        }
+
+        var dto = ResultAssert.Succeeded(await Service().SubmitAsync(900));
+
+        Assert.Equal(70m, dto.Score);
+        Assert.Equal(70, dto.PassRate);
+        Assert.True(dto.Passed);
+    }
+
+    [Fact]
+    public async Task SubmitAsync_AfterTheCountdown_FinishesAtTheEndTime()
+    {
+        var started = DateTime.UtcNow.AddMinutes(-40);
+        var attempt = Exam(started);
+
+        ResultAssert.Succeeded(await Service().SubmitAsync(900));
+
+        Assert.Equal(started.AddMinutes(30), attempt.FinishedAt);
+    }
+
+    [Fact]
+    public async Task SubmitAsync_AlreadyScored_ReturnsClosed()
+    {
+        Practice().Status = AttemptStatus.Submitted;
+
+        var result = await Service().SubmitAsync(900);
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Attempt.Closed");
+    }
+
     [Fact]
     public async Task AnswerAsync_AccessEndedDuringTheAttempt_ReturnsAccessEnded()
     {
