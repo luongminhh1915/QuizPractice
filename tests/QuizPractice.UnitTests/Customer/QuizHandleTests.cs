@@ -148,6 +148,29 @@ public class QuizHandleTests
     }
 
     [Fact]
+    public async Task MarkAsync_AnsweredQuestion_KeepsTheAnswer()
+    {
+        var attempt = Practice();
+        attempt.Questions[1].ChosenOptionId = 23;
+
+        var dto = ResultAssert.Succeeded(await Service().MarkAsync(900, 2, new MarkRequest(true)));
+
+        Assert.True(dto.IsMarked);
+        Assert.Equal(23, dto.ChosenOptionId);
+    }
+
+    [Fact]
+    public async Task MarkAsync_Unmark_ClearsTheMark()
+    {
+        var attempt = Practice();
+        attempt.Questions[0].IsMarked = true;
+
+        await Service().MarkAsync(900, 1, new MarkRequest(false));
+
+        Assert.False(attempt.Questions[0].IsMarked);
+    }
+
+    [Fact]
     public async Task AnswerAsync_AccessEndedDuringTheAttempt_ReturnsAccessEnded()
     {
         Practice();
