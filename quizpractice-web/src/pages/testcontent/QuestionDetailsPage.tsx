@@ -200,6 +200,12 @@ export function QuestionDetailsPage() {
                       {fields.map((field, index) => (
                         <Flex key={field.key} gap={8} align="start">
                           <Radio value={index} aria-label={`Option ${index + 1} is correct`} style={{ marginTop: 5 }} />
+                          {/* The stored option's id goes back on Save (a field not registered here is
+                              left out of the values): without it the API reads every option as removed
+                              and added again, and refuses a question customers answered (UC-54 A2). */}
+                          <Form.Item name={[field.name, 'id']} hidden noStyle>
+                            <Input />
+                          </Form.Item>
                           <Form.Item
                             name={[field.name, 'content']}
                             rules={[
