@@ -31,6 +31,12 @@ export function problemOf(error: unknown): ProblemDetails | undefined {
 
 /** A short sentence for the message area (SRS III 0.1) whatever went wrong. */
 export function errorMessage(error: unknown): string {
+  // An unhandled error (500), e.g. the database is unavailable: the framework's title says
+  // nothing to the user, and the last exception of every use case asks for a retry message.
+  // A 502 keeps its own detail (e.g. the mail could not be sent).
+  if (error instanceof AxiosError && error.response?.status === 500) {
+    return 'Something went wrong on the server. Try again in a moment.'
+  }
   const problem = problemOf(error)
   if (problem?.detail) return problem.detail
   if (problem?.title) return problem.title
