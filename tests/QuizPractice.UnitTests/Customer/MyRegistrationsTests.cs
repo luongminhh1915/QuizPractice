@@ -95,4 +95,86 @@ public class MyRegistrationsTests
 
         ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
     }
+
+    // ------------------------------------------------------------------ UC-16
+
+    [Fact]
+    public async Task GetChangeFormAsync_OwnSubmittedRegistration_PreselectsTheStoredPackage()
+    {
+        var form = ResultAssert.Succeeded(await Service().GetChangeFormAsync(7));
+
+        Assert.Equal(100, form.SelectedPackageId);
+        Assert.Equal([100, 101], form.Packages.Select(p => p.Id));
+    }
+
+    [Fact]
+    public async Task GetChangeFormAsync_AnotherCustomersRegistration_ReturnsNotFound()
+    {
+        var result = await Service().GetChangeFormAsync(99);
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Registration.NotFound");
+    }
+
+    [Fact]
+    public async Task ChangeAsync_AnotherActivePackage_UpdatesCostAndCopiesTheProfileAgain()
+    {
+        _customer.Mobile = "0900000000";
+
+        var dto = ResultAssert.Succeeded(await Service().ChangeAsync(7, new ChangeRegistrationRequest(101)));
+
+        Assert.Equal(101, dto.PackageId);
+        Assert.Equal(500_000m, dto.TotalCost);
+        Assert.Equal(RegistrationStatus.Submitted, dto.Status);
+        Assert.Equal("0900000000", _registration.Mobile);
+        _unitOfWork.Verify(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChangeAsync_InactivePackage_ReturnsPackageNotAvailable()
+    {
+        var result = await Service().ChangeAsync(7, new ChangeRegistrationRequest(_retired.Id));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Package.NotAvailable");
+    }
+
+    [Fact]
+    public async Task ChangeAsync_PaidRegistration_ReturnsSettled()
+    {
+        _registration.Status = RegistrationStatus.Paid;
+
+        var result = await Service().ChangeAsync(7, new ChangeRegistrationRequest(101));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.Settled");
+    }
+
+    [Fact]
+    public async Task ChangeAsync_InUnpaidInvoice_ReturnsInUnpaidInvoice()
+    {
+        TestData.InvoiceWith(InvoiceStatus.Unpaid, _registration);
+
+        var result = await Service().ChangeAsync(7, new ChangeRegistrationRequest(101));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.InUnpaidInvoice");
+    }
+
+    [Fact]
+    public async Task ChangeAsync_ProfileWithBadMobile_ReturnsProfileIncomplete()
+    {
+        _customer.Mobile = "12345";
+
+        var result = await Service().ChangeAsync(7, new ChangeRegistrationRequest(101));
+
+        ResultAssert.Failed(result, ErrorType.Validation, "Profile.Incomplete");
+        Assert.Equal(100, _registration.PackageId);
+    }
+
+    [Fact]
+    public async Task ChangeAsync_SettledBySaleMeanwhile_ReturnsSettled()
+    {
+        _unitOfWork.Setup(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var result = await Service().ChangeAsync(7, new ChangeRegistrationRequest(101));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.Settled");
+    }
 }
