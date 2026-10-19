@@ -267,6 +267,18 @@ public class QuizHandleTests
     }
 
     [Fact]
+    public async Task AnswerAsync_ExamPastItsTime_ScoresItAndReturnsTimeUp()
+    {
+        var attempt = Exam(DateTime.UtcNow.AddMinutes(-31));
+
+        var result = await Service().AnswerAsync(900, 1, new AnswerRequest(11));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Attempt.TimeUp");
+        Assert.Equal(AttemptStatus.Submitted, attempt.Status);
+        Assert.Null(attempt.Questions[0].ChosenOptionId);
+    }
+
+    [Fact]
     public async Task AnswerAsync_AccessEndedDuringTheAttempt_ReturnsAccessEnded()
     {
         Practice();
