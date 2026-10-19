@@ -83,6 +83,20 @@ public class RegistrationStatusTests : RegistrationServiceFixture
     }
 
     [Fact]
+    public async Task ChangeStatusAsync_RegistrationInUnpaidInvoice_ReturnsInUnpaidInvoice()
+    {
+        var registration = TestData.Registration(7);
+        TestData.InvoiceWith(InvoiceStatus.Unpaid, registration);
+        Stored(registration);
+
+        var result = await Service().ChangeStatusAsync(7, new(RegistrationStatus.Paid, null));
+
+        var error = ResultAssert.Failed(result, ErrorType.Conflict, "Registration.InUnpaidInvoice");
+        Assert.Contains("QP7K2M9X", error.Message);
+        Assert.Equal(RegistrationStatus.Submitted, registration.Status);
+    }
+
+    [Fact]
     public async Task ChangeStatusAsync_RegistrationInCancelledInvoice_CanBePaid()
     {
         var registration = TestData.Registration(7);
@@ -93,6 +107,58 @@ public class RegistrationStatusTests : RegistrationServiceFixture
 
         Assert.True(result.IsSuccess);
         Assert.Equal(RegistrationStatus.Paid, registration.Status);
+    }
+
+    [Theory]
+    [InlineData(RegistrationStatus.Paid)]
+    [InlineData(RegistrationStatus.Cancelled)]
+    public async Task ChangeStatusAsync_AlreadySettled_ReturnsSettled(RegistrationStatus settled)
+    {
+        Stored(TestData.Registration(7, settled));
+
+        var result = await Service().ChangeStatusAsync(7, new(RegistrationStatus.Paid, null));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.Settled");
+        VerifyNothingSaved();
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_BackToSubmitted_ReturnsValidationError()
+    {
+        Submitted();
+
+        var result = await Service().ChangeStatusAsync(7, new(RegistrationStatus.Submitted, null));
+
+        ResultAssert.Invalid(result, "Status");
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_UnknownRegistration_ReturnsNotFound()
+    {
+        var result = await Service().ChangeStatusAsync(404, new(RegistrationStatus.Paid, null));
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Registration.NotFound");
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_SettledByAnotherSaleUserMeanwhile_ReturnsChanged()
+    {
+        Submitted();
+        UnitOfWork.Setup(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var result = await Service().ChangeStatusAsync(7, new(RegistrationStatus.Paid, null));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.Changed");
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_NotSignedIn_ReturnsUnauthorized()
+    {
+        Submitted();
+
+        var result = await Service(MockUser.Guest()).ChangeStatusAsync(7, new(RegistrationStatus.Paid, null));
+
+        ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
     }
 
     [Fact]
