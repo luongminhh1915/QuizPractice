@@ -132,4 +132,27 @@ public class ConfirmInvoiceTests : InvoiceServiceFixture
 
         ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
     }
+
+    [Fact]
+    public async Task SaveNotesAsync_CancelledInvoice_StoresNotesOnly()
+    {
+        var invoice = Stored(TestData.InvoiceWith(InvoiceStatus.Cancelled, _java));
+
+        var dto = ResultAssert.Succeeded(await Service().SaveNotesAsync(50, new InvoiceNotesRequest("Refund not needed")));
+
+        Assert.Equal("Refund not needed", invoice.Notes);
+        Assert.Equal(InvoiceStatus.Cancelled, dto.Status);
+    }
+
+    [Fact]
+    public async Task GetAsync_ExistingInvoice_ShowsTheReceivingAccountCopy()
+    {
+        UnpaidInvoice();
+
+        var dto = ResultAssert.Succeeded(await Service().GetAsync(50));
+
+        Assert.Equal("0000000000", dto.AccountNumber);
+        Assert.Equal(600_000m, dto.TotalAmount);
+        Assert.Equal([1, 2], dto.Registrations.Select(r => r.Id));
+    }
 }
