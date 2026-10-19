@@ -158,4 +158,23 @@ public class PracticesTests
 
         ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
     }
+
+    // ------------------------------------------------------------------ UC-19, UC-21
+
+    [Fact]
+    public async Task ListAsync_FilteredBySubject_PassesTheCriteriaAndLabelsPractices()
+    {
+        AttemptSearch? search = null;
+        var attempt = LearningData.Attempt(900, questions: LearningData.Question(1));
+        _attempts.Setup(a => a.ListByUserAsync(TestData.CustomerId, It.IsAny<AttemptSearch>(), It.IsAny<PageRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<int, AttemptSearch, PageRequest, CancellationToken>((_, s, _, _) => search = s)
+            .ReturnsAsync(new Page<Attempt>([attempt], 1, 1, 10));
+
+        var page = ResultAssert.Succeeded(await Service().ListAsync(new PracticeListRequest(SubjectId: 1)));
+
+        Assert.Equal(1, search!.SubjectId);
+        var row = Assert.Single(page.Items);
+        Assert.Equal("Practice by topic: All topics", row.Title);
+        Assert.Null(row.Outcome);
+    }
 }
