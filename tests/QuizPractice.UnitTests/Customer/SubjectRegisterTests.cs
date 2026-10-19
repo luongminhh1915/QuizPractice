@@ -74,4 +74,84 @@ public class SubjectRegisterTests
 
         Assert.Contains("Mobile", form.ContactProblems.Keys);
     }
+
+    [Fact]
+    public async Task RegisterAsync_Guest_ReturnsAuthRequired()
+    {
+        var result = await Service(MockUser.Guest()).RegisterAsync(1, new SubjectRegisterRequest(100));
+
+        ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
+        _registrations.Verify(r => r.Add(It.IsAny<Registration>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_SignedInAsSale_ReturnsCustomerOnly()
+    {
+        var result = await Service(MockUser.Sale()).RegisterAsync(1, new SubjectRegisterRequest(100));
+
+        ResultAssert.Failed(result, ErrorType.Forbidden, "Registration.CustomerOnly");
+    }
+
+    [Fact]
+    public async Task RegisterAsync_SubjectNotPublished_ReturnsNotAvailable()
+    {
+        var result = await Service().RegisterAsync(2, new SubjectRegisterRequest(100));
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Subject.NotAvailable");
+    }
+
+    [Fact]
+    public async Task RegisterAsync_AlreadySubmittedForTheSubject_ReturnsAlreadySubmitted()
+    {
+        _registrations.Setup(r => r.FindSubmittedAsync(_customer.Id, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(TestData.Registration(7, package: _sixMonths, customer: _customer));
+
+        var result = await Service().RegisterAsync(1, new SubjectRegisterRequest(100));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.AlreadySubmitted");
+        _registrations.Verify(r => r.Add(It.IsAny<Registration>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_InactivePackage_ReturnsPackageNotAvailable()
+    {
+        var result = await Service().RegisterAsync(1, new SubjectRegisterRequest(_retired.Id));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Package.NotAvailable");
+    }
+
+    [Fact]
+    public async Task RegisterAsync_ProfileWithoutMobile_ReturnsProfileIncompleteAndStoresNothing()
+    {
+        _customer.Mobile = "";
+
+        var result = await Service().RegisterAsync(1, new SubjectRegisterRequest(100));
+
+        var error = ResultAssert.Failed(result, ErrorType.Validation, "Profile.Incomplete");
+        Assert.Contains("Mobile", error.Fields!.Keys);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(2)]   // the minimum
+    [InlineData(100)] // the maximum
+    public async Task RegisterAsync_FullNameAtTheLengthLimits_IsAccepted(int length)
+    {
+        _customer.FullName = new string('a', length);
+
+        var result = await Service().RegisterAsync(1, new SubjectRegisterRequest(100));
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_FullNameOf101Characters_ReturnsProfileIncomplete()
+    {
+        _customer.FullName = new string('a', 101);
+
+        var result = await Service().RegisterAsync(1, new SubjectRegisterRequest(100));
+
+        var error = ResultAssert.Failed(result, ErrorType.Validation, "Profile.Incomplete");
+        Assert.Contains("FullName", error.Fields!.Keys);
+    }
 }
