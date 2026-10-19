@@ -170,6 +170,31 @@ public class QuizHandleTests
         Assert.False(attempt.Questions[0].IsMarked);
     }
 
+    // ------------------------------------------------------------------ UC-28
+
+    [Fact]
+    public async Task PeekAsync_DuringPractice_ShowsTheCorrectOptionAndStoresNothing()
+    {
+        Practice();
+
+        var dto = ResultAssert.Succeeded(await Service().PeekAsync(900, 2));
+
+        Assert.Equal("C", dto.Letter);
+        Assert.Equal(23, dto.OptionId);
+        Assert.Equal("Because of rule 2.", dto.Explanation);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task PeekAsync_DuringExam_ReturnsNoPeek()
+    {
+        Exam();
+
+        var result = await Service().PeekAsync(900, 1);
+
+        ResultAssert.Failed(result, ErrorType.Forbidden, "Attempt.NoPeek");
+    }
+
     [Fact]
     public async Task AnswerAsync_AccessEndedDuringTheAttempt_ReturnsAccessEnded()
     {
