@@ -137,4 +137,70 @@ public class RegistrationDetailsTests : RegistrationServiceFixture
         ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
         VerifyNothingSaved();
     }
+
+    // ------------------------------------------------------------------ Update
+
+    [Fact]
+    public async Task UpdateAsync_ByItsRecorderWhileSubmitted_SavesTheNewPackage()
+    {
+        var registration = Stored(TestData.Registration(7, package: _sixMonths, customer: _customer, createdById: TestData.SaleId));
+
+        var dto = ResultAssert.Succeeded(await Service().UpdateAsync(7, Form(packageId: _twelveMonths.Id)));
+
+        Assert.Equal(_twelveMonths.Id, registration.PackageId);
+        Assert.Equal(500_000m, registration.TotalCost);
+        Assert.Equal(TestData.SaleId, registration.UpdatedById);
+        Assert.Equal(RegistrationStatus.Submitted, dto.Status);
+        UnitOfWork.Verify(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RecordedByAnotherSaleUser_ReturnsNotEditable()
+    {
+        Stored(TestData.Registration(7, customer: _customer, createdById: TestData.OtherSaleId));
+
+        var result = await Service().UpdateAsync(7, Form());
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.NotEditable");
+        VerifyNothingSaved();
+    }
+
+    [Fact]
+    public async Task UpdateAsync_OnlineRegistration_ReturnsNotEditable()
+    {
+        Stored(TestData.Registration(7, customer: _customer, createdById: null));
+
+        var result = await Service().UpdateAsync(7, Form());
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.NotEditable");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_PaidRegistration_ReturnsNotEditable()
+    {
+        Stored(TestData.Registration(7, RegistrationStatus.Paid, customer: _customer, createdById: TestData.SaleId));
+
+        var result = await Service().UpdateAsync(7, Form());
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.NotEditable");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ChangedByAnotherUserMeanwhile_ReturnsChanged()
+    {
+        Stored(TestData.Registration(7, package: _sixMonths, customer: _customer, createdById: TestData.SaleId));
+        UnitOfWork.Setup(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var result = await Service().UpdateAsync(7, Form());
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.Changed");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_UnknownRegistration_ReturnsNotFound()
+    {
+        var result = await Service().UpdateAsync(404, Form());
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Registration.NotFound");
+    }
 }
