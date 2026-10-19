@@ -79,4 +79,83 @@ public class PracticesTests
 
         ResultAssert.Invalid(result, "SelectedBy");
     }
+
+    [Fact]
+    public async Task CreateAsync_FromAllTopics_DrawsTheAskedNumberAndStartsTheAttempt()
+    {
+        var created = ResultAssert.Succeeded(await Service().CreateAsync(new CreatePracticeRequest(1, 3, SelectionType.Topic, null)));
+
+        Assert.Equal(900, created.Id);
+        Assert.Equal(AttemptMode.Practice, _added!.Mode);
+        Assert.Equal(AttemptStatus.InProgress, _added.Status);
+        Assert.Equal([1, 2, 3], _added.Questions.Select(q => (int)q.DisplayOrder));
+        Assert.Equal(3, _added.Questions.Select(q => q.QuestionId).Distinct().Count());
+        Assert.All(_added.Questions, q => Assert.InRange(q.QuestionId, 1, 5));
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_FromOneTopic_DrawsOnlyItsQuestions()
+    {
+        ResultAssert.Succeeded(await Service().CreateAsync(new CreatePracticeRequest(1, 2, SelectionType.Topic, 12)));
+
+        Assert.Equal([4, 5], _added!.Questions.Select(q => q.QuestionId).Order());
+        Assert.Equal(12, _added.GroupId);
+    }
+
+    [Fact]
+    public async Task CreateAsync_CountEqualToAvailableQuestions_IsAccepted()
+    {
+        var result = await Service().CreateAsync(new CreatePracticeRequest(1, 5, SelectionType.Topic, null));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(5, _added!.Questions.Count);
+    }
+
+    [Fact]
+    public async Task CreateAsync_MoreThanAvailableQuestions_ReturnsValidationErrorAndCreatesNothing()
+    {
+        var result = await Service().CreateAsync(new CreatePracticeRequest(1, 6, SelectionType.Topic, null));
+
+        var error = ResultAssert.Failed(result, ErrorType.Validation, "Validation");
+        Assert.Contains("Only 5 questions", error.Fields!["QuestionCount"][0]);
+        _attempts.Verify(a => a.Add(It.IsAny<Attempt>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(101)]
+    public async Task CreateAsync_CountOutsideOneToHundred_ReturnsValidationError(int count)
+    {
+        var result = await Service().CreateAsync(new CreatePracticeRequest(1, count, SelectionType.Topic, null));
+
+        ResultAssert.Invalid(result, "QuestionCount");
+    }
+
+    [Fact]
+    public async Task CreateAsync_GroupOfAnotherSubject_ReturnsValidationError()
+    {
+        var result = await Service().CreateAsync(new CreatePracticeRequest(1, 1, SelectionType.Topic, 99));
+
+        ResultAssert.Invalid(result, "GroupId");
+    }
+
+    [Fact]
+    public async Task CreateAsync_AccessEndedSinceTheFormLoaded_ReturnsNoAccess()
+    {
+        LearningData.SetupAccess(_registrations);
+
+        var result = await Service().CreateAsync(new CreatePracticeRequest(1, 3, SelectionType.Topic, null));
+
+        ResultAssert.Failed(result, ErrorType.Forbidden, "Subject.NoAccess");
+        _attempts.Verify(a => a.Add(It.IsAny<Attempt>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_Guest_ReturnsAuthRequired()
+    {
+        var result = await Service(MockUser.Guest()).CreateAsync(new CreatePracticeRequest(1, 3, SelectionType.Topic, null));
+
+        ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
+    }
 }
