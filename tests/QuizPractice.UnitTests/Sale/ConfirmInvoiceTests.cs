@@ -45,6 +45,56 @@ public class ConfirmInvoiceTests : InvoiceServiceFixture
     }
 
     [Fact]
+    public async Task ConfirmAsync_CancelledByTheCustomer_ReturnsInvoiceCancelled()
+    {
+        var invoice = Stored(TestData.InvoiceWith(InvoiceStatus.Cancelled, _java));
+
+        var result = await Service().ConfirmAsync(50, new InvoiceNotesRequest(null));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Invoice.Cancelled");
+        Assert.Equal(InvoiceStatus.Cancelled, invoice.Status);
+        UnitOfWork.Verify(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfirmAsync_AlreadyPaid_ReturnsInvoicePaidNamingTheConfirmer()
+    {
+        var invoice = TestData.InvoiceWith(InvoiceStatus.Paid, _java);
+        invoice.ConfirmedBy = TestData.SaleUser(TestData.OtherSaleId, "sale2@gmail.com");
+        Stored(invoice);
+
+        var result = await Service().ConfirmAsync(50, new InvoiceNotesRequest(null));
+
+        var error = ResultAssert.Failed(result, ErrorType.Conflict, "Invoice.Paid");
+        Assert.Contains("sale2@gmail.com", error.Message);
+    }
+
+    [Fact]
+    public async Task ConfirmAsync_RegistrationWithoutDuration_ReturnsNoDurationAndChangesNothing()
+    {
+        var noDuration = TestData.Registration(3, package: TestData.Package(300, months: 0, subjectId: 3));
+        var invoice = Stored(TestData.InvoiceWith(InvoiceStatus.Unpaid, _java, noDuration));
+
+        var result = await Service().ConfirmAsync(50, new InvoiceNotesRequest(null));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Registration.NoDuration");
+        Assert.Equal(InvoiceStatus.Unpaid, invoice.Status);
+        Assert.Equal(RegistrationStatus.Submitted, _java.Status);
+        Assert.Null(_java.ValidFrom);
+    }
+
+    [Fact]
+    public async Task ConfirmAsync_ChangedMeanwhile_ReturnsInvoiceChanged()
+    {
+        UnpaidInvoice();
+        UnitOfWork.Setup(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var result = await Service().ConfirmAsync(50, new InvoiceNotesRequest(null));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Invoice.Changed");
+    }
+
+    [Fact]
     public async Task ConfirmAsync_BlankNotes_KeepTheEarlierNotes()
     {
         var invoice = UnpaidInvoice();
@@ -53,5 +103,33 @@ public class ConfirmInvoiceTests : InvoiceServiceFixture
         await Service().ConfirmAsync(50, new InvoiceNotesRequest("  "));
 
         Assert.Equal("Customer called on 11/10", invoice.Notes);
+    }
+
+    [Fact]
+    public async Task ConfirmAsync_NotesOf501Characters_ReturnsValidationError()
+    {
+        UnpaidInvoice();
+
+        var result = await Service().ConfirmAsync(50, new InvoiceNotesRequest(new string('n', 501)));
+
+        ResultAssert.Invalid(result, "Notes");
+    }
+
+    [Fact]
+    public async Task ConfirmAsync_UnknownInvoice_ReturnsNotFound()
+    {
+        var result = await Service().ConfirmAsync(404, new InvoiceNotesRequest(null));
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Invoice.NotFound");
+    }
+
+    [Fact]
+    public async Task ConfirmAsync_NotSignedIn_ReturnsUnauthorized()
+    {
+        UnpaidInvoice();
+
+        var result = await Service(MockUser.Guest()).ConfirmAsync(50, new InvoiceNotesRequest(null));
+
+        ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
     }
 }
