@@ -122,6 +122,31 @@ public class QuizHandleTests
         ResultAssert.Failed(result, ErrorType.NotFound, "Question.NotFound");
     }
 
+    // ------------------------------------------------------------------ UC-25, UC-26
+
+    [Fact]
+    public async Task MoveAsync_ToTheLastQuestion_KeepsTheAnswers()
+    {
+        var attempt = Practice();
+        attempt.Questions[0].ChosenOptionId = 11;
+
+        var dto = ResultAssert.Succeeded(await Service().MoveAsync(900, new MoveRequest(3)));
+
+        Assert.Equal(3, dto.Order);
+        Assert.Equal(3, attempt.CurrentOrder);
+        Assert.Equal(11, attempt.Questions[0].ChosenOptionId);
+    }
+
+    [Fact]
+    public async Task MoveAsync_PastTheLastQuestion_ReturnsValidationError()
+    {
+        Practice();
+
+        var result = await Service().MoveAsync(900, new MoveRequest(4));
+
+        ResultAssert.Invalid(result, "Order");
+    }
+
     [Fact]
     public async Task AnswerAsync_AccessEndedDuringTheAttempt_ReturnsAccessEnded()
     {
