@@ -78,4 +78,78 @@ public class MyInvoicesTests
 
         _invoices.Verify(i => i.CodeExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
+
+    [Fact]
+    public async Task CreateAsync_NoRegistrationChosen_ReturnsValidationError()
+    {
+        var result = await Service().CreateAsync(new CreateInvoiceRequest([]));
+
+        ResultAssert.Invalid(result, "RegistrationIds");
+    }
+
+    [Fact]
+    public async Task CreateAsync_TwentyOneRegistrations_ReturnsValidationError()
+    {
+        var result = await Service().CreateAsync(new CreateInvoiceRequest(Enumerable.Range(1, 21).ToList()));
+
+        ResultAssert.Invalid(result, "RegistrationIds");
+    }
+
+    [Fact]
+    public async Task CreateAsync_RegistrationOfAnotherCustomer_ReturnsNotFound()
+    {
+        var result = await Service().CreateAsync(new CreateInvoiceRequest([1, 99]));
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Registration.NotFound");
+        _invoices.Verify(i => i.Add(It.IsAny<Invoice>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_PaidRegistration_ReturnsNotPayable()
+    {
+        _sql.Status = RegistrationStatus.Paid;
+
+        var result = await Service().CreateAsync(new CreateInvoiceRequest([1, 2]));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Invoice.RegistrationNotPayable");
+    }
+
+    [Fact]
+    public async Task CreateAsync_RegistrationAlreadyInUnpaidInvoice_ReturnsNotPayable()
+    {
+        TestData.InvoiceWith(InvoiceStatus.Unpaid, _java);
+
+        var result = await Service().CreateAsync(new CreateInvoiceRequest([1]));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Invoice.RegistrationNotPayable");
+    }
+
+    [Fact]
+    public async Task CreateAsync_NoReceivingBankAccount_ReturnsNoBankAccount()
+    {
+        _invoices.Setup(i => i.GetBankAccountAsync(It.IsAny<CancellationToken>())).ReturnsAsync((BankAccount?)null);
+
+        var result = await Service().CreateAsync(new CreateInvoiceRequest([1]));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Invoice.NoBankAccount");
+        _invoices.Verify(i => i.Add(It.IsAny<Invoice>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_RegistrationSettledMeanwhile_ReturnsNotPayable()
+    {
+        _unitOfWork.Setup(u => u.TrySaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var result = await Service().CreateAsync(new CreateInvoiceRequest([1]));
+
+        ResultAssert.Failed(result, ErrorType.Conflict, "Invoice.RegistrationNotPayable");
+    }
+
+    [Fact]
+    public async Task CreateAsync_Guest_ReturnsAuthRequired()
+    {
+        var result = await Service(MockUser.Guest()).CreateAsync(new CreateInvoiceRequest([1]));
+
+        ResultAssert.Failed(result, ErrorType.Unauthorized, "Auth.Required");
+    }
 }
