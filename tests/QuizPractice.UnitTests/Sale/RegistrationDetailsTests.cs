@@ -203,4 +203,42 @@ public class RegistrationDetailsTests : RegistrationServiceFixture
 
         ResultAssert.Failed(result, ErrorType.NotFound, "Registration.NotFound");
     }
+
+    // ------------------------------------------------------------------ Get, choices
+
+    [Fact]
+    public async Task GetAsync_RecorderSeesFullEditOtherSaleUserDoesNot()
+    {
+        Stored(TestData.Registration(7, customer: _customer, createdById: TestData.SaleId));
+
+        var mine = ResultAssert.Succeeded(await Service().GetAsync(7));
+        var theirs = ResultAssert.Succeeded(await Service(MockUser.Sale(TestData.OtherSaleId)).GetAsync(7));
+
+        Assert.True(mine.CanEditAll);
+        Assert.False(theirs.CanEditAll);
+        Assert.True(theirs.CanSettle);
+    }
+
+    [Fact]
+    public async Task GetAsync_RegistrationInUnpaidInvoice_CannotBeSettledHere()
+    {
+        var registration = TestData.Registration(7, customer: _customer, createdById: TestData.SaleId);
+        TestData.InvoiceWith(InvoiceStatus.Unpaid, registration);
+        Stored(registration);
+
+        var dto = ResultAssert.Succeeded(await Service().GetAsync(7));
+
+        Assert.False(dto.CanSettle);
+        Assert.False(dto.CanEditAll);
+        Assert.Equal("QP7K2M9X", dto.Invoice!.Code);
+    }
+
+    [Fact]
+    public async Task GetChoicesAsync_ListsActivePackagesCheapestFirst()
+    {
+        var choices = ResultAssert.Succeeded(await Service().GetChoicesAsync());
+
+        var java = Assert.Single(choices.Subjects);
+        Assert.Equal([100, 101], java.Packages.Select(p => p.Id));
+    }
 }
