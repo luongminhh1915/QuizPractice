@@ -105,4 +105,46 @@ public class RegisterAccountTests
         Assert.NotNull(_added);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    // ------------------------------------------------------------------ UC-03
+
+    [Fact]
+    public async Task VerifyEmailAsync_GenuineLink_ActivatesTheAccountAndMailsAPassword()
+    {
+        var user = TestData.Customer(42, "new.customer@gmail.com");
+        user.Status = UserStatus.Unverified;
+        _tokens.Setup(t => t.Read(LinkPurpose.VerifyEmail, "verify-token")).Returns(new LinkToken(42, ""));
+        _users.Setup(u => u.GetByIdAsync(42, It.IsAny<CancellationToken>())).ReturnsAsync(user);
+
+        var dto = ResultAssert.Succeeded(await Service().VerifyEmailAsync(new VerifyEmailRequest("verify-token")));
+
+        Assert.Equal(UserStatus.Active, user.Status);
+        Assert.Equal("hashed", user.PasswordHash);
+        Assert.True(dto.PasswordSent);
+        Assert.False(dto.AlreadyVerified);
+        _mail.Verify(m => m.SendLoginPasswordAsync("new.customer@gmail.com", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_AccountAlreadyActive_ChangesNothing()
+    {
+        _tokens.Setup(t => t.Read(LinkPurpose.VerifyEmail, "verify-token")).Returns(new LinkToken(10, ""));
+        _users.Setup(u => u.GetByIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(TestData.Customer());
+
+        var dto = ResultAssert.Succeeded(await Service().VerifyEmailAsync(new VerifyEmailRequest("verify-token")));
+
+        Assert.True(dto.AlreadyVerified);
+        _mail.Verify(m => m.SendLoginPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_ExpiredOrForgedLink_ReturnsLinkInvalid()
+    {
+        _tokens.Setup(t => t.Read(LinkPurpose.VerifyEmail, It.IsAny<string>())).Returns((LinkToken?)null);
+
+        var result = await Service().VerifyEmailAsync(new VerifyEmailRequest("forged"));
+
+        ResultAssert.Failed(result, ErrorType.Validation, "Link.Invalid");
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
 }
