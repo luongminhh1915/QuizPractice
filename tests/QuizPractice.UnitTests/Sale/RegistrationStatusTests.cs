@@ -181,4 +181,37 @@ public class RegistrationStatusTests : RegistrationServiceFixture
 
         ResultAssert.Invalid(result, "Notes");
     }
+
+    // ------------------------------------------------------------------ Notes (BR-22, A3, A4)
+
+    [Fact]
+    public async Task SaveNotesAsync_PaidRegistration_StoresNotesAndKeepsStatus()
+    {
+        var registration = Stored(TestData.Registration(7, RegistrationStatus.Paid));
+
+        var dto = ResultAssert.Succeeded(await Service().SaveNotesAsync(7, new SaveNotesRequest("Called the customer")));
+
+        Assert.Equal("Called the customer", registration.Notes);
+        Assert.Equal(RegistrationStatus.Paid, dto.Status);
+        Assert.Equal(TestData.SaleId, registration.UpdatedById);
+    }
+
+    [Fact]
+    public async Task SaveNotesAsync_BlankNotes_StoresNull()
+    {
+        var registration = Stored(TestData.Registration(7));
+        registration.Notes = "old";
+
+        await Service().SaveNotesAsync(7, new SaveNotesRequest("   "));
+
+        Assert.Null(registration.Notes);
+    }
+
+    [Fact]
+    public async Task SaveNotesAsync_UnknownRegistration_ReturnsNotFound()
+    {
+        var result = await Service().SaveNotesAsync(404, new SaveNotesRequest("x"));
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Registration.NotFound");
+    }
 }
