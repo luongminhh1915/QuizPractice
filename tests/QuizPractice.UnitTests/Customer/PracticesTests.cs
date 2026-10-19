@@ -177,4 +177,32 @@ public class PracticesTests
         Assert.Equal("Practice by topic: All topics", row.Title);
         Assert.Null(row.Outcome);
     }
+
+    [Fact]
+    public async Task GetAsync_ScoredPractice_ShowsTheOutcome()
+    {
+        var q1 = LearningData.Question(1);
+        var q2 = LearningData.Question(2);
+        var attempt = LearningData.Attempt(900, questions: [q1, q2]);
+        attempt.Questions[0].ChosenOptionId = LearningData.CorrectOptionOf(q1);
+        attempt.Status = AttemptStatus.Submitted;
+        attempt.Score = 50;
+        attempt.PassRate = 50;
+        attempt.FinishedAt = attempt.StartedAt.AddMinutes(3);
+        _attempts.Setup(a => a.GetOwnAsync(900, TestData.CustomerId, It.IsAny<CancellationToken>())).ReturnsAsync(attempt);
+
+        var dto = ResultAssert.Succeeded(await Service().GetAsync(900));
+
+        Assert.Equal(1, dto.Outcome!.Correct);
+        Assert.True(dto.Outcome.Passed); // 50 % at a pass rate of 50 % passes (BR-21)
+        Assert.Equal(180, dto.Outcome.DurationSeconds);
+    }
+
+    [Fact]
+    public async Task GetAsync_AnotherCustomersAttempt_ReturnsNotFound()
+    {
+        var result = await Service().GetAsync(901);
+
+        ResultAssert.Failed(result, ErrorType.NotFound, "Practice.NotFound");
+    }
 }
