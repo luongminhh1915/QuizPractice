@@ -62,6 +62,14 @@ Chưa có hoá đơn và bài làm mới: mỗi feature tự tạo qua màn củ
 
 **Mail ở máy dev.** Mục `Email:Host` trong `appsettings.json` để trống, nên không mail nào ra khỏi máy: mỗi mail (link xác thực, mật khẩu, link đặt lại mật khẩu) là một file `.eml` trong `src/QuizPractice.Api/App_Data/mails/`. Mở bằng Outlook hoặc Notepad rồi bấm link. Muốn gửi thật thì điền `Email:Host`, `Port`, `UserName`, `Password` vào `appsettings.Development.json`, **không** vào `appsettings.json`.
 
+**Reading mails with MailHog (optional).** MailHog is a fake SMTP server: it catches every mail the API sends, delivers none of them, and shows them in a web inbox. Download the binary for your machine from the [v1.0.1 release page](https://github.com/mailhog/MailHog/releases/tag/v1.0.1) (for example `MailHog_windows_amd64.exe` or `MailHog_linux_amd64`) and run it; by default it listens for SMTP on port 1025 and serves the inbox at `http://localhost:8025`. Then run the API with the `http-mailhog` profile:
+
+```bash
+dotnet run --project src/QuizPractice.Api --launch-profile http-mailhog
+```
+
+In VS Code, pick **API + Web (MailHog)** and press F5. Both only set `Email:Host=localhost`, `Port=1025` and `EnableSsl=false` through environment variables; the `http` profile and **API + Web** still write `.eml` files as before. MailHog keeps mails in memory, so they are gone once you stop it.
+
 **Muốn seed lại từ đầu** (xoá **toàn bộ** dữ liệu trên máy mình):
 
 ```bash

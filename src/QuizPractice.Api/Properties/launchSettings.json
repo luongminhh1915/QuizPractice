@@ -18,6 +18,18 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "http-mailhog": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5031",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Email__Host": "localhost",
+        "Email__Port": "1025",
+        "Email__EnableSsl": "false"
+      }
     }
   }
 }

@@ -28,6 +28,31 @@
       }
     },
     {
+      // Same as "API + Web", but mails go to MailHog (run its binary first) instead of
+      // .eml files. Read them at http://localhost:8025.
+      "name": "API + Web (MailHog)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "prepare: api + web",
+      "postDebugTask": "web: stop",
+      "program": "${workspaceFolder}/src/QuizPractice.Api/bin/Debug/net10.0/QuizPractice.Api.dll",
+      "cwd": "${workspaceFolder}/src/QuizPractice.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5031",
+        "Email__Host": "localhost",
+        "Email__Port": "1025",
+        "Email__EnableSsl": "false"
+      },
+      "console": "internalConsole",
+      "checkForDevCert": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Now listening on: http://(localhost):\\d+",
+        "uriFormat": "http://%s:5173"
+      }
+    },
+    {
       "name": "API only",
       "type": "coreclr",
       "request": "launch",
