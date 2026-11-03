@@ -32,6 +32,9 @@ public interface ISubjectRepository
     /// <summary>The subjects this user owns, tracked so their owner can be removed (UC-63 A3).</summary>
     Task<IReadOnlyList<Subject>> ListOwnedByAsync(int userId, CancellationToken ct = default);
 
+    /// <summary>Whether another subject already has this name, whatever its status (UC-42, UC-44).</summary>
+    Task<bool> NameExistsAsync(string name, int? exceptId, CancellationToken ct = default);
+
     /// <summary>Stages a new subject; the service commits through IUnitOfWork.</summary>
     void Add(Subject subject);
 

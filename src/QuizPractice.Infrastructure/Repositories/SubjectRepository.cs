@@ -101,6 +101,10 @@ public class SubjectRepository(AppDbContext db) : ISubjectRepository
     public async Task<IReadOnlyList<Subject>> ListOwnedByAsync(int userId, CancellationToken ct = default) =>
         await db.Subjects.Where(s => s.ExpertId == userId).OrderBy(s => s.Name).ToListAsync(ct);
 
+    // The column collation of SQL Server ignores case, so "java basics" matches "Java Basics".
+    public Task<bool> NameExistsAsync(string name, int? exceptId, CancellationToken ct = default) =>
+        db.Subjects.AnyAsync(s => s.Name == name && s.Id != exceptId, ct);
+
     public Task<bool> HasActivePackageAsync(int subjectId, CancellationToken ct = default) =>
         db.PricePackages.AnyAsync(p => p.SubjectId == subjectId && p.Status == ActiveStatus.Active, ct);
 
