@@ -14,5 +14,6 @@ public class SubjectDimensionConfiguration : IEntityTypeConfiguration<SubjectDim
         b.Property(x => x.Id).HasColumnName("dimension_id");
         b.Property(x => x.TypeId).HasColumnName("type");
         b.Property(x => x.Name).HasMaxLength(FieldLength.Name);
+        b.HasIndex(x => new { x.SubjectId, x.TypeId, x.Name }).IsUnique();
     }
 }

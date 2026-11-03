@@ -435,11 +435,12 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("QuizId");
 
-                    b.HasIndex("SubjectId");
-
                     b.HasIndex("TopicId");
 
                     b.HasIndex("TypeId");
+
+                    b.HasIndex("SubjectId", "TopicId", "Name")
+                        .IsUnique();
 
                     b.ToTable("Lessons", null, t =>
                         {
@@ -570,7 +571,8 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("SubjectId", "Name")
+                        .IsUnique();
 
                     b.ToTable("PricePackages", null, t =>
                         {
@@ -719,9 +721,10 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LevelId");
 
-                    b.HasIndex("SubjectId");
-
                     b.HasIndex("TypeId");
+
+                    b.HasIndex("SubjectId", "Name")
+                        .IsUnique();
 
                     b.ToTable("Quizzes", null, t =>
                         {
@@ -887,7 +890,11 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "SubjectId")
+                        .IsUnique()
+                        .HasFilter("[user_id] IS NOT NULL AND [status] = 'Submitted'");
+
+                    b.HasIndex(new[] { "UserId" }, "IX_Registrations_user_id");
 
                     b.ToTable("Registrations", null, t =>
                         {
@@ -1092,6 +1099,9 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ExpertId");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("Subjects", null, t =>
                         {
                             t.HasCheckConstraint("CK_Subjects_pass_rate", "[pass_rate] BETWEEN 0 AND 100");
@@ -1129,9 +1139,10 @@ namespace QuizPractice.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SubjectId");
-
                     b.HasIndex("TypeId");
+
+                    b.HasIndex("SubjectId", "TypeId", "Name")
+                        .IsUnique();
 
                     b.ToTable("SubjectDimensions", (string)null);
                 });

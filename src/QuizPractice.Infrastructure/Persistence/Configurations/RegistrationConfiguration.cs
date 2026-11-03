@@ -24,6 +24,13 @@ public class RegistrationConfiguration : IEntityTypeConfiguration<Registration>
         // second save fails instead of overwriting the first (BR-22).
         b.HasEnumColumn(x => x.Status, 10, RegistrationStatus.Submitted).IsConcurrencyToken();
 
+        // A3 of UC-14 and UC-60: one Submitted registration per account and subject.
+        b.HasIndex(x => new { x.UserId, x.SubjectId }).IsUnique()
+            .HasFilter("[user_id] IS NOT NULL AND [status] = 'Submitted'");
+
+        // The filtered index above skips most rows, so My Registrations keeps its own.
+        b.HasIndex(x => x.UserId, "IX_Registrations_user_id");
+
         b.Property(x => x.RegisteredAt).HasUtcNowDefault();
         b.HasCheck("valid_to", "[valid_to] >= [valid_from]");
         b.Property(x => x.Notes).HasMaxLength(FieldLength.Brief);

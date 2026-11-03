@@ -14,6 +14,7 @@ public class SubjectConfiguration : IEntityTypeConfiguration<Subject>
         b.HasKey(x => x.Id);
         b.Property(x => x.CategoryId).HasColumnName("category");
         b.Property(x => x.Name).HasMaxLength(FieldLength.Name);
+        b.HasIndex(x => x.Name).IsUnique();
         b.Property(x => x.Tagline).HasMaxLength(FieldLength.Brief);
         b.Property(x => x.Thumbnail).HasMaxLength(FieldLength.FilePath);
         b.Property(x => x.Brief).HasMaxLength(FieldLength.Brief);

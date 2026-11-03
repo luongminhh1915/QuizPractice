@@ -14,6 +14,7 @@ public class PricePackageConfiguration : IEntityTypeConfiguration<PricePackage>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).HasColumnName("package_id");
         b.Property(x => x.Name).HasMaxLength(FieldLength.Name);
+        b.HasIndex(x => new { x.SubjectId, x.Name }).IsUnique();
         b.HasCheck("access_months", "[access_months] BETWEEN 1 AND 24");
         b.HasCheck("list_price", "[list_price] >= 0");
         b.HasCheck("sale_price", "[sale_price] >= 0 AND [sale_price] <= [list_price]");

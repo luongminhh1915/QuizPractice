@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.DataProtection;
+using QuizPractice.Api;
 using QuizPractice.Api.Auth;
 using QuizPractice.Application;
 using QuizPractice.Infrastructure;
@@ -20,6 +21,7 @@ builder.Services
     .AddControllers(o => o.Filters.Add<AntiforgeryCheck>())
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<DuplicateKeyHandler>();
 builder.Services.AddOpenApi();
 
 builder.Services.AddApplication();
