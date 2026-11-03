@@ -88,7 +88,7 @@ public class RegistrationService(
             return invalid;
         }
 
-        var (package, account, refusal) = await CheckFormAsync(request, ct);
+        var (package, account, refusal) = await CheckFormAsync(request, exceptId: null, ct);
         if (refusal is not null)
         {
             return refusal;
@@ -136,7 +136,7 @@ public class RegistrationService(
                 "Only the status and the notes of this registration can change (BR-22). The registration is reloaded.");
         }
 
-        var (package, account, refusal) = await CheckFormAsync(request, ct);
+        var (package, account, refusal) = await CheckFormAsync(request, exceptId: id, ct);
         if (refusal is not null)
         {
             return refusal;
@@ -298,7 +298,7 @@ public class RegistrationService(
     /// email that already has an account links the registration to it (A4); a staff
     /// account is refused (Duck 12/10), since only a customer learns.
     /// </summary>
-    private async Task<(PricePackage? Package, User? Account, Error? Refusal)> CheckFormAsync(SaveRegistrationRequest request, CancellationToken ct)
+    private async Task<(PricePackage? Package, User? Account, Error? Refusal)> CheckFormAsync(SaveRegistrationRequest request, int? exceptId, CancellationToken ct)
     {
         var subject = (await registrations.ListOfferedSubjectsAsync(ct)).FirstOrDefault(s => s.Id == request.SubjectId);
         if (subject is null)
@@ -316,6 +316,15 @@ public class RegistrationService(
         if (account is not null && account.Role.Value != Roles.Customer)
         {
             return (null, null, Error.Invalid(nameof(request.Email), "This email belongs to a staff account. Use the customer's own email."));
+        }
+
+        // A3 of UC-14: the customer could otherwise pay twice for the same subject.
+        var other = await registrations.FindOtherSubmittedAsync(account?.Id, request.Email.Trim(), request.SubjectId, exceptId, ct);
+        if (other is not null)
+        {
+            return (null, null, Error.Conflict("Registration.AlreadySubmitted",
+                $"This customer already has Submitted registration #{other.Id} ({other.Package.Name}) for the subject. "
+                + "Change that one instead of recording another."));
         }
 
         return (package, account, null);

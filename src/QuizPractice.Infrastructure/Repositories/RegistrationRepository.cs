@@ -9,6 +9,14 @@ namespace QuizPractice.Infrastructure.Repositories;
 
 public class RegistrationRepository(AppDbContext db) : IRegistrationRepository
 {
+    public Task<Registration?> FindOtherSubmittedAsync(int? userId, string email, int subjectId, int? exceptId, CancellationToken ct = default) =>
+        db.Registrations.AsNoTracking()
+            .Include(r => r.Package)
+            .Where(r => r.SubjectId == subjectId && r.Status == RegistrationStatus.Submitted && r.Id != exceptId)
+            .Where(r => userId != null ? r.UserId == userId : r.UserId == null && r.Email == email)
+            .OrderByDescending(r => r.RegisteredAt)
+            .FirstOrDefaultAsync(ct);
+
     public Task<Registration?> FindSubmittedAsync(int userId, int subjectId, CancellationToken ct = default) =>
         db.Registrations.AsNoTracking()
             .Include(r => r.Package)
