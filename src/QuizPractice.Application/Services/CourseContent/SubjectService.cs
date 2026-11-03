@@ -172,6 +172,11 @@ public class SubjectService(
             return invalid;
         }
 
+        if (await CheckNameAsync(request.Name, exceptId: id, ct) is { } nameTaken)
+        {
+            return nameTaken;
+        }
+
         var category = await CheckCategoryAsync(request.CategoryId, keptCategoryId: subject.CategoryId, ct);
         if (category.Error is { } badCategory)
         {
