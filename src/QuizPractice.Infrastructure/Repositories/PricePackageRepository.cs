@@ -16,5 +16,8 @@ public class PricePackageRepository(AppDbContext db) : IPricePackageRepository
     public Task<PricePackage?> GetByIdAsync(int id, CancellationToken ct = default) =>
         db.PricePackages.FirstOrDefaultAsync(p => p.Id == id, ct);
 
+    public Task<bool> NameExistsAsync(int subjectId, string name, int? exceptId, CancellationToken ct = default) =>
+        db.PricePackages.AnyAsync(p => p.SubjectId == subjectId && p.Name == name && p.Id != exceptId, ct);
+
     public void Add(PricePackage package) => db.PricePackages.Add(package);
 }

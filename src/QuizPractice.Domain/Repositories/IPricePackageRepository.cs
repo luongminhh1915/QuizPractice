@@ -11,5 +11,8 @@ public interface IPricePackageRepository
     /// <summary>One package, tracked for a change.</summary>
     Task<PricePackage?> GetByIdAsync(int id, CancellationToken ct = default);
 
+    /// <summary>Whether another package of the subject already has this name, whatever its status.</summary>
+    Task<bool> NameExistsAsync(int subjectId, string name, int? exceptId, CancellationToken ct = default);
+
     void Add(PricePackage package);
 }

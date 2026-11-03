@@ -51,6 +51,11 @@ public class PricePackageService(
             return invalid;
         }
 
+        if (await CheckNameAsync(subjectId, request.Name, exceptId: null, ct) is { } nameTaken)
+        {
+            return nameTaken;
+        }
+
         var package = new PricePackage { SubjectId = subjectId, Status = ActiveStatus.Active };
         Apply(package, request);
         packages.Add(package);
@@ -74,6 +79,11 @@ public class PricePackageService(
         if (await saveValidator.CheckAsync(request, ct) is { } invalid)
         {
             return invalid;
+        }
+
+        if (await CheckNameAsync(subjectId, request.Name, exceptId: packageId, ct) is { } nameTaken)
+        {
+            return nameTaken;
         }
 
         // A registration stores its own total cost and validity, so a new price or
@@ -122,6 +132,12 @@ public class PricePackageService(
 
         return await subjects.GetByIdAsync(subjectId, ct) is null ? Error.NotFound("Subject", subjectId) : null;
     }
+
+    /// <summary>The customer chooses a package by its name (UC-14), so one subject cannot offer two with the same.</summary>
+    private async Task<Error?> CheckNameAsync(int subjectId, string name, int? exceptId, CancellationToken ct) =>
+        await packages.NameExistsAsync(subjectId, name.Trim(), exceptId, ct)
+            ? Error.Invalid(nameof(SavePricePackageRequest.Name), $"The subject already has a package named \"{name.Trim()}\".")
+            : null;
 
     private static void Apply(PricePackage package, SavePricePackageRequest request)
     {
