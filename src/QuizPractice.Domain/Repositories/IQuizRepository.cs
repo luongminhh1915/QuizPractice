@@ -48,6 +48,9 @@ public interface IQuizRepository
     Task<IReadOnlyList<Setting>> GetLevelsAsync(CancellationToken ct = default);
 
     /// <summary>Stages a new quiz with its rules and fixed questions; the service commits through IUnitOfWork.</summary>
+    /// <summary>Whether another quiz of the subject already has this name, whatever its type and status (UC-57).</summary>
+    Task<bool> NameExistsAsync(int subjectId, string name, int? exceptId, CancellationToken ct = default);
+
     void Add(Quiz quiz);
 
     void RemoveRule(QuizRule rule);

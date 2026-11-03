@@ -155,6 +155,9 @@ public class QuizRepository(AppDbContext db) : IQuizRepository
         return new Page<Quiz>(items, total, page.PageNumber, page.PageSize);
     }
 
+    public Task<bool> NameExistsAsync(int subjectId, string name, int? exceptId, CancellationToken ct = default) =>
+        db.Quizzes.AnyAsync(q => q.SubjectId == subjectId && q.Name == name && q.Id != exceptId, ct);
+
     public async Task<IReadOnlyList<Setting>> GetTypesAsync(CancellationToken ct = default) =>
         await db.Settings.AsNoTracking()
             .Where(s => s.Type == SettingType.TestType)
