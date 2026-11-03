@@ -207,6 +207,13 @@ public class LessonService(
             }
         }
 
+        if (await lessons.NameExistsAsync(lesson.SubjectId, topicId, request.Name.Trim(), isNew ? null : lesson.Id, ct))
+        {
+            return Error.Invalid(nameof(SaveLessonRequest.Name), becomesTopic
+                ? $"The subject already has a topic named \"{request.Name.Trim()}\"."
+                : $"This topic already holds a lesson named \"{request.Name.Trim()}\".");
+        }
+
         var moved = isNew || topicId != lesson.TopicId || becomesTopic != IsTopic(lesson);
         lesson.Name = request.Name.Trim();
         lesson.TypeId = type.Id;

@@ -20,5 +20,11 @@ public interface ILessonRepository
     /// <summary>The lesson quizzes of a subject (Test Type "Lesson quiz"), whatever their status, by name (UC-50 A3).</summary>
     Task<IReadOnlyList<Quiz>> ListLessonQuizzesAsync(int subjectId, CancellationToken ct = default);
 
+    /// <summary>
+    /// Whether another lesson under the same topic already has this name; with topicId null,
+    /// whether another topic of the subject has it. Two topics may each hold an "Introduction".
+    /// </summary>
+    Task<bool> NameExistsAsync(int subjectId, int? topicId, string name, int? exceptId, CancellationToken ct = default);
+
     void Add(Lesson lesson);
 }

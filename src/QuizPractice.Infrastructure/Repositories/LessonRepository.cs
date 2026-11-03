@@ -22,6 +22,9 @@ public class LessonRepository(AppDbContext db) : ILessonRepository
             .Include(l => l.Quiz)
             .FirstOrDefaultAsync(l => l.Id == id, ct);
 
+    public Task<bool> NameExistsAsync(int subjectId, int? topicId, string name, int? exceptId, CancellationToken ct = default) =>
+        db.Lessons.AnyAsync(l => l.SubjectId == subjectId && l.TopicId == topicId && l.Name == name && l.Id != exceptId, ct);
+
     public Task<bool> HasLessonsUnderAsync(int topicId, CancellationToken ct = default) =>
         db.Lessons.AnyAsync(l => l.TopicId == topicId, ct);
 
