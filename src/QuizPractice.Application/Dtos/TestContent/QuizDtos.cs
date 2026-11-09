@@ -1,5 +1,6 @@
 using QuizPractice.Domain.Entities;
 using QuizPractice.Domain.Enums;
+using QuizPractice.Domain.Repositories;
 
 namespace QuizPractice.Application.Dtos.TestContent;
 
@@ -67,9 +68,16 @@ public sealed record QuizGroupDto(int Id, string Name, int Available);
 /// <summary>A rule of a stored quiz, with the group's current number of shown questions (E2).</summary>
 public sealed record QuizRuleDto(int GroupId, string Group, int QuestionCount, int Available);
 
+/// <summary>A question of the set a lesson quiz drew; a Hidden one stays in the set until the quiz draws again.</summary>
+public sealed record FixedQuestionDto(int Order, int Id, string Content, string? Lesson, string Level, VisibilityStatus Status)
+{
+    public static FixedQuestionDto From(FixedQuestion q) => new(q.Order, q.QuestionId, q.Content, q.Lesson, q.Level, q.Status);
+}
+
 /// <summary>
 /// A quiz as Quiz Details shows it. IsTaken: an attempt exists, so only the status may
-/// change (A2). FixedQuestionCount: the set a lesson quiz drew at its last save.
+/// change (A2). FixedQuestionCount: the set a lesson quiz drew at its last save, listed in
+/// FixedQuestions for the Questions tab (empty for a simulation exam, which draws per attempt).
 /// </summary>
 public sealed record QuizDto(
     int Id,
@@ -87,7 +95,8 @@ public sealed record QuizDto(
     string SelectionType,
     IReadOnlyList<QuizRuleDto> Rules,
     int FixedQuestionCount,
-    bool IsTaken);
+    bool IsTaken,
+    IReadOnlyList<FixedQuestionDto> FixedQuestions);
 
 /// <summary>A subject the user may reach, with the pass rate a new quiz starts from (BR-21).</summary>
 public sealed record QuizSubjectDto(int Id, string Name, byte PassRate);

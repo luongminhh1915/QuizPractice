@@ -36,6 +36,14 @@ public class QuizRepository(AppDbContext db) : IQuizRepository
             .OrderBy(d => d.Type.DisplayOrder).ThenBy(d => d.Name).ThenBy(d => d.Id)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<FixedQuestion>> ListFixedQuestionsAsync(int quizId, CancellationToken ct = default) =>
+        await db.QuizQuestions.AsNoTracking()
+            .Where(z => z.QuizId == quizId)
+            .OrderBy(z => z.DisplayOrder)
+            .Select(z => new FixedQuestion(z.DisplayOrder, z.QuestionId, z.Question.Content,
+                z.Question.Lesson == null ? null : z.Question.Lesson.Name, z.Question.Level.Value, z.Question.Status))
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<GroupMember>> GetTopicMembersAsync(int subjectId, CancellationToken ct = default) =>
         await db.Questions.AsNoTracking()
             .Where(q => q.SubjectId == subjectId && q.Status == VisibilityStatus.Shown && q.LessonId != null)

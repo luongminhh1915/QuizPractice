@@ -1,5 +1,6 @@
 using QuizPractice.Domain.Common;
 using QuizPractice.Domain.Entities;
+using QuizPractice.Domain.Enums;
 
 namespace QuizPractice.Domain.Repositories;
 
@@ -9,6 +10,9 @@ namespace QuizPractice.Domain.Repositories;
 /// </summary>
 /// <summary>A shown question that belongs to a group: a topic, or a dimension (UC-57).</summary>
 public sealed record GroupMember(int GroupId, int QuestionId);
+
+/// <summary>One question of the fixed set a lesson quiz drew, in the order it is asked (UC-57).</summary>
+public sealed record FixedQuestion(short Order, int QuestionId, string Content, string? Lesson, string Level, VisibilityStatus Status);
 
 /// <summary>
 /// Criteria of Simulation Exams (UC-22): only Active quizzes of type Simulation in the
@@ -50,6 +54,9 @@ public interface IQuizRepository
     /// <summary>Stages a new quiz with its rules and fixed questions; the service commits through IUnitOfWork.</summary>
     /// <summary>Whether another quiz of the subject already has this name, whatever its type and status (UC-57).</summary>
     Task<bool> NameExistsAsync(int subjectId, string name, int? exceptId, CancellationToken ct = default);
+
+    /// <summary>The fixed set of a lesson quiz with what Quiz Details shows of each question; empty for a simulation exam.</summary>
+    Task<IReadOnlyList<FixedQuestion>> ListFixedQuestionsAsync(int quizId, CancellationToken ct = default);
 
     void Add(Quiz quiz);
 

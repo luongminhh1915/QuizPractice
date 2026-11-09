@@ -362,9 +362,12 @@ public class QuizService(
                 groups?.Available(r.GroupId) ?? 0))
             .OrderBy(r => groups?.Order(r.GroupId) ?? r.GroupId)
             .ToList();
+        var fixedSet = quiz.Questions.Count == 0
+            ? []
+            : (await quizzes.ListFixedQuestionsAsync(quiz.Id, ct)).Select(FixedQuestionDto.From).ToList();
         return new QuizDto(quiz.Id, quiz.Name, quiz.SubjectId, quiz.Subject.Name, quiz.LevelId, quiz.TypeId, quiz.Type.Value,
             quiz.DurationMin, quiz.PassRate, quiz.Status, quiz.Description, quiz.QuestionCount, quiz.SelectionType, rules,
-            quiz.Questions.Count, await IsTakenAsync(quiz.Id, ct));
+            quiz.Questions.Count, await IsTakenAsync(quiz.Id, ct), fixedSet);
     }
 
     private async Task<bool> IsTakenAsync(int id, CancellationToken ct) => (await quizzes.GetTakenAsync([id], ct)).Count > 0;
