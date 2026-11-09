@@ -26,5 +26,11 @@ public interface ILessonRepository
     /// </summary>
     Task<bool> NameExistsAsync(int subjectId, int? topicId, string name, int? exceptId, CancellationToken ct = default);
 
+    /// <summary>
+    /// The Active lessons of a subject as a customer sees them (UC-71): with their type and,
+    /// for a lesson of type Quiz, the quiz with its type and fixed set; ordered like UC-49.
+    /// </summary>
+    Task<IReadOnlyList<Lesson>> ListForLearnerAsync(int subjectId, CancellationToken ct = default);
+
     void Add(Lesson lesson);
 }

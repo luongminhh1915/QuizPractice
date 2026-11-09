@@ -15,8 +15,8 @@ namespace QuizPractice.Application.Services.Customer;
 
 /// <summary>
 /// An exam is offered while it is Active, of type Simulation, and its subject is one the
-/// customer may reach today (BR-05, BR-23). A lesson quiz is not listed: no customer
-/// screen opens one yet.
+/// customer may reach today (BR-05, BR-23). A lesson quiz is not listed here: the
+/// customer takes it from the lessons of the subject (My Subjects, UC-71).
 /// </summary>
 public class SimulationExamService(
     IRegistrationRepository registrations,

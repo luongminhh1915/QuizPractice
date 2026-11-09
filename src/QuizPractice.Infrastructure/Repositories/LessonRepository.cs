@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using QuizPractice.Domain.Constants;
 using QuizPractice.Domain.Entities;
+using QuizPractice.Domain.Enums;
 using QuizPractice.Domain.Repositories;
 using QuizPractice.Infrastructure.Persistence;
 
@@ -12,6 +13,16 @@ public class LessonRepository(AppDbContext db) : ILessonRepository
         await db.Lessons.AsNoTracking()
             .Include(l => l.Type)
             .Where(l => l.SubjectId == subjectId)
+            .OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Lesson>> ListForLearnerAsync(int subjectId, CancellationToken ct = default) =>
+        await db.Lessons.AsNoTracking()
+            .Include(l => l.Type)
+            .Include(l => l.Quiz).ThenInclude(q => q!.Type)
+            .Include(l => l.Quiz).ThenInclude(q => q!.Questions)
+            .AsSplitQuery()
+            .Where(l => l.SubjectId == subjectId && l.Status == ActiveStatus.Active)
             .OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id)
             .ToListAsync(ct);
 
