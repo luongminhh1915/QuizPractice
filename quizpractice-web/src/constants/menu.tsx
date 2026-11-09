@@ -8,6 +8,7 @@ import {
   FormOutlined,
   PictureOutlined,
   QuestionCircleOutlined,
+  ReadOutlined,
   SettingOutlined,
   ShoppingCartOutlined,
   TeamOutlined,
@@ -44,6 +45,7 @@ export const MENU_SCREENS: Record<string, MenuScreen> = {
   Practices: { path: '/practices', area: 'learning', icon: <AppstoreOutlined />, ready: true },
   'Simulation Exams': { path: '/simulation-exams', area: 'learning', icon: <FormOutlined />, ready: true },
   'My Invoices': { path: '/my-invoices', area: 'learning', icon: <FileDoneOutlined />, ready: true },
+  'My Subjects': { path: '/my-subjects', area: 'learning', icon: <ReadOutlined />, ready: true },
 }
 
 /**

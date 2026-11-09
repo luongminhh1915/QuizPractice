@@ -22,6 +22,8 @@ import { MyRegistrationsPage } from '../pages/customer/MyRegistrationsPage'
 import { PracticeDetailsPage } from '../pages/customer/PracticeDetailsPage'
 import { PracticesListPage } from '../pages/customer/PracticesListPage'
 import { SimulationExamsPage } from '../pages/customer/SimulationExamsPage'
+import { MySubjectsPage } from '../pages/customer/MySubjectsPage'
+import { MySubjectLessonsPage } from '../pages/customer/MySubjectLessonsPage'
 import { QuizHandlePage } from '../pages/learning/QuizHandlePage'
 import { QuizReviewPage } from '../pages/learning/QuizReviewPage'
 import { DashboardPage } from '../pages/marketing/DashboardPage'
@@ -68,6 +70,8 @@ export const router = createBrowserRouter([
           { path: '/practices/new', element: <PracticeDetailsPage /> },
           { path: '/practices/:id', element: <PracticeDetailsPage /> },
           { path: '/simulation-exams', element: <SimulationExamsPage /> },
+          { path: '/my-subjects', element: <MySubjectsPage /> },
+          { path: '/my-subjects/:id', element: <MySubjectLessonsPage /> },
           { path: '/verify-email', element: <VerifyEmailPage /> },
           { path: '/reset-password', element: <ResetPasswordPage /> },
           { path: '*', element: <NotFoundPage /> },
