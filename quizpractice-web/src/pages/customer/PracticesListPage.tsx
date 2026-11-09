@@ -111,7 +111,7 @@ export function PracticesListPage() {
           options={[
             { value: 'All', label: 'All types' },
             { value: 'Practice', label: 'Practice' },
-            { value: 'Exam', label: 'Simulation exam' },
+            { value: 'Exam', label: 'Exam or lesson quiz' },
           ]}
         />
       </Space>

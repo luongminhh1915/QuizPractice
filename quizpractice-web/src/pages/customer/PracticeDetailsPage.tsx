@@ -56,7 +56,7 @@ function ExistingPractice({ id }: { id: number }) {
         <Descriptions column={1} bordered size="middle">
           <Descriptions.Item label="Subject">{p.subjectName}</Descriptions.Item>
           {p.mode === 'Exam' ? (
-            <Descriptions.Item label="Simulation Exam">{p.title}</Descriptions.Item>
+            <Descriptions.Item label="Quiz">{p.title}</Descriptions.Item>
           ) : (
             <>
               <Descriptions.Item label="Selected By">{p.selectionType === 'Topic' ? 'By topic' : 'By dimension'}</Descriptions.Item>
