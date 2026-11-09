@@ -1,5 +1,5 @@
 import { http } from './client'
-import type { ActiveStatus, ListCriteria, Page } from './types'
+import type { ActiveStatus, ListCriteria, Page, VisibilityStatus } from './types'
 import type { QuestionLevel, QuestionLookup } from './questionsApi'
 
 /** Matches QuizSummaryDto of the API: a row of Quizzes List. */
@@ -35,6 +35,16 @@ export interface QuizRule {
   available: number
 }
 
+/** Matches FixedQuestionDto: one question of the set a lesson quiz drew, in the order it is asked. */
+export interface FixedQuestion {
+  order: number
+  id: number
+  content: string
+  lesson: string | null
+  level: string
+  status: VisibilityStatus
+}
+
 /** Matches QuizDto of the API: everything Quiz Details shows. */
 export interface Quiz {
   id: number
@@ -56,6 +66,8 @@ export interface Quiz {
   fixedQuestionCount: number
   /** Taken: only the status may change (UC-57 A2). */
   isTaken: boolean
+  /** The questions of that set, for the Questions tab; empty for a simulation exam. */
+  fixedQuestions: FixedQuestion[]
 }
 
 /** Quiz Details form: the Overview tab, then the Setting tab. */
