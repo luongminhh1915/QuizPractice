@@ -39,11 +39,13 @@ public static class SettingValues
         public const string Practices = "Practices";
         public const string SimulationExams = "Simulation Exams";
         public const string MyInvoices = "My Invoices";
+        /// <summary>The lessons of the subjects the customer may reach, with their lesson quizzes (UC-71).</summary>
+        public const string MySubjects = "My Subjects";
 
         public static readonly IReadOnlyList<string> All =
         [
             Dashboard, Posts, Sliders, Registrations, Invoices, Subjects, Questions, Quizzes, Users, Settings,
-            MyRegistrations, Practices, SimulationExams, MyInvoices,
+            MyRegistrations, Practices, SimulationExams, MyInvoices, MySubjects,
         ];
     }
 

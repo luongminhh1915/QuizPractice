@@ -42,6 +42,7 @@ public static class DevDataSeeder
             await SeedBaseAsync(db, hasher, logger, ct);
         }
 
+        await DevMenuSeeder.SeedAsync(db, logger, ct);
         await DevQuizSeeder.SeedAsync(db, logger, DateTime.UtcNow, ct);
         await DevPostSeeder.SeedAsync(db, logger, DateTime.UtcNow, ct);
         await DevSliderSeeder.SeedAsync(db, logger, ct);

@@ -82,7 +82,8 @@ public sealed class DevSeedData
             Menu(SettingValues.MenuItems.MyRegistrations, "My Registrations"),
             Menu(SettingValues.MenuItems.Practices, "Practices List"),
             Menu(SettingValues.MenuItems.SimulationExams, "Simulation Exams"),
-            Menu(SettingValues.MenuItems.MyInvoices, "My Invoices"));
+            Menu(SettingValues.MenuItems.MyInvoices, "My Invoices"),
+            Menu(SettingValues.MenuItems.MySubjects, "My Subjects"));
 
         Add(SettingType.PostCategory,
             ("Study Tips", null), ("Exam Guides", null), ("News", null), ("Career", null));
